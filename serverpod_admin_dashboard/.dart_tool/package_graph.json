@@ -24,7 +24,7 @@
     },
     {
       "name": "serverpod_admin_client",
-      "version": "0.0.0",
+      "version": "1.0.0",
       "dependencies": [
         "serverpod_client"
       ]
