@@ -42,6 +42,34 @@ typedef DetailsBuilder = Widget Function(
   Map<String, String> record,
 );
 
+/// Builder function for custom edit/update dialog widget
+///
+/// Receives the [BuildContext], [AdminDashboardController], [HomeOperations],
+/// the [AdminResource], and the [Map] of current record values.
+/// Should return a dialog that calls [onSubmit] with the updated payload when saved.
+typedef EditDialogBuilder = Widget Function(
+  BuildContext context,
+  AdminDashboardController controller,
+  HomeOperations operations,
+  AdminResource resource,
+  Map<String, String> currentValues,
+  Future<bool> Function(Map<String, String> payload) onSubmit,
+);
+
+/// Builder function for custom delete confirmation dialog widget
+///
+/// Receives the [BuildContext], [AdminDashboardController], [HomeOperations],
+/// the [AdminResource], and the [Map] of record to delete.
+/// Should return a dialog that calls [onConfirm] when deletion is confirmed.
+typedef DeleteDialogBuilder = Widget Function(
+  BuildContext context,
+  AdminDashboardController controller,
+  HomeOperations operations,
+  AdminResource resource,
+  Map<String, String> record,
+  Future<void> Function() onConfirm,
+);
+
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({
     super.key,
@@ -53,6 +81,8 @@ class AdminDashboard extends StatefulWidget {
     this.customSidebarBuilder,
     this.customBodyBuilder,
     this.customDetailsBuilder,
+    this.customEditDialogBuilder,
+    this.customDeleteDialogBuilder,
   });
 
   final ServerpodClientShared client;
@@ -69,6 +99,12 @@ class AdminDashboard extends StatefulWidget {
 
   /// Optional custom record details builder. If provided, replaces the default record details view.
   final DetailsBuilder? customDetailsBuilder;
+
+  /// Optional custom edit/update dialog builder. If provided, replaces the default edit dialog.
+  final EditDialogBuilder? customEditDialogBuilder;
+
+  /// Optional custom delete confirmation dialog builder. If provided, replaces the default delete dialog.
+  final DeleteDialogBuilder? customDeleteDialogBuilder;
 
   @override
   State<AdminDashboard> createState() => _AdminDashboardState();
@@ -175,6 +211,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
             customSidebarBuilder: widget.customSidebarBuilder,
             customBodyBuilder: widget.customBodyBuilder,
             customDetailsBuilder: widget.customDetailsBuilder,
+            customEditDialogBuilder: widget.customEditDialogBuilder,
+            customDeleteDialogBuilder: widget.customDeleteDialogBuilder,
           ),
         );
       },

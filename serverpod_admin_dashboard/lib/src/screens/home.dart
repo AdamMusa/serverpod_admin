@@ -29,6 +29,26 @@ typedef DetailsBuilder = Widget Function(
   Map<String, String> record,
 );
 
+/// Builder function for custom edit/update dialog widget
+typedef EditDialogBuilder = Widget Function(
+  BuildContext context,
+  AdminDashboardController controller,
+  HomeOperations operations,
+  AdminResource resource,
+  Map<String, String> currentValues,
+  Future<bool> Function(Map<String, String> payload) onSubmit,
+);
+
+/// Builder function for custom delete confirmation dialog widget
+typedef DeleteDialogBuilder = Widget Function(
+  BuildContext context,
+  AdminDashboardController controller,
+  HomeOperations operations,
+  AdminResource resource,
+  Map<String, String> record,
+  Future<void> Function() onConfirm,
+);
+
 class Home extends StatefulWidget {
   const Home({
     super.key,
@@ -36,12 +56,16 @@ class Home extends StatefulWidget {
     this.customSidebarBuilder,
     this.customBodyBuilder,
     this.customDetailsBuilder,
+    this.customEditDialogBuilder,
+    this.customDeleteDialogBuilder,
   });
 
   final AdminDashboardController controller;
   final SidebarBuilder? customSidebarBuilder;
   final BodyBuilder? customBodyBuilder;
   final DetailsBuilder? customDetailsBuilder;
+  final EditDialogBuilder? customEditDialogBuilder;
+  final DeleteDialogBuilder? customDeleteDialogBuilder;
 
   @override
   State<Home> createState() => _HomeState();
@@ -80,6 +104,8 @@ class _HomeState extends State<Home> {
     _operations ??= HomeOperations(
       controller: widget.controller,
       context: context,
+      customEditDialogBuilder: widget.customEditDialogBuilder,
+      customDeleteDialogBuilder: widget.customDeleteDialogBuilder,
     );
   }
 
@@ -88,6 +114,8 @@ class _HomeState extends State<Home> {
     return _operations ??= HomeOperations(
       controller: widget.controller,
       context: context,
+      customEditDialogBuilder: widget.customEditDialogBuilder,
+      customDeleteDialogBuilder: widget.customDeleteDialogBuilder,
     );
   }
 

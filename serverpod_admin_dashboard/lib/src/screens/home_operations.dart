@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:serverpod_admin_dashboard/src/admin_dashboard.dart';
 import 'package:serverpod_admin_dashboard/src/controller/admin_dashboard.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/record_dialog.dart';
@@ -9,10 +10,14 @@ class HomeOperations {
   HomeOperations({
     required this.controller,
     required this.context,
+    this.customEditDialogBuilder,
+    this.customDeleteDialogBuilder,
   });
 
   final AdminDashboardController controller;
   final BuildContext context;
+  final EditDialogBuilder? customEditDialogBuilder;
+  final DeleteDialogBuilder? customDeleteDialogBuilder;
 
   /// Shows the create record dialog.
   Future<void> showCreateDialog(AdminResource resource) async {
@@ -34,18 +39,37 @@ class HomeOperations {
     AdminResource resource,
     Map<String, String> record,
   ) async {
-    final updated = await showDialog<bool>(
-      context: context,
-      builder: (context) => RecordDialog(
-        resource: resource,
-        onSubmit: (payload) => _updateRecord(resource, payload),
-        initialValues: record,
-        isUpdate: true,
-      ),
-    );
+    if (customEditDialogBuilder != null) {
+      final updated = await showDialog<bool>(
+        context: context,
+        builder: (context) => customEditDialogBuilder!(
+          context,
+          controller,
+          this,
+          resource,
+          record,
+          (payload) => _updateRecord(resource, payload),
+        ),
+      );
 
-    if (updated == true) {
-      // Records are reloaded in _updateRecord
+      if (updated == true) {
+        // Records are reloaded in _updateRecord
+      }
+    } else {
+      // Default implementation
+      final updated = await showDialog<bool>(
+        context: context,
+        builder: (context) => RecordDialog(
+          resource: resource,
+          onSubmit: (payload) => _updateRecord(resource, payload),
+          initialValues: record,
+          isUpdate: true,
+        ),
+      );
+
+      if (updated == true) {
+        // Records are reloaded in _updateRecord
+      }
     }
   }
 
@@ -62,31 +86,50 @@ class HomeOperations {
     AdminResource resource,
     Map<String, String> record,
   ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Delete from ${resource.tableName}?'),
-        content: const Text(
-          'This action cannot be undone. Are you sure you want to delete this record?',
+    if (customDeleteDialogBuilder != null) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => customDeleteDialogBuilder!(
+          context,
+          controller,
+          this,
+          resource,
+          record,
+          () => _deleteRecord(resource, record),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
+      );
 
-    if (confirmed == true) {
-      await _deleteRecord(resource, record);
+      if (confirmed == true) {
+        // Deletion handled in the custom dialog's onConfirm callback
+      }
+    } else {
+      // Default implementation
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Delete from ${resource.tableName}?'),
+          content: const Text(
+            'This action cannot be undone. Are you sure you want to delete this record?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed == true) {
+        await _deleteRecord(resource, record);
+      }
     }
   }
 

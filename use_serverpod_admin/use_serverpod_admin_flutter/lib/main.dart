@@ -5,6 +5,8 @@ import 'package:serverpod_admin_dashboard/serverpod_admin_dashboard.dart';
 import 'custom_sidebar.dart';
 import 'custom_body.dart';
 import 'custom_details.dart';
+import 'custom_edit_dialog.dart';
+import 'custom_delete_dialog.dart';
 
 /// Sets up a global client object that can be used to talk to the server from
 /// anywhere in our app. The client is generated from your server code
@@ -51,6 +53,22 @@ void main() {
             operations: operations,
             resource: resource,
             record: record,
+          );
+        },
+        customEditDialogBuilder: (context, controller, operations, resource,
+            currentValues, onSubmit) {
+          return CustomEditDialog(
+            resource: resource,
+            currentValues: currentValues,
+            onSubmit: onSubmit,
+          );
+        },
+        customDeleteDialogBuilder:
+            (context, controller, operations, resource, record, onConfirm) {
+          return CustomDeleteDialog(
+            resource: resource,
+            record: record,
+            onConfirm: onConfirm,
           );
         },
       ),
