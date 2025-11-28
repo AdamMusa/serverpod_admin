@@ -6,28 +6,30 @@ class Footer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 18),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: theme.colorScheme.surface.withOpacity(0.8),
-        border: Border.all(
-          color: theme.colorScheme.primary.withOpacity(0.15),
-        ),
-      ),
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             Icons.favorite_rounded,
             color: theme.colorScheme.primary,
-            size: 18,
+            size: 16,
           ),
           const SizedBox(width: 8),
           Text(
-            'Brought to you with love by Izeesoft',
-            style: theme.textTheme.bodyMedium?.copyWith(
+            'Brought to you with love by ',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+            ),
+          ),
+          Text(
+            'Izeesoft',
+            style: theme.textTheme.bodySmall?.copyWith(
               fontWeight: FontWeight.w600,
+              color: theme.colorScheme.primary,
             ),
           ),
         ],
