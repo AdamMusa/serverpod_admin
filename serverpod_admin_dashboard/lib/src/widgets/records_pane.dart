@@ -68,139 +68,168 @@ class _RecordsPaneState extends State<RecordsPane> {
       return _buildNoResourceSelected(context);
     }
 
-    final theme = Theme.of(context);
-
     return Card(
       margin: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 22),
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(18),
-              ),
-              color: theme.colorScheme.primary.withOpacity(0.06),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.resource!.tableName,
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Chip(
-                          label: Text(
-                            widget.totalRecords != null &&
-                                    widget.totalRecords != widget.records.length
-                                ? '${widget.records.length} of ${widget.totalRecords} records'
-                                : '${widget.records.length} records',
-                            style: theme.textTheme.labelLarge,
-                          ),
-                          avatar: const Icon(Icons.table_rows, size: 18),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    if (widget.onSearchChanged != null)
-                      SizedBox(
-                        width: 300,
-                        child: TextField(
-                          controller: _searchController,
-                          decoration: InputDecoration(
-                            hintText: 'Search...',
-                            prefixIcon: const Icon(Icons.search, size: 20),
-                            suffixIcon: (widget.searchQuery ?? '').isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(Icons.clear, size: 20),
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      widget.onClearSearch?.call();
-                                    },
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                    style: IconButton.styleFrom(
-                                      tapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
-                                    ),
-                                  )
-                                : null,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(
-                                color:
-                                    theme.colorScheme.outline.withOpacity(0.3),
-                              ),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(
-                                color:
-                                    theme.colorScheme.outline.withOpacity(0.3),
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(
-                                color: theme.colorScheme.primary,
-                                width: 2,
-                              ),
-                            ),
-                            filled: true,
-                            fillColor: theme.colorScheme.surface,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                            isDense: true,
-                          ),
-                          onChanged: widget.onSearchChanged,
-                        ),
-                      ),
-                    if (widget.onSearchChanged != null)
-                      const SizedBox(width: 12),
-                    FilledButton.icon(
-                      onPressed: widget.onAdd,
-                      icon: const Icon(Icons.add),
-                      label: Text('Add ${widget.resource!.tableName}'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          _buildHeader(context),
           const Divider(height: 1, thickness: 1),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: RecordsBody(
-                resource: widget.resource!,
-                records: widget.records,
-                isLoading: widget.isLoading,
-                errorMessage: widget.errorMessage,
-                onEdit: widget.onEdit,
-                onDelete: widget.onDelete,
-                onView: widget.onView,
-                searchQuery: widget.searchQuery,
-                totalRecords: widget.totalRecords,
-              ),
-            ),
-          ),
+          _buildBody(context),
         ],
       ),
     );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 22),
+      decoration: BoxDecoration(
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(18),
+        ),
+        color: theme.colorScheme.primary.withOpacity(0.06),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _buildHeaderInfo(context),
+          _buildHeaderActions(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderInfo(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.resource!.tableName,
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 6),
+        _buildRecordCountChip(context),
+      ],
+    );
+  }
+
+  Widget _buildRecordCountChip(BuildContext context) {
+    final theme = Theme.of(context);
+    final countText = widget.totalRecords != null &&
+            widget.totalRecords != widget.records.length
+        ? '${widget.records.length} of ${widget.totalRecords} records'
+        : '${widget.records.length} records';
+
+    return Chip(
+      label: Text(
+        countText,
+        style: theme.textTheme.labelLarge,
+      ),
+      avatar: const Icon(Icons.table_rows, size: 18),
+    );
+  }
+
+  Widget _buildHeaderActions(BuildContext context) {
+    return Row(
+      children: [
+        if (widget.onSearchChanged != null) ...[
+          _buildSearchField(context),
+          const SizedBox(width: 12),
+        ],
+        _buildAddButton(context),
+      ],
+    );
+  }
+
+  Widget _buildSearchField(BuildContext context) {
+    final theme = Theme.of(context);
+    final hasSearchQuery = (widget.searchQuery ?? '').isNotEmpty;
+
+    return SizedBox(
+      width: 300,
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: 'Search...',
+          prefixIcon: const Icon(Icons.search, size: 20),
+          suffixIcon: hasSearchQuery
+              ? IconButton(
+                  icon: const Icon(Icons.clear, size: 20),
+                  onPressed: _handleClearSearch,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  style: IconButton.styleFrom(
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                )
+              : null,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(
+              color: theme.colorScheme.outline.withOpacity(0.3),
+            ),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(
+              color: theme.colorScheme.outline.withOpacity(0.3),
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(
+              color: theme.colorScheme.primary,
+              width: 2,
+            ),
+          ),
+          filled: true,
+          fillColor: theme.colorScheme.surface,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 10,
+          ),
+          isDense: true,
+        ),
+        onChanged: widget.onSearchChanged,
+      ),
+    );
+  }
+
+  Widget _buildAddButton(BuildContext context) {
+    return FilledButton.icon(
+      onPressed: widget.onAdd,
+      icon: const Icon(Icons.add),
+      label: Text('Add ${widget.resource!.tableName}'),
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: RecordsBody(
+          resource: widget.resource!,
+          records: widget.records,
+          isLoading: widget.isLoading,
+          errorMessage: widget.errorMessage,
+          onEdit: widget.onEdit,
+          onDelete: widget.onDelete,
+          onView: widget.onView,
+          searchQuery: widget.searchQuery,
+          totalRecords: widget.totalRecords,
+        ),
+      ),
+    );
+  }
+
+  void _handleClearSearch() {
+    _searchController.clear();
+    widget.onClearSearch?.call();
   }
 
   Widget _buildNoResourceSelected(BuildContext context) {

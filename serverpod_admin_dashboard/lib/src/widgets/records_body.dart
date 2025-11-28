@@ -170,12 +170,21 @@ class _RecordsBodyState extends State<RecordsBody> {
           .map(
             (column) => DataCell(
               ConstrainedBox(
-                constraints: const BoxConstraints(minWidth: 160),
-                child: Text(
-                  formatRecordValue(column, record[column.name]),
+                constraints: const BoxConstraints(minWidth: 160, maxWidth: 300),
+                child: Tooltip(
+                  message: _truncateTooltipText(
+                    formatRecordValue(column, record[column.name]),
+                  ),
+                  child: Text(
+                    formatRecordValue(column, record[column.name]),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium,
+                  ),
                 ),
               ),
-              onTap: widget.onView != null ? () => widget.onView!(record) : null,
+              onTap:
+                  widget.onView != null ? () => widget.onView!(record) : null,
             ),
           )
           .toList()
@@ -185,6 +194,12 @@ class _RecordsBodyState extends State<RecordsBody> {
 
       return DataRow(cells: cells);
     }).toList();
+  }
+
+  /// Truncates text for tooltip display to prevent overly long tooltips
+  String _truncateTooltipText(String text, {int maxLength = 100}) {
+    if (text.length <= maxLength) return text;
+    return '${text.substring(0, maxLength)}...';
   }
 
   /// Builds action buttons for a record row
@@ -239,7 +254,9 @@ class _RecordsBodyState extends State<RecordsBody> {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                isSearchResult ? Icons.search_off_rounded : Icons.inbox_outlined,
+                isSearchResult
+                    ? Icons.search_off_rounded
+                    : Icons.inbox_outlined,
                 size: 64,
                 color: isSearchResult
                     ? theme.colorScheme.secondary
@@ -248,9 +265,7 @@ class _RecordsBodyState extends State<RecordsBody> {
             ),
             const SizedBox(height: 24),
             Text(
-              isSearchResult
-                  ? 'No matching records found'
-                  : 'No records yet',
+              isSearchResult ? 'No matching records found' : 'No records yet',
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: theme.colorScheme.onSurface,
@@ -311,32 +326,78 @@ class _RecordsBodyState extends State<RecordsBody> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: theme.colorScheme.errorContainer.withOpacity(0.3),
+                gradient: LinearGradient(
+                  colors: [
+                    theme.colorScheme.errorContainer.withOpacity(0.4),
+                    theme.colorScheme.errorContainer.withOpacity(0.2),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.colorScheme.error.withOpacity(0.1),
+                    blurRadius: 20,
+                    spreadRadius: 2,
+                  ),
+                ],
               ),
               child: Icon(
                 Icons.error_outline_rounded,
-                size: 64,
+                size: 56,
                 color: theme.colorScheme.error,
               ),
             ),
-            const SizedBox(height: 24),
-            Text(
-              'Unable to Load Records',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.error,
+            const SizedBox(height: 28),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.errorContainer.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: theme.colorScheme.error.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    size: 20,
+                    color: theme.colorScheme.error,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Failed to Load Records',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: theme.colorScheme.error,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 12),
-            Text(
-              widget.errorMessage!,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+            const SizedBox(height: 16),
+            Container(
+              constraints: const BoxConstraints(maxWidth: 500),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
               ),
-              textAlign: TextAlign.center,
+              child: Text(
+                widget.errorMessage!,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.8),
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
             ),
           ],
         ),

@@ -217,7 +217,7 @@ class RecordDetails extends StatelessWidget {
                             DataCell(
                               ConstrainedBox(
                                 constraints: const BoxConstraints(minWidth: 200),
-                                child: Text(
+                                child: SelectableText(
                                   isEmpty ? '(empty)' : formattedValue,
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     color: isEmpty

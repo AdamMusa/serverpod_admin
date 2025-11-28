@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:serverpod_admin_dashboard/src/admin_dashboard.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/side_bar_error.dart';
 
@@ -13,6 +14,7 @@ class Sidebar extends StatelessWidget {
     required this.isCollapsed,
     required this.onToggleCollapse,
     this.isInDrawer = false,
+    this.itemCustomizations,
   });
 
   final List<AdminResource> resources;
@@ -24,6 +26,7 @@ class Sidebar extends StatelessWidget {
   final bool isCollapsed;
   final VoidCallback onToggleCollapse;
   final bool isInDrawer;
+  final Map<String, SidebarItemCustomization>? itemCustomizations;
 
   @override
   Widget build(BuildContext context) {
@@ -126,6 +129,12 @@ class Sidebar extends StatelessWidget {
       itemBuilder: (context, index) {
         final resource = resources[index];
         final isSelected = selectedResource?.key == resource.key;
+        final customization = itemCustomizations?[resource.key];
+        
+        // Debug: Print available resource keys (remove in production)
+        // Uncomment the line below to see what keys are available:
+        // debugPrint('Resource key: ${resource.key}, tableName: ${resource.tableName}');
+        
         return AnimatedContainer(
           duration: const Duration(milliseconds: 250),
           curve: Curves.fastOutSlowIn,
@@ -150,12 +159,12 @@ class Sidebar extends StatelessWidget {
               backgroundColor:
                   theme.colorScheme.primary.withOpacity(isSelected ? 0.2 : 0.1),
               child: Icon(
-                Icons.data_object_outlined,
+                customization?.icon ?? Icons.data_object_outlined,
                 color: theme.colorScheme.primary,
               ),
             ),
             title: Text(
-              resource.tableName,
+              customization?.label ?? resource.tableName,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),

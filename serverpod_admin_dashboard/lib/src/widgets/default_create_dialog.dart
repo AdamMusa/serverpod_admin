@@ -241,6 +241,8 @@ class _DefaultCreateDialogState extends State<DefaultCreateDialog> {
                           child: TextFormField(
                             controller: _controllers[column.name],
                             readOnly: isDate,
+                            maxLines: null,
+                            minLines: 1,
                             onTap: isDate
                                 ? () async {
                                     final currentIso = _isoValues[column.name];
@@ -257,6 +259,7 @@ class _DefaultCreateDialogState extends State<DefaultCreateDialog> {
                                     }
                                   }
                                 : null,
+                            textInputAction: TextInputAction.newline,
                             decoration: InputDecoration(
                               labelText: column.name,
                               hintText: isDate

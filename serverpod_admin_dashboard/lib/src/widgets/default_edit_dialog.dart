@@ -34,10 +34,10 @@ class _DefaultEditDialogState extends State<DefaultEditDialog> {
     if (value == null || value.isEmpty) return '';
     final parsed = DateTime.tryParse(value);
     if (parsed == null) return value;
-    
+
     final local = parsed.toLocal();
     final isDateTime = column.dataType.toLowerCase().contains('datetime');
-    
+
     if (isDateTime) {
       final year = local.year.toString().padLeft(4, '0');
       final month = local.month.toString().padLeft(2, '0');
@@ -139,13 +139,14 @@ class _DefaultEditDialogState extends State<DefaultEditDialog> {
       (col) => col.isPrimary,
       orElse: () => widget.resource.columns.first,
     );
-    payload[primaryColumn.name] = widget.currentValues[primaryColumn.name] ?? '';
+    payload[primaryColumn.name] =
+        widget.currentValues[primaryColumn.name] ?? '';
 
     for (final entry in _controllers.entries) {
       final column = widget.resource.columns.firstWhere(
         (col) => col.name == entry.key,
       );
-      
+
       if (_isDateType(column)) {
         // Use ISO8601 value for date fields
         final isoValue = _isoValues[entry.key];
@@ -251,15 +252,49 @@ class _DefaultEditDialogState extends State<DefaultEditDialog> {
                       ...widget.resource.columns
                           .where((col) => !col.isPrimary)
                           .map((column) {
-                            final isDate = _isDateType(column);
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 16),
-                              child: TextFormField(
-                                controller: _controllers[column.name],
-                                readOnly: isDate,
-                                onTap: isDate
-                                    ? () async {
-                                        final currentIso = _isoValues[column.name];
+                        final isDate = _isDateType(column);
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: TextFormField(
+                            controller: _controllers[column.name],
+                            readOnly: isDate,
+                            maxLines: null,
+                            minLines: 1,
+                            onTap: isDate
+                                ? () async {
+                                    final currentIso = _isoValues[column.name];
+                                    final picked = await _pickDateTime(
+                                      context,
+                                      currentIso,
+                                      column,
+                                    );
+                                    if (picked != null && mounted) {
+                                      _isoValues[column.name] = picked;
+                                      _controllers[column.name]!.text =
+                                          _formatDateValue(picked, column);
+                                      setState(() {});
+                                    }
+                                  }
+                                : null,
+                            textInputAction: TextInputAction.newline,
+                            decoration: InputDecoration(
+                              labelText: column.name,
+                              hintText: isDate
+                                  ? 'Tap to select date'
+                                  : 'Enter ${column.name}',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              filled: true,
+                              fillColor:
+                                  theme.colorScheme.surfaceContainerHighest,
+                              suffixIcon: isDate
+                                  ? IconButton(
+                                      icon: const Icon(
+                                          Icons.calendar_today_outlined),
+                                      onPressed: () async {
+                                        final currentIso =
+                                            _isoValues[column.name];
                                         final picked = await _pickDateTime(
                                           context,
                                           currentIso,
@@ -271,63 +306,35 @@ class _DefaultEditDialogState extends State<DefaultEditDialog> {
                                               _formatDateValue(picked, column);
                                           setState(() {});
                                         }
-                                      }
-                                    : null,
-                                decoration: InputDecoration(
-                                  labelText: column.name,
-                                  hintText: isDate
-                                      ? 'Tap to select date'
-                                      : 'Enter ${column.name}',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  filled: true,
-                                  fillColor: theme.colorScheme.surfaceContainerHighest,
-                                  suffixIcon: isDate
-                                      ? IconButton(
-                                          icon: const Icon(Icons.calendar_today_outlined),
-                                          onPressed: () async {
-                                            final currentIso = _isoValues[column.name];
-                                            final picked = await _pickDateTime(
-                                              context,
-                                              currentIso,
-                                              column,
-                                            );
-                                            if (picked != null && mounted) {
-                                              _isoValues[column.name] = picked;
-                                              _controllers[column.name]!.text =
-                                                  _formatDateValue(picked, column);
-                                              setState(() {});
-                                            }
-                                          },
+                                      },
+                                    )
+                                  : column.hasDefault
+                                      ? Icon(
+                                          Icons.settings,
+                                          size: 18,
+                                          color: theme.colorScheme.secondary,
                                         )
-                                      : column.hasDefault
-                                          ? Icon(
-                                              Icons.settings,
-                                              size: 18,
-                                              color: theme.colorScheme.secondary,
-                                            )
-                                          : null,
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.trim().isEmpty) {
-                                    return 'This field is required';
-                                  }
-                                  if (isDate && value.isNotEmpty) {
-                                    // Check if we have a valid ISO value stored
-                                    final isoValue = _isoValues[column.name];
-                                    if (isoValue == null || isoValue.isEmpty) {
-                                      return 'Please select a date';
-                                    }
-                                    if (DateTime.tryParse(isoValue) == null) {
-                                      return 'Invalid date';
-                                    }
-                                  }
-                                  return null;
-                                },
-                              ),
-                            );
-                          }),
+                                      : null,
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'This field is required';
+                              }
+                              if (isDate && value.isNotEmpty) {
+                                // Check if we have a valid ISO value stored
+                                final isoValue = _isoValues[column.name];
+                                if (isoValue == null || isoValue.isEmpty) {
+                                  return 'Please select a date';
+                                }
+                                if (DateTime.tryParse(isoValue) == null) {
+                                  return 'Invalid date';
+                                }
+                              }
+                              return null;
+                            },
+                          ),
+                        );
+                      }),
                       if (_errorMessage != null) ...[
                         const SizedBox(height: 16),
                         Container(
@@ -388,7 +395,7 @@ class _DefaultEditDialogState extends State<DefaultEditDialog> {
                             height: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Icon(Icons.save),
+                        : const Icon(Icons.check_circle_outline),
                     label: Text(_isSubmitting ? 'Updating...' : 'Update'),
                   ),
                 ],
@@ -400,4 +407,3 @@ class _DefaultEditDialogState extends State<DefaultEditDialog> {
     );
   }
 }
-

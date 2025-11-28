@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:serverpod_admin_dashboard/src/admin_dashboard.dart';
 import 'package:serverpod_admin_dashboard/src/controller/admin_dashboard.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
 import 'package:serverpod_admin_dashboard/src/screens/home_operations.dart';
@@ -6,12 +7,6 @@ import 'package:serverpod_admin_dashboard/src/screens/record_details.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/footer.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/records_pane.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/side_bar.dart';
-
-/// Builder function for custom sidebar widget
-typedef SidebarBuilder = Widget Function(
-  BuildContext context,
-  AdminDashboardController controller,
-);
 
 /// Builder function for custom records pane/body widget
 typedef BodyBuilder = Widget Function(
@@ -63,6 +58,7 @@ class Home extends StatefulWidget {
     super.key,
     required this.controller,
     this.customSidebarBuilder,
+    this.sidebarItemCustomizations,
     this.customBodyBuilder,
     this.customDetailsBuilder,
     this.customEditDialogBuilder,
@@ -72,6 +68,7 @@ class Home extends StatefulWidget {
 
   final AdminDashboardController controller;
   final SidebarBuilder? customSidebarBuilder;
+  final Map<String, SidebarItemCustomization>? sidebarItemCustomizations;
   final BodyBuilder? customBodyBuilder;
   final DetailsBuilder? customDetailsBuilder;
   final EditDialogBuilder? customEditDialogBuilder;
@@ -238,6 +235,7 @@ class _HomeState extends State<Home> {
       onSelect: widget.controller.selectResource,
       isCollapsed: widget.controller.isSidebarCollapsed,
       onToggleCollapse: () => widget.controller.toggleSidebarCollapsed(),
+      itemCustomizations: widget.sidebarItemCustomizations,
     );
   }
 
@@ -294,6 +292,7 @@ class _HomeState extends State<Home> {
                         Navigator.of(context).pop(); // close drawer
                       },
                       isInDrawer: true,
+                      itemCustomizations: widget.sidebarItemCustomizations,
                     ),
                   ),
                 )

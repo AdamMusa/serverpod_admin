@@ -83,6 +83,12 @@ void main() {
 
       home: AdminDashboard(
         client: client,
+        sidebarItemCustomizations: {
+          'posts': SidebarItemCustomization(
+            label: 'Posts',
+            icon: Icons.post_add,
+          ),
+        },
       ),
     ),
   );

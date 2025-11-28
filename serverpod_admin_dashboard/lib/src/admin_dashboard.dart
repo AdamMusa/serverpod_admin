@@ -8,6 +8,21 @@ import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
 import 'package:serverpod_admin_dashboard/src/screens/home.dart';
 import 'package:serverpod_admin_dashboard/src/screens/home_operations.dart';
 
+/// Lightweight customization for sidebar items.
+/// Allows customizing the label and icon for specific resources by their key.
+class SidebarItemCustomization {
+  const SidebarItemCustomization({
+    required this.label,
+    required this.icon,
+  });
+
+  /// Custom label text to display instead of the resource table name
+  final String label;
+
+  /// Custom icon to display instead of the default data object icon
+  final IconData icon;
+}
+
 /// Builder function for custom sidebar widget
 ///
 /// Receives the [BuildContext] and [AdminDashboardController] to build
@@ -92,6 +107,7 @@ class AdminDashboard extends StatefulWidget {
     this.lightTheme,
     this.darkTheme,
     this.customSidebarBuilder,
+    this.sidebarItemCustomizations,
     this.customBodyBuilder,
     this.customDetailsBuilder,
     this.customEditDialogBuilder,
@@ -107,6 +123,11 @@ class AdminDashboard extends StatefulWidget {
 
   /// Optional custom sidebar builder. If provided, replaces the default sidebar.
   final SidebarBuilder? customSidebarBuilder;
+
+  /// Optional map of sidebar item customizations.
+  /// Key is the resource key, value contains custom label and icon.
+  /// Example: {'users': SidebarItemCustomization(label: 'Users', icon: Icons.people)}
+  final Map<String, SidebarItemCustomization>? sidebarItemCustomizations;
 
   /// Optional custom body/records pane builder. If provided, replaces the default records pane.
   final BodyBuilder? customBodyBuilder;
@@ -226,6 +247,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           home: Home(
             controller: _controller,
             customSidebarBuilder: widget.customSidebarBuilder,
+            sidebarItemCustomizations: widget.sidebarItemCustomizations,
             customBodyBuilder: widget.customBodyBuilder,
             customDetailsBuilder: widget.customDetailsBuilder,
             customEditDialogBuilder: widget.customEditDialogBuilder,
