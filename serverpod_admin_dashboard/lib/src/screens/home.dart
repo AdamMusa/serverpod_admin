@@ -1,18 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:serverpod_admin_dashboard/src/controller/admin_dashboard.dart';
+import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
 import 'package:serverpod_admin_dashboard/src/screens/home_operations.dart';
 import 'package:serverpod_admin_dashboard/src/screens/record_details.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/footer.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/records_pane.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/side_bar.dart';
 
+/// Builder function for custom sidebar widget
+typedef SidebarBuilder = Widget Function(
+  BuildContext context,
+  AdminDashboardController controller,
+);
+
+/// Builder function for custom records pane/body widget
+typedef BodyBuilder = Widget Function(
+  BuildContext context,
+  AdminDashboardController controller,
+  HomeOperations operations,
+);
+
+/// Builder function for custom record details widget
+typedef DetailsBuilder = Widget Function(
+  BuildContext context,
+  AdminDashboardController controller,
+  HomeOperations operations,
+  AdminResource resource,
+  Map<String, String> record,
+);
+
 class Home extends StatefulWidget {
   const Home({
     super.key,
     required this.controller,
+    this.customSidebarBuilder,
+    this.customBodyBuilder,
+    this.customDetailsBuilder,
   });
 
   final AdminDashboardController controller;
+  final SidebarBuilder? customSidebarBuilder;
+  final BodyBuilder? customBodyBuilder;
+  final DetailsBuilder? customDetailsBuilder;
 
   @override
   State<Home> createState() => _HomeState();
@@ -59,6 +88,115 @@ class _HomeState extends State<Home> {
     return _operations ??= HomeOperations(
       controller: widget.controller,
       context: context,
+    );
+  }
+
+  /// Builds the RecordDetails widget with common callbacks
+  Widget _buildRecordDetails() {
+    final detailsResource = widget.controller.detailsResource;
+    final detailsRecord = widget.controller.detailsRecord;
+
+    if (detailsResource == null || detailsRecord == null) {
+      return const SizedBox.shrink();
+    }
+
+    // Use custom builder if provided
+    if (widget.customDetailsBuilder != null) {
+      return widget.customDetailsBuilder!(
+        context,
+        widget.controller,
+        operations,
+        detailsResource,
+        detailsRecord,
+      );
+    }
+
+    // Default implementation
+    return RecordDetails(
+      resource: detailsResource,
+      record: detailsRecord,
+      showAppBar: false,
+      onBack: () => widget.controller.closeDetails(),
+      onEdit: (record) {
+        operations.showEditDialog(detailsResource, record);
+      },
+      onDelete: (record) {
+        operations.showDeleteConfirmation(detailsResource, record);
+      },
+    );
+  }
+
+  /// Builds the RecordsPane widget with common callbacks
+  Widget _buildRecordsPane() {
+    final selectedResource = widget.controller.selectedResource;
+    if (selectedResource == null) {
+      return const SizedBox.shrink();
+    }
+
+    // Use custom builder if provided
+    if (widget.customBodyBuilder != null) {
+      return widget.customBodyBuilder!(
+        context,
+        widget.controller,
+        operations,
+      );
+    }
+
+    // Default implementation
+    return RecordsPane(
+      resource: selectedResource,
+      records: widget.controller.filteredRecords,
+      totalRecords: widget.controller.records.length,
+      isLoading: widget.controller.isRecordsLoading,
+      errorMessage: widget.controller.recordsError,
+      searchQuery: widget.controller.searchQuery,
+      onSearchChanged: widget.controller.setSearchQuery,
+      onClearSearch: widget.controller.clearSearch,
+      onAdd: () => operations.showCreateDialog(selectedResource),
+      onEdit: (record) => operations.showEditDialog(selectedResource, record),
+      onDelete: (record) =>
+          operations.showDeleteConfirmation(selectedResource, record),
+      onView: (record) => operations.showDetailsPage(selectedResource, record),
+    );
+  }
+
+  /// Builds the main content area (RecordDetails or RecordsPane)
+  Widget _buildMainContent() {
+    if (widget.controller.isShowingDetails) {
+      return _buildRecordDetails();
+    }
+    return _buildRecordsPane();
+  }
+
+  /// Builds the sidebar widget
+  Widget _buildSidebar() {
+    // Use custom builder if provided
+    if (widget.customSidebarBuilder != null) {
+      return widget.customSidebarBuilder!(context, widget.controller);
+    }
+
+    // Default implementation
+    if (widget.controller.isSidebarCollapsed) {
+      return Container(
+        width: 40,
+        alignment: Alignment.topCenter,
+        child: IconButton(
+          tooltip: 'Expand sidebar',
+          icon: const Icon(Icons.chevron_right_rounded),
+          onPressed: () => widget.controller.toggleSidebarCollapsed(),
+        ),
+      );
+    }
+
+    return Sidebar(
+      resources: widget.controller.resources,
+      isLoading: widget.controller.isResourcesLoading,
+      errorMessage: widget.controller.resourcesError,
+      selectedResource: widget.controller.selectedResource,
+      onRetry: widget.controller.loadResources,
+      onSelect: widget.controller.selectResource,
+      isCollapsed: widget.controller.isSidebarCollapsed,
+      onToggleCollapse: () => widget.controller.toggleSidebarCollapsed(),
     );
   }
 
@@ -142,258 +280,13 @@ class _HomeState extends State<Home> {
                       children: [
                         Expanded(
                           child: isSmallScreen
-                              ? widget.controller.isShowingDetails &&
-                                      widget.controller.detailsResource !=
-                                          null &&
-                                      widget.controller.detailsRecord != null
-                                  ? RecordDetails(
-                                      resource:
-                                          widget.controller.detailsResource!,
-                                      record: widget.controller.detailsRecord!,
-                                      showAppBar: false,
-                                      onBack: () {
-                                        widget.controller.closeDetails();
-                                      },
-                                      onEdit: (record) {
-                                        final resource =
-                                            widget.controller.detailsResource;
-                                        if (resource != null) {
-                                          operations.showEditDialog(
-                                              resource, record);
-                                        }
-                                      },
-                                      onDelete: (record) {
-                                        final resource =
-                                            widget.controller.detailsResource;
-                                        if (resource != null) {
-                                          operations.showDeleteConfirmation(
-                                              resource, record);
-                                        }
-                                      },
-                                    )
-                                  : RecordsPane(
-                                      resource:
-                                          widget.controller.selectedResource,
-                                      records:
-                                          widget.controller.filteredRecords,
-                                      totalRecords:
-                                          widget.controller.records.length,
-                                      isLoading:
-                                          widget.controller.isRecordsLoading,
-                                      errorMessage:
-                                          widget.controller.recordsError,
-                                      searchQuery:
-                                          widget.controller.searchQuery,
-                                      onSearchChanged:
-                                          widget.controller.setSearchQuery,
-                                      onClearSearch:
-                                          widget.controller.clearSearch,
-                                      onAdd: widget.controller
-                                                  .selectedResource ==
-                                              null
-                                          ? null
-                                          : () {
-                                              final resource = widget
-                                                  .controller.selectedResource;
-                                              if (resource != null) {
-                                                operations
-                                                    .showCreateDialog(resource);
-                                              }
-                                            },
-                                      onEdit:
-                                          widget.controller.selectedResource ==
-                                                  null
-                                              ? null
-                                              : (record) {
-                                                  final resource = widget
-                                                      .controller
-                                                      .selectedResource;
-                                                  if (resource != null) {
-                                                    operations.showEditDialog(
-                                                        resource, record);
-                                                  }
-                                                },
-                                      onDelete:
-                                          widget.controller.selectedResource ==
-                                                  null
-                                              ? null
-                                              : (record) {
-                                                  final resource = widget
-                                                      .controller
-                                                      .selectedResource;
-                                                  if (resource != null) {
-                                                    operations
-                                                        .showDeleteConfirmation(
-                                                            resource, record);
-                                                  }
-                                                },
-                                      onView:
-                                          widget.controller.selectedResource ==
-                                                  null
-                                              ? null
-                                              : (record) {
-                                                  final resource = widget
-                                                      .controller
-                                                      .selectedResource;
-                                                  if (resource != null) {
-                                                    operations.showDetailsPage(
-                                                        resource, record);
-                                                  }
-                                                },
-                                    )
+                              ? _buildMainContent()
                               : Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    if (widget.controller.isSidebarCollapsed)
-                                      Container(
-                                        width: 40,
-                                        alignment: Alignment.topCenter,
-                                        child: IconButton(
-                                          tooltip: 'Expand sidebar',
-                                          icon: const Icon(
-                                            Icons.chevron_right_rounded,
-                                          ),
-                                          onPressed: () {
-                                            widget.controller
-                                                .toggleSidebarCollapsed();
-                                          },
-                                        ),
-                                      )
-                                    else
-                                      Sidebar(
-                                        resources: widget.controller.resources,
-                                        isLoading: widget
-                                            .controller.isResourcesLoading,
-                                        errorMessage:
-                                            widget.controller.resourcesError,
-                                        selectedResource:
-                                            widget.controller.selectedResource,
-                                        onRetry:
-                                            widget.controller.loadResources,
-                                        onSelect:
-                                            widget.controller.selectResource,
-                                        isCollapsed: widget
-                                            .controller.isSidebarCollapsed,
-                                        onToggleCollapse: () {
-                                          widget.controller
-                                              .toggleSidebarCollapsed();
-                                        },
-                                      ),
+                                    _buildSidebar(),
                                     const SizedBox(width: 20),
-                                    Expanded(
-                                      child: widget.controller
-                                                  .isShowingDetails &&
-                                              widget.controller
-                                                      .detailsResource !=
-                                                  null &&
-                                              widget.controller.detailsRecord !=
-                                                  null
-                                          ? RecordDetails(
-                                              resource: widget
-                                                  .controller.detailsResource!,
-                                              record: widget
-                                                  .controller.detailsRecord!,
-                                              showAppBar: false,
-                                              onBack: () {
-                                                widget.controller
-                                                    .closeDetails();
-                                              },
-                                              onEdit: (record) {
-                                                final resource = widget
-                                                    .controller.detailsResource;
-                                                if (resource != null) {
-                                                  operations.showEditDialog(
-                                                      resource, record);
-                                                }
-                                              },
-                                              onDelete: (record) {
-                                                final resource = widget
-                                                    .controller.detailsResource;
-                                                if (resource != null) {
-                                                  operations
-                                                      .showDeleteConfirmation(
-                                                          resource, record);
-                                                }
-                                              },
-                                            )
-                                          : RecordsPane(
-                                              resource: widget
-                                                  .controller.selectedResource,
-                                              records: widget
-                                                  .controller.filteredRecords,
-                                              totalRecords: widget
-                                                  .controller.records.length,
-                                              isLoading: widget
-                                                  .controller.isRecordsLoading,
-                                              errorMessage: widget
-                                                  .controller.recordsError,
-                                              searchQuery:
-                                                  widget.controller.searchQuery,
-                                              onSearchChanged: widget
-                                                  .controller.setSearchQuery,
-                                              onClearSearch:
-                                                  widget.controller.clearSearch,
-                                              onAdd: widget.controller
-                                                          .selectedResource ==
-                                                      null
-                                                  ? null
-                                                  : () {
-                                                      final resource = widget
-                                                          .controller
-                                                          .selectedResource;
-                                                      if (resource != null) {
-                                                        operations
-                                                            .showCreateDialog(
-                                                                resource);
-                                                      }
-                                                    },
-                                              onEdit: widget.controller
-                                                          .selectedResource ==
-                                                      null
-                                                  ? null
-                                                  : (record) {
-                                                      final resource = widget
-                                                          .controller
-                                                          .selectedResource;
-                                                      if (resource != null) {
-                                                        operations
-                                                            .showEditDialog(
-                                                                resource,
-                                                                record);
-                                                      }
-                                                    },
-                                              onDelete: widget.controller
-                                                          .selectedResource ==
-                                                      null
-                                                  ? null
-                                                  : (record) {
-                                                      final resource = widget
-                                                          .controller
-                                                          .selectedResource;
-                                                      if (resource != null) {
-                                                        operations
-                                                            .showDeleteConfirmation(
-                                                                resource,
-                                                                record);
-                                                      }
-                                                    },
-                                              onView: widget.controller
-                                                          .selectedResource ==
-                                                      null
-                                                  ? null
-                                                  : (record) {
-                                                      final resource = widget
-                                                          .controller
-                                                          .selectedResource;
-                                                      if (resource != null) {
-                                                        operations
-                                                            .showDetailsPage(
-                                                                resource,
-                                                                record);
-                                                      }
-                                                    },
-                                            ),
-                                    ),
+                                    Expanded(child: _buildMainContent()),
                                   ],
                                 ),
                         ),

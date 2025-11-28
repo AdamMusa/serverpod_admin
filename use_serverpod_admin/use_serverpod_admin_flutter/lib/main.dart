@@ -2,6 +2,9 @@ import 'package:use_serverpod_admin_client/use_serverpod_admin_client.dart';
 import 'package:flutter/material.dart';
 import 'package:serverpod_flutter/serverpod_flutter.dart';
 import 'package:serverpod_admin_dashboard/serverpod_admin_dashboard.dart';
+import 'custom_sidebar.dart';
+import 'custom_body.dart';
+import 'custom_details.dart';
 
 /// Sets up a global client object that can be used to talk to the server from
 /// anywhere in our app. The client is generated from your server code
@@ -30,7 +33,26 @@ void main() {
   runApp(
     MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: AdminDashboard(client: client),
+      home: AdminDashboard(
+        client: client,
+        customSidebarBuilder: (context, controller) {
+          return CustomSidebar(controller: controller);
+        },
+        customBodyBuilder: (context, controller, operations) {
+          return CustomBody(
+            controller: controller,
+            operations: operations,
+          );
+        },
+        customDetailsBuilder: (context, controller, operations, resource, record) {
+          return CustomDetails(
+            controller: controller,
+            operations: operations,
+            resource: resource,
+            record: record,
+          );
+        },
+      ),
     ),
   );
 }

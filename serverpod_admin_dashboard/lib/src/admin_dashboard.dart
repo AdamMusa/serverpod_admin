@@ -1,9 +1,46 @@
 import 'package:flutter/material.dart';
-import 'package:serverpod_admin_client/serverpod_admin_client.dart';
+import 'package:serverpod_admin_client/serverpod_admin_client.dart'
+    hide AdminResource;
 import 'package:serverpod_admin_client/serverpod_admin_client.dart'
     as admin_client;
 import 'package:serverpod_admin_dashboard/src/controller/admin_dashboard.dart';
+import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
 import 'package:serverpod_admin_dashboard/src/screens/home.dart';
+import 'package:serverpod_admin_dashboard/src/screens/home_operations.dart';
+
+/// Builder function for custom sidebar widget
+///
+/// Receives the [BuildContext] and [AdminDashboardController] to build
+/// a custom sidebar widget. The controller provides access to resources,
+/// selected resource, loading states, etc.
+typedef SidebarBuilder = Widget Function(
+  BuildContext context,
+  AdminDashboardController controller,
+);
+
+/// Builder function for custom records pane/body widget
+///
+/// Receives the [BuildContext], [AdminDashboardController], and [HomeOperations]
+/// to build a custom body/records pane widget. Use this to completely replace
+/// the default records table view.
+typedef BodyBuilder = Widget Function(
+  BuildContext context,
+  AdminDashboardController controller,
+  HomeOperations operations,
+);
+
+/// Builder function for custom record details widget
+///
+/// Receives the [BuildContext], [AdminDashboardController], [HomeOperations],
+/// the [AdminResource], and the [Map] of record data to build a custom
+/// record details view.
+typedef DetailsBuilder = Widget Function(
+  BuildContext context,
+  AdminDashboardController controller,
+  HomeOperations operations,
+  AdminResource resource,
+  Map<String, String> record,
+);
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({
@@ -13,6 +50,9 @@ class AdminDashboard extends StatefulWidget {
     this.initialThemeMode = ThemeMode.system,
     this.lightTheme,
     this.darkTheme,
+    this.customSidebarBuilder,
+    this.customBodyBuilder,
+    this.customDetailsBuilder,
   });
 
   final ServerpodClientShared client;
@@ -20,6 +60,15 @@ class AdminDashboard extends StatefulWidget {
   final ThemeMode initialThemeMode;
   final ThemeData? lightTheme;
   final ThemeData? darkTheme;
+
+  /// Optional custom sidebar builder. If provided, replaces the default sidebar.
+  final SidebarBuilder? customSidebarBuilder;
+
+  /// Optional custom body/records pane builder. If provided, replaces the default records pane.
+  final BodyBuilder? customBodyBuilder;
+
+  /// Optional custom record details builder. If provided, replaces the default record details view.
+  final DetailsBuilder? customDetailsBuilder;
 
   @override
   State<AdminDashboard> createState() => _AdminDashboardState();
@@ -123,6 +172,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
           debugShowCheckedModeBanner: false,
           home: Home(
             controller: _controller,
+            customSidebarBuilder: widget.customSidebarBuilder,
+            customBodyBuilder: widget.customBodyBuilder,
+            customDetailsBuilder: widget.customDetailsBuilder,
           ),
         );
       },

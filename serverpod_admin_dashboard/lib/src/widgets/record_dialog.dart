@@ -97,59 +97,10 @@ class _RecordDialogState extends State<RecordDialog> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        height: 44,
-                        width: 44,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Icon(
-                          Icons.add_box_outlined,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.isUpdate
-                                  ? 'Update ${widget.resource.tableName}'
-                                  : 'Add ${widget.resource.tableName}',
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              widget.isUpdate
-                                  ? 'Modify the fields and save your changes.'
-                                  : 'Complete the form to create a new record.',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.textTheme.bodySmall?.color
-                                    ?.withOpacity(0.7),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      ListenableBuilder(
-                        listenable: _stateController,
-                        builder: (context, _) {
-                          return IconButton(
-                            tooltip: 'Close dialog',
-                            onPressed: _stateController.isSubmitting
-                                ? null
-                                : () => Navigator.of(context).pop(false),
-                            icon: const Icon(Icons.close_rounded),
-                          );
-                        },
-                      ),
-                    ],
+                  _DialogHeader(
+                    resource: widget.resource,
+                    isUpdate: widget.isUpdate,
+                    stateController: _stateController,
                   ),
                   const SizedBox(height: 24),
                   Expanded(
@@ -277,5 +228,77 @@ class _RecordDialogState extends State<RecordDialog> {
             'Failed to ${widget.isUpdate ? 'update' : 'create'} record. Please try again.',
       );
     }
+  }
+}
+
+/// Dialog header widget for RecordDialog
+class _DialogHeader extends StatelessWidget {
+  const _DialogHeader({
+    required this.resource,
+    required this.isUpdate,
+    required this.stateController,
+  });
+
+  final AdminResource resource;
+  final bool isUpdate;
+  final RecordDialogStateController stateController;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Row(
+      children: [
+        Container(
+          height: 44,
+          width: 44,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(
+            Icons.add_box_outlined,
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isUpdate
+                    ? 'Update ${resource.tableName}'
+                    : 'Add ${resource.tableName}',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                isUpdate
+                    ? 'Modify the fields and save your changes.'
+                    : 'Complete the form to create a new record.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+                ),
+              ),
+            ],
+          ),
+        ),
+        ListenableBuilder(
+          listenable: stateController,
+          builder: (context, _) {
+            return IconButton(
+              tooltip: 'Close dialog',
+              onPressed: stateController.isSubmitting
+                  ? null
+                  : () => Navigator.of(context).pop(false),
+              icon: const Icon(Icons.close_rounded),
+            );
+          },
+        ),
+      ],
+    );
   }
 }

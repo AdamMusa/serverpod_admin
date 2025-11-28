@@ -118,85 +118,8 @@ class _RecordsBodyState extends State<RecordsBody> {
                       child: DataTable(
                         columnSpacing: 36,
                         horizontalMargin: 20,
-                        columns: columns
-                            .map(
-                              (column) => DataColumn(
-                                label: Row(
-                                  children: [
-                                    const Icon(Icons.view_column_outlined,
-                                        size: 16),
-                                    const SizedBox(width: 8),
-                                    Text(column.name),
-                                  ],
-                                ),
-                              ),
-                            )
-                            .toList()
-                          ..add(
-                            const DataColumn(
-                              label: Text('Actions'),
-                            ),
-                          ),
-                        rows: pagedRecords
-                            .map(
-                              (record) => DataRow(
-                                cells: columns
-                                    .map(
-                                      (column) => DataCell(
-                                        ConstrainedBox(
-                                          constraints: const BoxConstraints(
-                                              minWidth: 160),
-                                          child: Text(
-                                            formatRecordValue(
-                                              column,
-                                              record[column.name],
-                                            ),
-                                          ),
-                                        ),
-                                        onTap: widget.onView != null
-                                            ? () => widget.onView!(record)
-                                            : null,
-                                      ),
-                                    )
-                                    .toList()
-                                  ..add(
-                                    DataCell(
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          if (widget.onView != null)
-                                            IconButton(
-                                              tooltip: 'Show record',
-                                              icon: const Icon(
-                                                  Icons.visibility_outlined),
-                                              onPressed: () =>
-                                                  widget.onView!(record),
-                                            ),
-                                          if (widget.onEdit != null)
-                                            IconButton(
-                                              tooltip: 'Edit record',
-                                              icon: const Icon(
-                                                  Icons.edit_outlined),
-                                              onPressed: () =>
-                                                  widget.onEdit!(record),
-                                            ),
-                                          if (widget.onDelete != null)
-                                            IconButton(
-                                              tooltip: 'Delete record',
-                                              icon: Icon(
-                                                Icons.delete_outline,
-                                                color: theme.colorScheme.error,
-                                              ),
-                                              onPressed: () =>
-                                                  widget.onDelete!(record),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                              ),
-                            )
-                            .toList(),
+                        columns: _buildDataColumns(columns),
+                        rows: _buildDataRows(pagedRecords, columns, theme),
                       ),
                     ),
                   ),
@@ -221,6 +144,82 @@ class _RecordsBodyState extends State<RecordsBody> {
           ],
         );
       },
+    );
+  }
+
+  /// Builds DataColumn widgets for the table
+  List<DataColumn> _buildDataColumns(List<AdminColumn> columns) {
+    return [
+      ...columns.map(
+        (column) => DataColumn(
+          label: Row(
+            children: [
+              const Icon(Icons.view_column_outlined, size: 16),
+              const SizedBox(width: 8),
+              Text(column.name),
+            ],
+          ),
+        ),
+      ),
+      const DataColumn(label: Text('Actions')),
+    ];
+  }
+
+  /// Builds DataRow widgets for the table
+  List<DataRow> _buildDataRows(
+    List<Map<String, String>> records,
+    List<AdminColumn> columns,
+    ThemeData theme,
+  ) {
+    return records.map((record) {
+      final cells = columns
+          .map(
+            (column) => DataCell(
+              ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 160),
+                child: Text(
+                  formatRecordValue(column, record[column.name]),
+                ),
+              ),
+              onTap: widget.onView != null ? () => widget.onView!(record) : null,
+            ),
+          )
+          .toList()
+        ..add(
+          DataCell(_buildActionButtons(record, theme)),
+        );
+
+      return DataRow(cells: cells);
+    }).toList();
+  }
+
+  /// Builds action buttons for a record row
+  Widget _buildActionButtons(Map<String, String> record, ThemeData theme) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (widget.onView != null)
+          IconButton(
+            tooltip: 'Show record',
+            icon: const Icon(Icons.visibility_outlined),
+            onPressed: () => widget.onView!(record),
+          ),
+        if (widget.onEdit != null)
+          IconButton(
+            tooltip: 'Edit record',
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () => widget.onEdit!(record),
+          ),
+        if (widget.onDelete != null)
+          IconButton(
+            tooltip: 'Delete record',
+            icon: Icon(
+              Icons.delete_outline,
+              color: theme.colorScheme.error,
+            ),
+            onPressed: () => widget.onDelete!(record),
+          ),
+      ],
     );
   }
 }
