@@ -108,132 +108,7 @@ class RecordDetails extends StatelessWidget {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(24),
-              child: SingleChildScrollView(
-                child: DataTableTheme(
-                  data: DataTableThemeData(
-                    headingTextStyle: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                    headingRowColor: WidgetStateProperty.resolveWith(
-                      (states) =>
-                          theme.colorScheme.secondary.withOpacity(0.08),
-                    ),
-                    dataTextStyle: theme.textTheme.bodyMedium,
-                    dividerThickness: 0.6,
-                  ),
-                  child: DataTable(
-                      columnSpacing: 36,
-                      horizontalMargin: 20,
-                      columns: const [
-                        DataColumn(
-                          label: Row(
-                            children: [
-                              Icon(Icons.view_column_outlined, size: 16),
-                              SizedBox(width: 8),
-                              Text('Field'),
-                            ],
-                          ),
-                        ),
-                        DataColumn(
-                          label: Row(
-                            children: [
-                              Icon(Icons.view_column_outlined, size: 16),
-                              SizedBox(width: 8),
-                              Text('Value'),
-                            ],
-                          ),
-                        ),
-                      ],
-                      rows: columns.map((column) {
-                        final value = record[column.name];
-                        final formattedValue = formatRecordValue(column, value);
-                        final isEmpty = formattedValue.isEmpty;
-                        final isPrimary = column.isPrimary;
-
-                        return DataRow(
-                          cells: [
-                            DataCell(
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    isPrimary
-                                        ? Icons.vpn_key
-                                        : Icons.label_outline,
-                                    size: 18,
-                                    color: isPrimary
-                                        ? theme.colorScheme.primary
-                                        : theme.textTheme.bodyMedium?.color
-                                            ?.withOpacity(0.6),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    column.name,
-                                    style: theme.textTheme.titleSmall?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      color: isPrimary
-                                          ? theme.colorScheme.primary
-                                          : null,
-                                    ),
-                                  ),
-                                  if (isPrimary) ...[
-                                    const SizedBox(width: 8),
-                                    Chip(
-                                      label: const Text(
-                                        'PK',
-                                        style: TextStyle(fontSize: 10),
-                                      ),
-                                      padding: EdgeInsets.zero,
-                                      visualDensity: VisualDensity.compact,
-                                      backgroundColor: theme.colorScheme.primary
-                                          .withOpacity(0.1),
-                                      labelStyle: TextStyle(
-                                        color: theme.colorScheme.primary,
-                                        fontSize: 10,
-                                      ),
-                                    ),
-                                  ],
-                                  if (column.hasDefault) ...[
-                                    const SizedBox(width: 8),
-                                    Chip(
-                                      label: const Text(
-                                        'Default',
-                                        style: TextStyle(fontSize: 10),
-                                      ),
-                                      padding: EdgeInsets.zero,
-                                      visualDensity: VisualDensity.compact,
-                                      backgroundColor: theme
-                                          .colorScheme.secondary
-                                          .withOpacity(0.1),
-                                      labelStyle: TextStyle(
-                                        color: theme.colorScheme.secondary,
-                                        fontSize: 10,
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                            DataCell(
-                              ConstrainedBox(
-                                constraints: const BoxConstraints(minWidth: 200),
-                                child: SelectableText(
-                                  isEmpty ? '(empty)' : formattedValue,
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: isEmpty
-                                        ? theme.textTheme.bodyMedium?.color
-                                            ?.withOpacity(0.5)
-                                        : null,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      }).toList(),
-                  ),
-                ),
-              ),
+              child: _buildDetailsTable(context, theme, columns),
             ),
           ),
         ],
@@ -250,43 +125,138 @@ class RecordDetails extends StatelessWidget {
         : cardContent;
 
     if (showAppBar) {
-      return Scaffold(
-        appBar: AppBar(
-          title: Text('${resource.tableName} Details'),
-          actions: [
-            if (onEdit != null)
-              IconButton(
-                tooltip: 'Edit record',
-                icon: const Icon(Icons.edit_outlined),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  onEdit!(record);
-                },
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('${resource.tableName} Details'),
+        actions: [
+          if (onEdit != null)
+            IconButton(
+              tooltip: 'Edit record',
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: () {
+                Navigator.of(context).pop();
+                onEdit!(record);
+              },
+            ),
+          if (onDelete != null)
+            IconButton(
+              tooltip: 'Delete record',
+              icon: Icon(
+                Icons.delete_outline,
+                color: theme.colorScheme.error,
               ),
-            if (onDelete != null)
-              IconButton(
-                tooltip: 'Delete record',
-                icon: Icon(
-                  Icons.delete_outline,
-                  color: theme.colorScheme.error,
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  onDelete!(record);
-                },
-              ),
-            const SizedBox(width: 8),
-          ],
-        ),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+              onPressed: () {
+                Navigator.of(context).pop();
+                onDelete!(record);
+              },
+            ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
             child: content,
-          ),
         ),
-      );
+      ),
+    );
     }
 
     return content;
+  }
+
+  Widget _buildDetailsTable(
+    BuildContext context,
+    ThemeData theme,
+    List<AdminColumn> columns,
+  ) {
+    return ListView.separated(
+      shrinkWrap: false,
+      itemCount: columns.length,
+      separatorBuilder: (context, index) => Divider(
+        height: 1,
+        thickness: 0.5,
+        color: theme.dividerColor.withOpacity(0.3),
+      ),
+      itemBuilder: (context, index) {
+        final column = columns[index];
+        final value = record[column.name];
+        final formattedValue = formatRecordValue(column, value);
+        final isEmpty = formattedValue.isEmpty;
+        final isPrimary = column.isPrimary;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Field column
+              SizedBox(
+                width: 200,
+                child: Row(
+                  children: [
+                    Icon(
+                      isPrimary ? Icons.vpn_key : Icons.label_outline,
+                      size: 18,
+                      color: isPrimary
+                          ? theme.colorScheme.primary
+                          : theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        column.name,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: isPrimary ? theme.colorScheme.primary : null,
+                        ),
+                      ),
+                    ),
+                    if (isPrimary) ...[
+                      const SizedBox(width: 8),
+                      Chip(
+                        label: const Text('PK', style: TextStyle(fontSize: 10)),
+                        padding: EdgeInsets.zero,
+                        visualDensity: VisualDensity.compact,
+                        backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                        labelStyle: TextStyle(
+                          color: theme.colorScheme.primary,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                    if (column.hasDefault) ...[
+                      const SizedBox(width: 8),
+                      Chip(
+                        label: const Text('Default', style: TextStyle(fontSize: 10)),
+                        padding: EdgeInsets.zero,
+                        visualDensity: VisualDensity.compact,
+                        backgroundColor: theme.colorScheme.secondary.withOpacity(0.1),
+                        labelStyle: TextStyle(
+                          color: theme.colorScheme.secondary,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 24),
+              // Value column - wraps to multiple lines
+              Expanded(
+                child: SelectableText(
+                  isEmpty ? '(empty)' : formattedValue,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: isEmpty
+                        ? theme.textTheme.bodyMedium?.color?.withOpacity(0.5)
+                        : null,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
