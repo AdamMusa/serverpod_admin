@@ -44,7 +44,8 @@ void main() {
             operations: operations,
           );
         },
-        customDetailsBuilder: (context, controller, operations, resource, record) {
+        customDetailsBuilder:
+            (context, controller, operations, resource, record) {
           return CustomDetails(
             controller: controller,
             operations: operations,
