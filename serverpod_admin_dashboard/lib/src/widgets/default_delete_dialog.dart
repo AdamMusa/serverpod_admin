@@ -165,4 +165,3 @@ class _DefaultDeleteDialogState extends State<DefaultDeleteDialog> {
     );
   }
 }
-

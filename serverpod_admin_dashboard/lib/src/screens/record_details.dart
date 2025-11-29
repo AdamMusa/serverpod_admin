@@ -125,41 +125,41 @@ class RecordDetails extends StatelessWidget {
         : cardContent;
 
     if (showAppBar) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('${resource.tableName} Details'),
-        actions: [
-          if (onEdit != null)
-            IconButton(
-              tooltip: 'Edit record',
-              icon: const Icon(Icons.edit_outlined),
-              onPressed: () {
-                Navigator.of(context).pop();
-                onEdit!(record);
-              },
-            ),
-          if (onDelete != null)
-            IconButton(
-              tooltip: 'Delete record',
-              icon: Icon(
-                Icons.delete_outline,
-                color: theme.colorScheme.error,
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('${resource.tableName} Details'),
+          actions: [
+            if (onEdit != null)
+              IconButton(
+                tooltip: 'Edit record',
+                icon: const Icon(Icons.edit_outlined),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  onEdit!(record);
+                },
               ),
-              onPressed: () {
-                Navigator.of(context).pop();
-                onDelete!(record);
-              },
-            ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-            child: content,
+            if (onDelete != null)
+              IconButton(
+                tooltip: 'Delete record',
+                icon: Icon(
+                  Icons.delete_outline,
+                  color: theme.colorScheme.error,
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  onDelete!(record);
+                },
+              ),
+            const SizedBox(width: 8),
+          ],
         ),
-      ),
-    );
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: content,
+          ),
+        ),
+      );
     }
 
     return content;
@@ -218,7 +218,8 @@ class RecordDetails extends StatelessWidget {
                         label: const Text('PK', style: TextStyle(fontSize: 10)),
                         padding: EdgeInsets.zero,
                         visualDensity: VisualDensity.compact,
-                        backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                        backgroundColor:
+                            theme.colorScheme.primary.withOpacity(0.1),
                         labelStyle: TextStyle(
                           color: theme.colorScheme.primary,
                           fontSize: 10,
@@ -228,10 +229,12 @@ class RecordDetails extends StatelessWidget {
                     if (column.hasDefault) ...[
                       const SizedBox(width: 8),
                       Chip(
-                        label: const Text('Default', style: TextStyle(fontSize: 10)),
+                        label: const Text('Default',
+                            style: TextStyle(fontSize: 10)),
                         padding: EdgeInsets.zero,
                         visualDensity: VisualDensity.compact,
-                        backgroundColor: theme.colorScheme.secondary.withOpacity(0.1),
+                        backgroundColor:
+                            theme.colorScheme.secondary.withOpacity(0.1),
                         labelStyle: TextStyle(
                           color: theme.colorScheme.secondary,
                           fontSize: 10,

@@ -130,11 +130,11 @@ class Sidebar extends StatelessWidget {
         final resource = resources[index];
         final isSelected = selectedResource?.key == resource.key;
         final customization = itemCustomizations?[resource.key];
-        
+
         // Debug: Print available resource keys (remove in production)
         // Uncomment the line below to see what keys are available:
         // debugPrint('Resource key: ${resource.key}, tableName: ${resource.tableName}');
-        
+
         return AnimatedContainer(
           duration: const Duration(milliseconds: 250),
           curve: Curves.fastOutSlowIn,

@@ -10,7 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   serverpod_client: 2.9.1
-  serverpod_admin_client: ^1.0.0
+  serverpod_admin_client: ^1.0.3
 
 
 dev_dependencies:
