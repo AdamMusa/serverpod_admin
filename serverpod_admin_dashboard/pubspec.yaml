@@ -13,6 +13,7 @@ dependencies:
   serverpod_admin_client: ^1.0.3
 
 
+
 dev_dependencies:
   flutter_lints: '>=3.0.0 <7.0.0'
 
