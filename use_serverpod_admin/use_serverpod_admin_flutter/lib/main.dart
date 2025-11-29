@@ -2,12 +2,6 @@ import 'package:use_serverpod_admin_client/use_serverpod_admin_client.dart';
 import 'package:flutter/material.dart';
 import 'package:serverpod_flutter/serverpod_flutter.dart';
 import 'package:serverpod_admin_dashboard/serverpod_admin_dashboard.dart';
-import 'custom_sidebar.dart';
-import 'custom_body.dart';
-import 'custom_details.dart';
-import 'custom_edit_dialog.dart';
-import 'custom_delete_dialog.dart';
-import 'custom_create_dialog.dart';
 import 'custom_footer.dart';
 
 /// Sets up a global client object that can be used to talk to the server from
@@ -88,6 +82,18 @@ void main() {
           'posts': SidebarItemCustomization(
             label: 'Posts',
             icon: Icons.post_add,
+          ),
+          'persons': SidebarItemCustomization(
+            label: 'Person',
+            icon: Icons.person,
+          ),
+          'comments': SidebarItemCustomization(
+            label: 'Comment',
+            icon: Icons.comment,
+          ),
+          'settings': SidebarItemCustomization(
+            label: 'Setting',
+            icon: Icons.settings,
           ),
         },
         customFooterBuilder: (context, controller) {

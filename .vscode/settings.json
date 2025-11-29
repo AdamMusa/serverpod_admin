@@ -1,0 +1,15 @@
+{
+    "sqltools.connections": [
+        {
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 8090,
+            "driver": "PostgreSQL",
+            "name": "use_serverpod_admin",
+            "database": "use_serverpod_admin",
+            "username": "postgres",
+            "password": "ANViNkkftYuDcDyl5XFNAaQLznpyOU1O"
+        }
+    ]
+}

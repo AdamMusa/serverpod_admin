@@ -1,0 +1,11 @@
+### Our AI generated post
+class: Comment
+table: comments
+fields:
+  ### The title of the  post
+  title: String
+  ### The description text
+  description: String
+  ### The date the  was created
+  date: DateTime
+  ### The ingredients the user has passed in

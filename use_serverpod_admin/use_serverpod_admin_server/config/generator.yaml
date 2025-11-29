@@ -1,4 +1,8 @@
 type: server
-
 client_package_path: ../use_serverpod_admin_client
 server_test_tools_path: test/integration/test_tools
+
+# modules:
+#   serverpod_admin_server:
+#     path: ../../../serverpod_admin_server
+#     nickname: serverpod_admin

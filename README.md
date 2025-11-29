@@ -8,6 +8,30 @@ You've built an amazing Serverpod app with powerful endpoints, robust models, an
 
 ---
 
+## 🏠 Admin Dashboard Overview
+
+![Admin Dashboard](images/posts.png)
+
+Browse and manage all your data with a beautiful, intuitive interface.
+
+![Search & Filter](images/search.png)
+
+Powerful search and filtering capabilities to find exactly what you need.
+
+![Edit Records](images/edit.png)
+
+Edit records with a clean, user-friendly interface.
+
+![Record Details](images/detail.png)
+
+View detailed information about any record.
+
+![Empty State](images/empty_record.png)
+
+Beautiful empty states when no records are found.
+
+---
+
 ## ✨ Why Serverpod Admin Matters
 
 ### 🚀 **Zero Configuration, Maximum Power**
@@ -37,17 +61,21 @@ Stop spending days building admin interfaces. Get back to building features that
 
 ## 📦 Installation
 
-### Server Dependency
+Add the packages to your `pubspec.yaml`:
 
 ```yaml
-serverpod_admin_server: 0.0.1
+dependencies:
+  serverpod_admin_server:
+  serverpod_admin_dashboard:
 ```
 
-### Flutter Dependency
+Then run:
 
-```yaml
-serverpod_admin_dashboard: 0.0.1
+```bash
+flutter pub get
 ```
+
+**That's it! You're good to go!** 🚀
 
 ---
 
@@ -82,6 +110,233 @@ Future<void> main() async {
 ```
 
 **That's it!** You now have a fully working admin panel for your Serverpod app! 🚀🎉
+
+---
+
+## 🎨 Customization
+
+Serverpod Admin offers flexible customization options, from simple sidebar tweaks to complete UI replacement.
+
+### Sidebar Level Customization
+
+Customize individual sidebar items with custom labels and icons:
+
+```dart
+AdminDashboard(
+  client: client,
+  sidebarItemCustomizations: {
+    'posts': SidebarItemCustomization(
+      label: 'Posts',
+      icon: Icons.post_add,
+    ),
+    'persons': SidebarItemCustomization(
+      label: 'Person',
+      icon: Icons.person,
+    ),
+    'comments': SidebarItemCustomization(
+      label: 'Comment',
+      icon: Icons.comment,
+    ),
+    'settings': SidebarItemCustomization(
+      label: 'Setting',
+      icon: Icons.settings,
+    ),
+  },
+)
+```
+
+This allows you to:
+
+- **Customize labels** – Change the display name for any resource
+- **Customize icons** – Use your own icons for better visual identification
+- **Keep it simple** – Only customize what you need, leave the rest default
+
+### Full Customization
+
+For complete control over the admin interface, you can replace any component with your own custom widgets:
+
+```dart
+AdminDashboard(
+  client: client,
+  // Custom sidebar - completely replace the default sidebar
+  customSidebarBuilder: (context, controller) {
+    return CustomSidebar(controller: controller);
+  },
+
+  // Custom body/records pane - replace the default table view
+  customBodyBuilder: (context, controller, operations) {
+    return CustomBody(
+      controller: controller,
+      operations: operations,
+    );
+  },
+
+  // Custom record details view
+  customDetailsBuilder: (context, controller, operations, resource, record) {
+    return CustomDetails(
+      controller: controller,
+      operations: operations,
+      resource: resource,
+      record: record,
+    );
+  },
+
+  // Custom edit dialog
+  customEditDialogBuilder: (context, controller, operations, resource,
+      currentValues, onSubmit) {
+    return CustomEditDialog(
+      resource: resource,
+      currentValues: currentValues,
+      onSubmit: onSubmit,
+    );
+  },
+
+  // Custom delete confirmation dialog
+  customDeleteDialogBuilder: (context, controller, operations, resource,
+      record, onConfirm) {
+    return CustomDeleteDialog(
+      resource: resource,
+      record: record,
+      onConfirm: onConfirm,
+    );
+  },
+
+  // Custom create dialog
+  customCreateDialogBuilder: (context, controller, operations, resource,
+      onSubmit) {
+    return CustomCreateDialog(
+      resource: resource,
+      onSubmit: onSubmit,
+    );
+  },
+
+  // Custom footer (displayed above the default footer)
+  customFooterBuilder: (context, controller) {
+    return CustomFooter(controller: controller);
+  },
+
+  // Custom themes
+  lightTheme: myLightTheme,
+  darkTheme: myDarkTheme,
+  initialThemeMode: ThemeMode.dark,
+)
+```
+
+#### Available Customization Options
+
+| Builder                     | Purpose                                | Parameters                                                             |
+| --------------------------- | -------------------------------------- | ---------------------------------------------------------------------- |
+| `customSidebarBuilder`      | Replace the entire sidebar             | `(context, controller)`                                                |
+| `customBodyBuilder`         | Replace the records table view         | `(context, controller, operations)`                                    |
+| `customDetailsBuilder`      | Replace the record details view        | `(context, controller, operations, resource, record)`                  |
+| `customEditDialogBuilder`   | Replace the edit dialog                | `(context, controller, operations, resource, currentValues, onSubmit)` |
+| `customDeleteDialogBuilder` | Replace the delete confirmation dialog | `(context, controller, operations, resource, record, onConfirm)`       |
+| `customCreateDialogBuilder` | Replace the create dialog              | `(context, controller, operations, resource, onSubmit)`                |
+| `customFooterBuilder`       | Add custom footer above default footer | `(context, controller)`                                                |
+
+#### Custom Builder Guidelines
+
+When creating custom builders, you have access to:
+
+- **`AdminDashboardController`** – Provides access to:
+
+  - `resources` – List of all registered resources
+  - `selectedResource` – Currently selected resource
+  - `loading` – Loading states
+  - `themeMode` – Current theme mode
+  - Methods to load data, refresh, etc.
+
+- **`HomeOperations`** – Provides CRUD operations:
+
+  - `list()` – Get list of records
+  - `find()` – Find a specific record
+  - `create()` – Create a new record
+  - `update()` – Update an existing record
+  - `delete()` – Delete a record
+
+- **`AdminResource`** – Information about the resource:
+  - `key` – Resource identifier
+  - `tableName` – Database table name
+  - `columns` – List of column definitions
+
+#### Example: Custom Sidebar
+
+```dart
+Widget CustomSidebar(AdminDashboardController controller) {
+  return Drawer(
+    child: ListView(
+      children: [
+        const DrawerHeader(
+          decoration: BoxDecoration(color: Colors.blue),
+          child: Text('My Admin Panel'),
+        ),
+        ...controller.resources.map((resource) {
+          final customization = controller.sidebarItemCustomizations?[resource.key];
+          return ListTile(
+            leading: Icon(customization?.icon ?? Icons.table_chart),
+            title: Text(customization?.label ?? resource.tableName),
+            selected: controller.selectedResource?.key == resource.key,
+            onTap: () => controller.selectResource(resource),
+          );
+        }),
+      ],
+    ),
+  );
+}
+```
+
+#### Example: Custom Edit Dialog
+
+```dart
+Widget CustomEditDialog({
+  required AdminResource resource,
+  required Map<String, String> currentValues,
+  required Future<bool> Function(Map<String, String> payload) onSubmit,
+}) {
+  final formKey = GlobalKey<FormState>();
+  final controllers = currentValues.map(
+    (key, value) => MapEntry(key, TextEditingController(text: value)),
+  );
+
+  return AlertDialog(
+    title: Text('Edit ${resource.tableName}'),
+    content: Form(
+      key: formKey,
+      child: SingleChildScrollView(
+        child: Column(
+          children: resource.columns.map((column) {
+            return TextFormField(
+              controller: controllers[column.name],
+              decoration: InputDecoration(labelText: column.name),
+              enabled: !column.isId, // Disable editing ID fields
+            );
+          }).toList(),
+        ),
+      ),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Cancel'),
+      ),
+      TextButton(
+        onPressed: () async {
+          if (formKey.currentState!.validate()) {
+            final payload = controllers.map(
+              (key, controller) => MapEntry(key, controller.text),
+            );
+            final success = await onSubmit(payload);
+            if (success && context.mounted) {
+              Navigator.pop(context);
+            }
+          }
+        },
+        child: const Text('Save'),
+      ),
+    ],
+  );
+}
+```
 
 ---
 

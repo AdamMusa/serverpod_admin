@@ -290,7 +290,7 @@ packages:
     source: hosted
     version: "2.9.1"
   serverpod_admin_server:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       path: "../../serverpod_admin_server"
       relative: true
