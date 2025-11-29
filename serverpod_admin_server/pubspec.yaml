@@ -1,6 +1,6 @@
 name: serverpod_admin_server
 description: Starting point for a Serverpod module.
-version: 1.0.2
+version: 1.0.3
 homepage: https://github.com/AdamMusa/serverpod_admin
 
 environment:
