@@ -63,14 +63,7 @@ Stop spending days building admin interfaces. Get back to building features that
 
 ### Server Side
 
-Add to your server's `pubspec.yaml`:
-
-```yaml
-dependencies:
-  serverpod_admin_server:
-```
-
-Then run:
+Run:
 
 ```bash
 flutter pub get serverpod_admin_server
@@ -78,14 +71,7 @@ flutter pub get serverpod_admin_server
 
 ### Flutter (Frontend)
 
-Add to your Flutter app's `pubspec.yaml`:
-
-```yaml
-dependencies:
-  serverpod_admin_dashboard:
-```
-
-Then run:
+Run:
 
 ```bash
 flutter pub get serverpod_admin_dashboard
