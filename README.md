@@ -10,25 +10,25 @@ You've built an amazing Serverpod app with powerful endpoints, robust models, an
 
 ## 🏠 Admin Dashboard Overview
 
-![Admin Dashboard](images/posts.png)
-
 Browse and manage all your data with a beautiful, intuitive interface.
 
-![Search & Filter](images/search.png)
+![Admin Dashboard](images/posts.png)
 
 Powerful search and filtering capabilities to find exactly what you need.
 
-![Edit Records](images/edit.png)
+![Search & Filter](images/search.png)
 
 Edit records with a clean, user-friendly interface.
 
-![Record Details](images/detail.png)
+![Edit Records](images/edit.png)
 
 View detailed information about any record.
 
-![Empty State](images/empty_record.png)
+![Record Details](images/detail.png)
 
 Beautiful empty states when no records are found.
+
+![Empty State](images/empty_record.png)
 
 ---
 
@@ -61,18 +61,34 @@ Stop spending days building admin interfaces. Get back to building features that
 
 ## 📦 Installation
 
-Add the packages to your `pubspec.yaml`:
+### Server Side
+
+Add to your server's `pubspec.yaml`:
 
 ```yaml
 dependencies:
   serverpod_admin_server:
+```
+
+Then run:
+
+```bash
+flutter pub get serverpod_admin_server
+```
+
+### Flutter (Frontend)
+
+Add to your Flutter app's `pubspec.yaml`:
+
+```yaml
+dependencies:
   serverpod_admin_dashboard:
 ```
 
 Then run:
 
 ```bash
-flutter pub get
+flutter pub get serverpod_admin_dashboard
 ```
 
 **That's it! You're good to go!** 🚀
@@ -84,13 +100,16 @@ flutter pub get
 ### Registering Models (Server Side)
 
 ```dart
-import 'package:first_site_server/src/generated/protocol.dart';
 import 'package:serverpod_admin_server/serverpod_admin_server.dart' as admin;
+
+import 'package:use_serverpod_admin_server/src/generated/protocol.dart';
 
 void registerAdminModule() {
   admin.configureAdminModule((registry) {
-    registry.register<Blog>();
+    registry.register<Post>();
     registry.register<Person>();
+    registry.register<Comment>();
+    registry.register<Comment>();
     // Add any model you want to manage!
   });
 }
@@ -344,9 +363,6 @@ Widget CustomEditDialog({
 
 This is a **proof of concept** that's already stable and production-ready. We're actively working on:
 
-- ✅ **Full Customization** – Tailor every aspect to your needs
-- ✅ **Advanced Filtering** – Complex queries made simple
-- ✅ **Bulk Operations** – Manage multiple records at once
 - ✅ **Export/Import** – Data portability built-in
 - ✅ **Role-Based Access** – Secure your admin panel
 - ✅ **Comprehensive Testing** – Ensuring reliability
