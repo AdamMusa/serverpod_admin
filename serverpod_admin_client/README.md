@@ -14,13 +14,20 @@ Browse and manage all your data with a beautiful, intuitive interface.
 
 ![Admin Dashboard](https://raw.githubusercontent.com/AdamMusa/serverpod_admin/main/images/posts.png)
 
+New record with a clean, user-friendly interface.
+![Admin Dashboard](https://raw.githubusercontent.com/AdamMusa/serverpod_admin/main/images/new.png)
+
 Powerful search and filtering capabilities to find exactly what you need.
 
 ![Search & Filter](https://raw.githubusercontent.com/AdamMusa/serverpod_admin/main/images/search.png)
 
-Edit records with a clean, user-friendly interface.
+Edit record with a clean, user-friendly interface.
 
 ![Edit Records](https://raw.githubusercontent.com/AdamMusa/serverpod_admin/main/images/edit.png)
+
+Delete record with a clean, user-friendly interface.
+![Admin Dashboard](https://raw.githubusercontent.com/AdamMusa/serverpod_admin/main/images/delete.png)
+
 
 View detailed information about any record.
 
