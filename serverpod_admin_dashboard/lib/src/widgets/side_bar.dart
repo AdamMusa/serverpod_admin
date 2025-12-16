@@ -66,7 +66,8 @@ class Sidebar extends StatelessWidget {
                       size: 20,
                     ),
                     onPressed: onToggleCollapse,
-                    tooltip: isCollapsed ? 'Expand sidebar' : 'Collapse sidebar',
+                    tooltip:
+                        isCollapsed ? 'Expand sidebar' : 'Collapse sidebar',
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
@@ -149,7 +150,8 @@ class Sidebar extends StatelessWidget {
                     child: Text(
                       customization?.label ?? resource.tableName,
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.w400,
                         color: isSelected
                             ? theme.colorScheme.primary
                             : theme.colorScheme.onSurface,
@@ -200,4 +202,3 @@ class Sidebar extends StatelessWidget {
     );
   }
 }
-

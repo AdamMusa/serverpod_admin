@@ -242,5 +242,4 @@ class _DefaultEditDialogState extends State<DefaultEditDialog> {
       ),
     );
   }
-
 }

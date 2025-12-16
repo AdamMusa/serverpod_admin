@@ -99,4 +99,3 @@ class RecordsErrorState extends StatelessWidget {
     );
   }
 }
-

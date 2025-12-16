@@ -81,9 +81,7 @@ class DialogFormField extends StatelessWidget {
             readOnly: isDate,
             maxLines: null,
             minLines: 1,
-            onTap: isDate
-                ? () => _handleDateTap(context)
-                : null,
+            onTap: isDate ? () => _handleDateTap(context) : null,
             textInputAction: TextInputAction.newline,
             decoration: InputDecoration(
               labelText: column.name,
@@ -100,7 +98,8 @@ class DialogFormField extends StatelessWidget {
                     )
                   : null,
             ),
-            validator: (value) => _validateField(value, isDate, isBoolean, isForeignKey),
+            validator: (value) =>
+                _validateField(value, isDate, isBoolean, isForeignKey),
           );
         },
       ),
@@ -144,4 +143,3 @@ class DialogFormField extends StatelessWidget {
     return null;
   }
 }
-

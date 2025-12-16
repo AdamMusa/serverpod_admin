@@ -113,9 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF181B2C)
-                        : Colors.white,
+                    color: isDark ? const Color(0xFF181B2C) : Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: theme.dividerColor.withOpacity(0.1),
@@ -140,7 +138,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             filled: true,
-                            fillColor: theme.colorScheme.surfaceContainerHighest,
+                            fillColor:
+                                theme.colorScheme.surfaceContainerHighest,
                           ),
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
@@ -183,7 +182,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             filled: true,
-                            fillColor: theme.colorScheme.surfaceContainerHighest,
+                            fillColor:
+                                theme.colorScheme.surfaceContainerHighest,
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -275,4 +275,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-

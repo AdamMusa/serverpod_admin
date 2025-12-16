@@ -82,4 +82,3 @@ class RecordsDataTable extends StatelessWidget {
     }).toList();
   }
 }
-

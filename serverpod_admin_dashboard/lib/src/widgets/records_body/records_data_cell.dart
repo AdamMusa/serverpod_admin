@@ -68,4 +68,3 @@ class RecordsDataCell {
     return '${text.substring(0, maxLength)}...';
   }
 }
-
