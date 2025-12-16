@@ -1,0 +1,13 @@
+### Our AI generated post
+class: Post
+table: posts
+fields:
+  ### The title of the  post
+  title: String
+  ### post has multiple comments
+  comments: List<Comment>? , relation(name=post_comments)
+  ### The description text
+  description: String
+  ### The date the  was created
+  date: DateTime
+  ### The ingredients the user has passed in

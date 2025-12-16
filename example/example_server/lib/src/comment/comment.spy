@@ -1,0 +1,13 @@
+### Our AI generated post
+class: Comment
+table: comments
+fields:
+  ### The title of the  post
+  title: String, default='A comment title'
+  ### The description text
+  description: String, default='This is a comment'
+  ### Each comment belongs to post
+  postId: int, relation(parent=posts, name=post_comments)
+  ### The date the  was created
+  date: DateTime
+  ### The ingredients the user has passed in
