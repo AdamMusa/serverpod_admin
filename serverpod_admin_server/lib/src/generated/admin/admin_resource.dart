@@ -84,10 +84,10 @@ class _AdminResourceImpl extends AdminResource {
     required String tableName,
     required List<_i2.AdminColumn> columns,
   }) : super._(
-          key: key,
-          tableName: tableName,
-          columns: columns,
-        );
+         key: key,
+         tableName: tableName,
+         columns: columns,
+       );
 
   /// Returns a shallow copy of this [AdminResource]
   /// with some or all fields replaced by the given arguments.

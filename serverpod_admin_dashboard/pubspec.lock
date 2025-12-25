@@ -105,10 +105,9 @@ packages:
   serverpod_admin_client:
     dependency: "direct main"
     description:
-      name: serverpod_admin_client
-      sha256: "24375a6686c00d7c2628d44d4a90ad0ec814cefc16738f63b7acdb5c6560964f"
-      url: "https://pub.dev"
-    source: hosted
+      path: "../serverpod_admin_client"
+      relative: true
+    source: path
     version: "1.0.5"
   serverpod_client:
     dependency: "direct main"

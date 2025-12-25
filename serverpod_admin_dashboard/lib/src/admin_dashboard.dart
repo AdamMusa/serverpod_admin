@@ -4,10 +4,12 @@ import 'package:serverpod_admin_client/serverpod_admin_client.dart'
 import 'package:serverpod_admin_client/serverpod_admin_client.dart'
     as admin_client;
 import 'package:serverpod_admin_dashboard/src/controller/admin_dashboard.dart';
+import 'package:serverpod_admin_dashboard/src/controller/auth_controller.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
 import 'package:serverpod_admin_dashboard/src/screens/home.dart';
 import 'package:serverpod_admin_dashboard/src/screens/home_operations.dart';
 import 'package:serverpod_admin_dashboard/src/screens/login_screen.dart';
+import 'package:serverpod_admin_dashboard/src/services/login_service.dart';
 
 /// Lightweight customization for sidebar items.
 /// Allows customizing the label and icon for specific resources by their key.
@@ -125,7 +127,6 @@ class AdminDashboard extends StatefulWidget {
     this.customDeleteDialogBuilder,
     this.customCreateDialogBuilder,
     this.customFooterBuilder,
-    this.onLogin,
     this.loginTitle,
     this.loginSubtitle,
   });
@@ -167,8 +168,6 @@ class AdminDashboard extends StatefulWidget {
   /// Optional login callback. If provided, a login screen will be shown first.
   /// The callback receives username and password and should return true if login
   /// is successful, false otherwise.
-  final Future<bool> Function(String username, String password)? onLogin;
-
   /// Login screen title. Defaults to 'Serverpod Admin'.
   final String? loginTitle;
 
@@ -182,16 +181,27 @@ class AdminDashboard extends StatefulWidget {
 class _AdminDashboardState extends State<AdminDashboard> {
   late final admin_client.EndpointAdmin _adminEndpoint =
       _resolveAdminEndpoint(widget.client);
+
+  late final LoginService _loginService = LoginService(client: widget.client);
+
+  late final AuthController _authController = AuthController();
+
   late final AdminDashboardController _controller = AdminDashboardController(
     adminEndpoint: _adminEndpoint,
     initialThemeMode: widget.initialThemeMode,
   );
-  bool _isAuthenticated = false;
+
+  @override
+  void dispose() {
+    _authController.dispose();
+    super.dispose();
+  }
 
   admin_client.EndpointAdmin _resolveAdminEndpoint(
     ServerpodClientShared client,
   ) {
     final module = client.moduleLookup['serverpod_admin'];
+
     if (module is admin_client.Caller) {
       return module.admin;
     }
@@ -263,29 +273,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
   @override
   void initState() {
     super.initState();
-    // If no login callback is provided, user is already authenticated
-    if (widget.onLogin == null) {
-      _isAuthenticated = true;
-      _controller.loadResources();
-    }
+    // Load resources when authenticated
+    _authController.addListener(_onAuthStateChanged);
   }
 
-  Future<bool> _handleLogin(String username, String password) async {
-    if (widget.onLogin == null) return false;
-    final success = await widget.onLogin!(username, password);
-    if (success && mounted) {
-      setState(() {
-        _isAuthenticated = true;
-      });
+  void _onAuthStateChanged() {
+    if (_authController.isAuthenticated) {
       _controller.loadResources();
     }
-    return success;
   }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: _controller,
+      animation: Listenable.merge([_controller, _authController]),
       builder: (context, _) {
         return MaterialApp(
           title: widget.title,
@@ -293,7 +294,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           theme: _lightTheme,
           darkTheme: _darkTheme,
           debugShowCheckedModeBanner: false,
-          home: _isAuthenticated
+          home: _authController.isAuthenticated
               ? Home(
                   controller: _controller,
                   title: widget.title,
@@ -307,7 +308,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   customFooterBuilder: widget.customFooterBuilder,
                 )
               : LoginScreen(
-                  onLogin: _handleLogin,
+                  loginService: _loginService,
+                  authController: _authController,
                   title: widget.loginTitle ?? 'Serverpod Admin',
                   subtitle: widget.loginSubtitle,
                 ),

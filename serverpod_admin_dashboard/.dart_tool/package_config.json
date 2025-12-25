@@ -81,7 +81,7 @@
     },
     {
       "name": "serverpod_admin_client",
-      "rootUri": "file:///Users/macbookpro/.pub-cache/hosted/pub.dev/serverpod_admin_client-1.0.5",
+      "rootUri": "../../serverpod_admin_client",
       "packageUri": "lib/",
       "languageVersion": "3.5"
     },

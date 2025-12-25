@@ -1,11 +1,15 @@
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_admin_server/src/admin/admin_entry_base.dart';
+import 'package:serverpod_admin_server/src/generated/admin/admin_scope.dart';
 
 import '../../admin/admin.dart';
 import '../admin_registry.dart';
 import '../../../serverpod_admin_server.dart' show AdminResource;
 
 class AdminEndpoint extends Endpoint {
+  @override
+  bool get requireLogin => true;
+
   static const String _classNameKey = '__className__';
 
   final AdminRegistry _registry = AdminRegistry();
@@ -19,7 +23,19 @@ class AdminEndpoint extends Endpoint {
     return entry;
   }
 
+  /// Checks if the authenticated user has admin permissions (isSuperuser or isStaff).
+  /// Throws an exception if the user doesn't have permissions.
+  Future<void> _checkAdminScope(Session session) async {
+    final user = await _getAuthenticatedUserInfo(session);
+    if (!user.isSuperuser && !user.isStaff) {
+      throw ArgumentError(
+        'Permission denied. User must be a superuser or staff member to access admin features.',
+      );
+    }
+  }
+
   Future<List<AdminResource>> resources(Session session) async {
+    await _checkAdminScope(session);
     adminRegister();
     return _registry.registeredResourceMetadata;
   }
@@ -28,6 +44,7 @@ class AdminEndpoint extends Endpoint {
     Session session,
     String resourceKey,
   ) async {
+    await _checkAdminScope(session);
     final entry = _resolve(resourceKey);
 
     final result = await entry.list(session);
@@ -46,6 +63,7 @@ class AdminEndpoint extends Endpoint {
     int offset,
     int limit,
   ) async {
+    await _checkAdminScope(session);
     if (offset < 0 || limit <= 0) {
       throw ArgumentError(
         'Invalid pagination arguments. Offset must be >= 0 and limit > 0.',
@@ -69,6 +87,7 @@ class AdminEndpoint extends Endpoint {
     String resourceKey,
     Object id,
   ) async {
+    await _checkAdminScope(session);
     final entry = _resolve(resourceKey);
     final result = await entry.find(session, id);
     if (result == null) return null;
@@ -80,6 +99,7 @@ class AdminEndpoint extends Endpoint {
     String resourceKey,
     Map<String, String> data,
   ) async {
+    await _checkAdminScope(session);
     session.log(
       'AdminEndpoint.create resource=$resourceKey payload=$data',
     );
@@ -97,6 +117,7 @@ class AdminEndpoint extends Endpoint {
     String resourceKey,
     Map<String, String> data,
   ) async {
+    await _checkAdminScope(session);
     session.log(
       'AdminEndpoint.update resource=$resourceKey payload=$data',
     );
@@ -114,6 +135,7 @@ class AdminEndpoint extends Endpoint {
     String resourceKey,
     String id,
   ) async {
+    await _checkAdminScope(session);
     final entry = _resolve(resourceKey);
     final primaryColumnMetadata = entry.metadata.columns.firstWhere(
       (column) => column.isPrimary,
@@ -194,5 +216,23 @@ class AdminEndpoint extends Endpoint {
       return value.toUtc().toIso8601String();
     }
     return value.toString();
+  }
+
+  Future<AdminScope> _getAuthenticatedUserInfo(Session session) async {
+    final authenticationInfo = session.authenticated;
+
+    if (authenticationInfo == null) {
+      throw Exception('User not authenticated');
+    }
+    final userIdentifier = authenticationInfo.userIdentifier;
+    final user = await AdminScope.db.findFirstRow(
+      session,
+      where: (t) => t.userId.equals(userIdentifier),
+    );
+    if (user == null || user.id == null) {
+      throw Exception(
+          'UserInfo not found for user identifier: $userIdentifier');
+    }
+    return user;
   }
 }

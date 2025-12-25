@@ -61,9 +61,9 @@ class _ModuleClassImpl extends ModuleClass {
     required String name,
     required int data,
   }) : super._(
-          name: name,
-          data: data,
-        );
+         name: name,
+         data: data,
+       );
 
   /// Returns a shallow copy of this [ModuleClass]
   /// with some or all fields replaced by the given arguments.

@@ -6,3 +6,5 @@ admin:
   - create:
   - update:
   - delete:
+adminLogin:
+  - login:

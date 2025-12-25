@@ -19,6 +19,7 @@ abstract class AdminColumn implements _i1.SerializableModel {
     required this.hasDefault,
     required this.isPrimary,
     this.foreignKeyTable,
+    this.defaultValue,
   });
 
   factory AdminColumn({
@@ -27,6 +28,7 @@ abstract class AdminColumn implements _i1.SerializableModel {
     required bool hasDefault,
     required bool isPrimary,
     String? foreignKeyTable,
+    String? defaultValue,
   }) = _AdminColumnImpl;
 
   factory AdminColumn.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -36,6 +38,7 @@ abstract class AdminColumn implements _i1.SerializableModel {
       hasDefault: jsonSerialization['hasDefault'] as bool,
       isPrimary: jsonSerialization['isPrimary'] as bool,
       foreignKeyTable: jsonSerialization['foreignKeyTable'] as String?,
+      defaultValue: jsonSerialization['defaultValue'] as String?,
     );
   }
 
@@ -49,6 +52,8 @@ abstract class AdminColumn implements _i1.SerializableModel {
 
   String? foreignKeyTable;
 
+  String? defaultValue;
+
   /// Returns a shallow copy of this [AdminColumn]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -58,6 +63,7 @@ abstract class AdminColumn implements _i1.SerializableModel {
     bool? hasDefault,
     bool? isPrimary,
     String? foreignKeyTable,
+    String? defaultValue,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -68,6 +74,7 @@ abstract class AdminColumn implements _i1.SerializableModel {
       'hasDefault': hasDefault,
       'isPrimary': isPrimary,
       if (foreignKeyTable != null) 'foreignKeyTable': foreignKeyTable,
+      if (defaultValue != null) 'defaultValue': defaultValue,
     };
   }
 
@@ -86,13 +93,15 @@ class _AdminColumnImpl extends AdminColumn {
     required bool hasDefault,
     required bool isPrimary,
     String? foreignKeyTable,
+    String? defaultValue,
   }) : super._(
-          name: name,
-          dataType: dataType,
-          hasDefault: hasDefault,
-          isPrimary: isPrimary,
-          foreignKeyTable: foreignKeyTable,
-        );
+         name: name,
+         dataType: dataType,
+         hasDefault: hasDefault,
+         isPrimary: isPrimary,
+         foreignKeyTable: foreignKeyTable,
+         defaultValue: defaultValue,
+       );
 
   /// Returns a shallow copy of this [AdminColumn]
   /// with some or all fields replaced by the given arguments.
@@ -104,14 +113,17 @@ class _AdminColumnImpl extends AdminColumn {
     bool? hasDefault,
     bool? isPrimary,
     Object? foreignKeyTable = _Undefined,
+    Object? defaultValue = _Undefined,
   }) {
     return AdminColumn(
       name: name ?? this.name,
       dataType: dataType ?? this.dataType,
       hasDefault: hasDefault ?? this.hasDefault,
       isPrimary: isPrimary ?? this.isPrimary,
-      foreignKeyTable:
-          foreignKeyTable is String? ? foreignKeyTable : this.foreignKeyTable,
+      foreignKeyTable: foreignKeyTable is String?
+          ? foreignKeyTable
+          : this.foreignKeyTable,
+      defaultValue: defaultValue is String? ? defaultValue : this.defaultValue,
     );
   }
 }

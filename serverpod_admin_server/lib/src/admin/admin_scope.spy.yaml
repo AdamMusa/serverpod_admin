@@ -1,0 +1,10 @@
+class: AdminScope
+table: admin_scope
+fields:
+  userId: String
+  isStaff: bool
+  isSuperuser: bool
+indexes:
+  uniq_user:
+    fields: userId
+    unique: true

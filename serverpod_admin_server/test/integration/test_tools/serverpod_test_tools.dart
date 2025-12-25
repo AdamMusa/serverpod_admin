@@ -125,6 +125,8 @@ void withServerpod(
 
 class TestEndpoints {
   late final _AdminEndpoint admin;
+
+  late final _AdminLoginEndpoint adminLogin;
 }
 
 class _InternalTestEndpoints extends TestEndpoints
@@ -135,6 +137,10 @@ class _InternalTestEndpoints extends TestEndpoints
     _i2.EndpointDispatch endpoints,
   ) {
     admin = _AdminEndpoint(
+      endpoints,
+      serializationManager,
+    );
+    adminLogin = _AdminLoginEndpoint(
       endpoints,
       serializationManager,
     );
@@ -157,9 +163,9 @@ class _AdminEndpoint {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
           (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-        endpoint: 'admin',
-        method: 'resources',
-      );
+            endpoint: 'admin',
+            method: 'resources',
+          );
       try {
         var _localCallContext = await _endpointDispatch.getMethodCallContext(
           createSessionCallback: (_) => _localUniqueSession,
@@ -168,10 +174,12 @@ class _AdminEndpoint {
           parameters: _i1.testObjectToJson({}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue = await (_localCallContext.method.call(
-          _localUniqueSession,
-          _localCallContext.arguments,
-        ) as _i3.Future<List<_i4.AdminResource>>);
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<List<_i4.AdminResource>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -186,9 +194,9 @@ class _AdminEndpoint {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
           (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-        endpoint: 'admin',
-        method: 'list',
-      );
+            endpoint: 'admin',
+            method: 'list',
+          );
       try {
         var _localCallContext = await _endpointDispatch.getMethodCallContext(
           createSessionCallback: (_) => _localUniqueSession,
@@ -197,10 +205,12 @@ class _AdminEndpoint {
           parameters: _i1.testObjectToJson({'resourceKey': resourceKey}),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue = await (_localCallContext.method.call(
-          _localUniqueSession,
-          _localCallContext.arguments,
-        ) as _i3.Future<List<Map<String, String>>>);
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<List<Map<String, String>>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -217,9 +227,9 @@ class _AdminEndpoint {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
           (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-        endpoint: 'admin',
-        method: 'listPage',
-      );
+            endpoint: 'admin',
+            method: 'listPage',
+          );
       try {
         var _localCallContext = await _endpointDispatch.getMethodCallContext(
           createSessionCallback: (_) => _localUniqueSession,
@@ -232,10 +242,12 @@ class _AdminEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue = await (_localCallContext.method.call(
-          _localUniqueSession,
-          _localCallContext.arguments,
-        ) as _i3.Future<List<Map<String, String>>>);
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<List<Map<String, String>>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -251,9 +263,9 @@ class _AdminEndpoint {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
           (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-        endpoint: 'admin',
-        method: 'find',
-      );
+            endpoint: 'admin',
+            method: 'find',
+          );
       try {
         var _localCallContext = await _endpointDispatch.getMethodCallContext(
           createSessionCallback: (_) => _localUniqueSession,
@@ -265,10 +277,12 @@ class _AdminEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue = await (_localCallContext.method.call(
-          _localUniqueSession,
-          _localCallContext.arguments,
-        ) as _i3.Future<Map<String, dynamic>?>);
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<Map<String, dynamic>?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -284,9 +298,9 @@ class _AdminEndpoint {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
           (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-        endpoint: 'admin',
-        method: 'create',
-      );
+            endpoint: 'admin',
+            method: 'create',
+          );
       try {
         var _localCallContext = await _endpointDispatch.getMethodCallContext(
           createSessionCallback: (_) => _localUniqueSession,
@@ -298,10 +312,12 @@ class _AdminEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue = await (_localCallContext.method.call(
-          _localUniqueSession,
-          _localCallContext.arguments,
-        ) as _i3.Future<Map<String, String>>);
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<Map<String, String>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -317,9 +333,9 @@ class _AdminEndpoint {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
           (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-        endpoint: 'admin',
-        method: 'update',
-      );
+            endpoint: 'admin',
+            method: 'update',
+          );
       try {
         var _localCallContext = await _endpointDispatch.getMethodCallContext(
           createSessionCallback: (_) => _localUniqueSession,
@@ -331,10 +347,12 @@ class _AdminEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue = await (_localCallContext.method.call(
-          _localUniqueSession,
-          _localCallContext.arguments,
-        ) as _i3.Future<Map<String, String>>);
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<Map<String, String>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -350,9 +368,9 @@ class _AdminEndpoint {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
           (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-        endpoint: 'admin',
-        method: 'delete',
-      );
+            endpoint: 'admin',
+            method: 'delete',
+          );
       try {
         var _localCallContext = await _endpointDispatch.getMethodCallContext(
           createSessionCallback: (_) => _localUniqueSession,
@@ -364,10 +382,58 @@ class _AdminEndpoint {
           }),
           serializationManager: _serializationManager,
         );
-        var _localReturnValue = await (_localCallContext.method.call(
-          _localUniqueSession,
-          _localCallContext.arguments,
-        ) as _i3.Future<bool>);
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<bool>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+}
+
+class _AdminLoginEndpoint {
+  _AdminLoginEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
+
+  final _i2.EndpointDispatch _endpointDispatch;
+
+  final _i2.SerializationManager _serializationManager;
+
+  _i3.Future<Map<String, dynamic>> login(
+    _i1.TestSessionBuilder sessionBuilder,
+    String email,
+    String password,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'adminLogin',
+            method: 'login',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'adminLogin',
+          methodName: 'login',
+          parameters: _i1.testObjectToJson({
+            'email': email,
+            'password': password,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<Map<String, dynamic>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

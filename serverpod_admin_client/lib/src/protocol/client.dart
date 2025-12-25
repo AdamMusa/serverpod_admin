@@ -40,79 +40,102 @@ class EndpointAdmin extends _i1.EndpointRef {
     String resourceKey,
     int offset,
     int limit,
-  ) =>
-      caller.callServerEndpoint<List<Map<String, String>>>(
-        'serverpod_admin.admin',
-        'listPage',
-        {
-          'resourceKey': resourceKey,
-          'offset': offset,
-          'limit': limit,
-        },
-      );
+  ) => caller.callServerEndpoint<List<Map<String, String>>>(
+    'serverpod_admin.admin',
+    'listPage',
+    {
+      'resourceKey': resourceKey,
+      'offset': offset,
+      'limit': limit,
+    },
+  );
 
   _i2.Future<Map<String, dynamic>?> find(
     String resourceKey,
     Object id,
-  ) =>
-      caller.callServerEndpoint<Map<String, dynamic>?>(
-        'serverpod_admin.admin',
-        'find',
-        {
-          'resourceKey': resourceKey,
-          'id': id,
-        },
-      );
+  ) => caller.callServerEndpoint<Map<String, dynamic>?>(
+    'serverpod_admin.admin',
+    'find',
+    {
+      'resourceKey': resourceKey,
+      'id': id,
+    },
+  );
 
   _i2.Future<Map<String, String>> create(
     String resourceKey,
     Map<String, String> data,
-  ) =>
-      caller.callServerEndpoint<Map<String, String>>(
-        'serverpod_admin.admin',
-        'create',
-        {
-          'resourceKey': resourceKey,
-          'data': data,
-        },
-      );
+  ) => caller.callServerEndpoint<Map<String, String>>(
+    'serverpod_admin.admin',
+    'create',
+    {
+      'resourceKey': resourceKey,
+      'data': data,
+    },
+  );
 
   _i2.Future<Map<String, String>> update(
     String resourceKey,
     Map<String, String> data,
-  ) =>
-      caller.callServerEndpoint<Map<String, String>>(
-        'serverpod_admin.admin',
-        'update',
-        {
-          'resourceKey': resourceKey,
-          'data': data,
-        },
-      );
+  ) => caller.callServerEndpoint<Map<String, String>>(
+    'serverpod_admin.admin',
+    'update',
+    {
+      'resourceKey': resourceKey,
+      'data': data,
+    },
+  );
 
   _i2.Future<bool> delete(
     String resourceKey,
     String id,
-  ) =>
-      caller.callServerEndpoint<bool>(
-        'serverpod_admin.admin',
-        'delete',
-        {
-          'resourceKey': resourceKey,
-          'id': id,
-        },
-      );
+  ) => caller.callServerEndpoint<bool>(
+    'serverpod_admin.admin',
+    'delete',
+    {
+      'resourceKey': resourceKey,
+      'id': id,
+    },
+  );
+}
+
+/// Login endpoint for admin dashboard authentication.
+/// This endpoint does not require authentication (it's the login itself).
+/// {@category Endpoint}
+class EndpointAdminLogin extends _i1.EndpointRef {
+  EndpointAdminLogin(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'serverpod_admin.adminLogin';
+
+  /// Login endpoint that authenticates users via email/password.
+  /// Makes a POST request to the emailIdp/login endpoint.
+  _i2.Future<Map<String, dynamic>> login(
+    String email,
+    String password,
+  ) => caller.callServerEndpoint<Map<String, dynamic>>(
+    'serverpod_admin.adminLogin',
+    'login',
+    {
+      'email': email,
+      'password': password,
+    },
+  );
 }
 
 class Caller extends _i1.ModuleEndpointCaller {
   Caller(_i1.ServerpodClientShared client) : super(client) {
     admin = EndpointAdmin(this);
+    adminLogin = EndpointAdminLogin(this);
   }
 
   late final EndpointAdmin admin;
 
+  late final EndpointAdminLogin adminLogin;
+
   @override
   Map<String, _i1.EndpointRef> get endpointRefLookup => {
-        'serverpod_admin.admin': admin,
-      };
+    'serverpod_admin.admin': admin,
+    'serverpod_admin.adminLogin': adminLogin,
+  };
 }

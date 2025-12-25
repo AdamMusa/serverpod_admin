@@ -5,6 +5,7 @@ fields:
   hasDefault: bool
   isPrimary: bool
   foreignKeyTable: String?
+  defaultValue: String?
 
 
 

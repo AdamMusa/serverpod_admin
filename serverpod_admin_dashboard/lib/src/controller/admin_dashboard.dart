@@ -144,8 +144,8 @@ class AdminDashboardController extends ChangeNotifier {
     try {
       final loaded = await adminEndpoint.list(resource.key);
       records = loaded;
-      recordsError = null;
 
+      recordsError = null;
       // Update details record if it's the same resource and record still exists
       if (isShowingDetails &&
           detailsResource?.key == resource.key &&
