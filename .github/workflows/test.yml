@@ -3,19 +3,74 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Test
+name: Serverpod Admin CI
 
 on:
+  workflow_dispatch:
   push:
-    branches: ["main"]
+    branches:
+      - main
+      - dev
   pull_request:
-    branches: ["main"]
+    branches:
+      - main
+      - dev
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
-  test-server:
-    name: Test Server
+  dart_analyze_server:
+    name: dart analyze (server)
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        flutter-version: ['3.32.0', '3.38.4']
+    steps:
+      - uses: actions/checkout@v4
 
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ matrix.flutter-version }}
+          cache: true
+
+      - name: Install dependencies
+        working-directory: serverpod_admin_server
+        run: dart pub get
+
+      - name: Analyze server source
+        working-directory: serverpod_admin_server
+        run: dart analyze
+
+  dart_analyze_dashboard:
+    name: dart analyze (dashboard)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        flutter-version: ['3.32.0', '3.38.4']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ matrix.flutter-version }}
+          cache: true
+
+      - name: Install dependencies
+        working-directory: serverpod_admin_dashboard
+        run: flutter pub get
+
+      - name: Analyze dashboard source
+        working-directory: serverpod_admin_dashboard
+        run: flutter analyze
+
+  server_integration_tests:
+    name: Server integration tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        flutter-version: ['3.32.0', '3.38.4']
     services:
       postgres:
         image: postgres:15
@@ -44,7 +99,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ matrix.flutter-version }}
+          cache: true
 
       - name: Install dependencies
         working-directory: serverpod_admin_server
@@ -65,47 +123,29 @@ jobs:
             database: 'postgres'
           EOF
 
-      - name: Analyze server source
-        working-directory: serverpod_admin_server
-        run: dart analyze
-
       - name: Run server tests
         working-directory: serverpod_admin_server
-        run: dart test
+        run: dart test --reporter=failures-only
 
-  test-dashboard:
-    name: Test Dashboard
+  dashboard_unit_tests:
+    name: Dashboard unit tests
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        flutter-version: ['3.32.0', '3.38.4']
     steps:
       - uses: actions/checkout@v4
 
-      - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
-
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'latest'
-          channel: 'stable'
+          flutter-version: ${{ matrix.flutter-version }}
+          cache: true
 
       - name: Install dependencies
         working-directory: serverpod_admin_dashboard
         run: flutter pub get
 
-      - name: Analyze dashboard source
-        working-directory: serverpod_admin_dashboard
-        run: flutter analyze
-
       - name: Run dashboard tests
         working-directory: serverpod_admin_dashboard
-        run: flutter test
-
-  test-all:
-    name: Test All
-    runs-on: ubuntu-latest
-    needs: [test-server, test-dashboard]
-
-    steps:
-      - uses: actions/checkout@v4
-      - name: All tests passed
-        run: echo "✅ All tests passed successfully!"
+        run: flutter test --reporter=failures-only
 
