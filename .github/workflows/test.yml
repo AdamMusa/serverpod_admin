@@ -64,17 +64,20 @@ jobs:
       - name: Analyze dashboard source
         working-directory: serverpod_admin_dashboard
         run: |
-          # Run analyze and filter out expected path dependency warning for monorepo
+          # Run analyze and filter out expected warnings for monorepo
           OUTPUT=$(flutter analyze 2>&1) || true
-          FILTERED=$(echo "$OUTPUT" | grep -v "Publishable packages can't have 'path' dependencies")
+          # Filter out expected warnings:
+          # 1. Path dependency warning (expected in monorepo)
+          # 2. DropdownButtonFormField value deprecation (initialValue not available in tested Flutter versions)
+          FILTERED=$(echo "$OUTPUT" | grep -v "Publishable packages can't have 'path' dependencies" | grep -v "Use initialValue instead")
           echo "$FILTERED"
-          # Count real issues (excluding path dependency warning)
+          # Count real issues (excluding expected warnings)
           REAL_ISSUES=$(echo "$FILTERED" | grep -cE "(error|warning|info) •" || echo "0")
           if [ "$REAL_ISSUES" -gt "0" ]; then
             echo "Found $REAL_ISSUES analysis issue(s)"
             exit 1
           fi
-          echo "Analysis passed (path dependency warning ignored for monorepo)"
+          echo "Analysis passed (expected warnings ignored)"
 
   server_integration_tests:
     name: Server integration tests
