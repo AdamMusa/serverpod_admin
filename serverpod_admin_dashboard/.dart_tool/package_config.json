@@ -297,43 +297,43 @@
     },
     {
       "name": "serverpod_admin_client",
-      "rootUri": "file:///Users/macbookpro/.pub-cache/hosted/pub.dev/serverpod_admin_client-1.0.6",
+      "rootUri": "../../serverpod_admin_client",
       "packageUri": "lib/",
       "languageVersion": "3.5"
     },
     {
       "name": "serverpod_auth_core_client",
-      "rootUri": "file:///Users/macbookpro/.pub-cache/hosted/pub.dev/serverpod_auth_core_client-3.0.1",
+      "rootUri": "file:///Users/macbookpro/.pub-cache/hosted/pub.dev/serverpod_auth_core_client-3.1.1",
       "packageUri": "lib/",
       "languageVersion": "3.8"
     },
     {
       "name": "serverpod_auth_core_flutter",
-      "rootUri": "file:///Users/macbookpro/.pub-cache/hosted/pub.dev/serverpod_auth_core_flutter-3.0.1",
+      "rootUri": "file:///Users/macbookpro/.pub-cache/hosted/pub.dev/serverpod_auth_core_flutter-3.1.1",
       "packageUri": "lib/",
       "languageVersion": "3.8"
     },
     {
       "name": "serverpod_auth_idp_client",
-      "rootUri": "file:///Users/macbookpro/.pub-cache/hosted/pub.dev/serverpod_auth_idp_client-3.0.1",
+      "rootUri": "file:///Users/macbookpro/.pub-cache/hosted/pub.dev/serverpod_auth_idp_client-3.1.1",
       "packageUri": "lib/",
       "languageVersion": "3.8"
     },
     {
       "name": "serverpod_auth_idp_flutter",
-      "rootUri": "file:///Users/macbookpro/.pub-cache/hosted/pub.dev/serverpod_auth_idp_flutter-3.0.1",
+      "rootUri": "file:///Users/macbookpro/.pub-cache/hosted/pub.dev/serverpod_auth_idp_flutter-3.1.1",
       "packageUri": "lib/",
       "languageVersion": "3.8"
     },
     {
       "name": "serverpod_client",
-      "rootUri": "file:///Users/macbookpro/.pub-cache/hosted/pub.dev/serverpod_client-3.0.1",
+      "rootUri": "file:///Users/macbookpro/.pub-cache/hosted/pub.dev/serverpod_client-3.1.1",
       "packageUri": "lib/",
       "languageVersion": "3.8"
     },
     {
       "name": "serverpod_serialization",
-      "rootUri": "file:///Users/macbookpro/.pub-cache/hosted/pub.dev/serverpod_serialization-3.0.1",
+      "rootUri": "file:///Users/macbookpro/.pub-cache/hosted/pub.dev/serverpod_serialization-3.1.1",
       "packageUri": "lib/",
       "languageVersion": "3.8"
     },

@@ -2,8 +2,6 @@ import 'dart:io';
 
 import 'package:example_server/src/admin/admin.dart';
 import 'package:serverpod/serverpod.dart';
-import 'package:serverpod_admin_server/serverpod_admin_server.dart'
-    show AdminScope;
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
 
@@ -40,7 +38,7 @@ void run(List<String> args) async {
 
   // Serve all files in the web/static relative directory under /.
   final root = Directory(Uri(path: 'web/static').toFilePath());
-  pod.webServer.addRoute(StaticRoute.directory(root), '/**');
+  pod.webServer.addRoute(StaticRoute.directory(root), '/static');
 
   // Start the server.
   await pod.start();

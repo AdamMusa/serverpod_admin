@@ -6,6 +6,7 @@ import 'package:serverpod_admin_dashboard/src/screens/record_details.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/footer.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/records_view.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/side_bar.dart';
+import 'package:serverpod_admin_client/serverpod_admin_client.dart';
 
 class Home extends StatefulWidget {
   const Home({
@@ -20,6 +21,8 @@ class Home extends StatefulWidget {
     this.customDeleteDialogBuilder,
     this.customCreateDialogBuilder,
     this.customFooterBuilder,
+    this.client,
+    this.onLogout,
   });
 
   final AdminDashboardController controller;
@@ -32,6 +35,8 @@ class Home extends StatefulWidget {
   final CreateDialogBuilder? customCreateDialogBuilder;
   final FooterBuilder? customFooterBuilder;
   final String? title;
+  final ServerpodClientShared? client;
+  final VoidCallback? onLogout;
   @override
   State<Home> createState() => _HomeState();
 }
@@ -209,6 +214,8 @@ class _HomeState extends State<Home> {
       isCollapsed: widget.controller.isSidebarCollapsed,
       onToggleCollapse: () => widget.controller.toggleSidebarCollapsed(),
       itemCustomizations: widget.sidebarItemCustomizations,
+      client: widget.client,
+      onLogout: widget.onLogout,
     );
   }
 
@@ -266,6 +273,8 @@ class _HomeState extends State<Home> {
                       },
                       isInDrawer: true,
                       itemCustomizations: widget.sidebarItemCustomizations,
+                      client: widget.client,
+                      onLogout: widget.onLogout,
                     ),
                   ),
                 )

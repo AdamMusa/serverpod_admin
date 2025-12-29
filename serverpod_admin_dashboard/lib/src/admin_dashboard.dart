@@ -284,6 +284,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
   }
 
+  void _handleLogout() {
+    // Sign out from the client by clearing the authentication key first
+    try {
+      (widget.client.auth as dynamic).keyManager?.remove();
+    } catch (_) {
+      // If keyManager is not available, just clear auth state
+    }
+    // Then logout from the controller - this will trigger rebuild via AnimatedBuilder
+    // and replace Home widget with LoginScreen
+    _authController.logout();
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -307,6 +319,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   customDeleteDialogBuilder: widget.customDeleteDialogBuilder,
                   customCreateDialogBuilder: widget.customCreateDialogBuilder,
                   customFooterBuilder: widget.customFooterBuilder,
+                  client: widget.client,
+                  onLogout: _handleLogout,
                 )
               : LoginScreen(
                   authController: _authController,

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:serverpod_admin_dashboard/src/admin_dashboard.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/side_bar_error.dart';
+import 'package:serverpod_admin_dashboard/src/screens/user_info_section.dart';
+import 'package:serverpod_admin_client/serverpod_admin_client.dart'
+    show ServerpodClientShared;
 
 class Sidebar extends StatelessWidget {
   const Sidebar({
@@ -15,6 +18,8 @@ class Sidebar extends StatelessWidget {
     required this.onToggleCollapse,
     this.isInDrawer = false,
     this.itemCustomizations,
+    this.client,
+    this.onLogout,
   });
 
   final List<AdminResource> resources;
@@ -27,6 +32,8 @@ class Sidebar extends StatelessWidget {
   final VoidCallback onToggleCollapse;
   final bool isInDrawer;
   final Map<String, SidebarItemCustomization>? itemCustomizations;
+  final ServerpodClientShared? client;
+  final VoidCallback? onLogout;
 
   @override
   Widget build(BuildContext context) {
@@ -86,6 +93,12 @@ class Sidebar extends StatelessWidget {
           Expanded(
             child: _buildContent(context),
           ),
+          // User info section at the bottom
+          if (client != null && onLogout != null)
+            UserInfoSection(
+              client: client!,
+              onLogout: onLogout!,
+            ),
         ],
       ),
     );

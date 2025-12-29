@@ -9,11 +9,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  serverpod_client: 3.0.1
-  # serverpod_admin_client:
-  #   path: ../serverpod_admin_client
-  serverpod_admin_client: ^1.0.6
-  serverpod_auth_idp_flutter: ^3.0.1
+  serverpod_client: ^3.1.1
+  serverpod_admin_client:
+    path: ../serverpod_admin_client
+  # serverpod_admin_client: ^1.0.6
+  serverpod_auth_idp_flutter: ^3.1.1
 
 
 

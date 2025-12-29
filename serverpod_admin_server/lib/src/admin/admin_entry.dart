@@ -122,6 +122,28 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
     final tableDefs = pod.serializationManager.getTargetTableDefinitions();
     final tableName = _resolvedTable.tableName;
 
+    // In test mode, allow tables that aren't in the protocol
+    // This allows testing with in-memory storage without requiring protocol registration
+    if (pod.runMode == 'test') {
+      try {
+        final tableDef = tableDefs.firstWhere(
+          (def) => def.name == tableName,
+        );
+        final foreignKeyMap = <String, String>{};
+        for (final fk in tableDef.foreignKeys) {
+          // Only support single-column foreign keys for now
+          if (fk.columns.length == 1) {
+            final columnName = fk.columns.first;
+            foreignKeyMap[columnName] = fk.referenceTable;
+          }
+        }
+        return foreignKeyMap;
+      } catch (e) {
+        // Table not in protocol - return empty map for tests
+        return <String, String>{};
+      }
+    }
+
     final tableDef = tableDefs.firstWhere(
       (def) => def.name == tableName,
       orElse: () => throw StateError(

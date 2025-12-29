@@ -25,7 +25,7 @@
     },
     {
       "name": "serverpod_auth_idp_flutter",
-      "version": "3.0.1",
+      "version": "3.1.1",
       "dependencies": [
         "animations",
         "email_validator",
@@ -52,7 +52,7 @@
     },
     {
       "name": "serverpod_client",
-      "version": "3.0.1",
+      "version": "3.1.1",
       "dependencies": [
         "collection",
         "http",
@@ -91,7 +91,7 @@
     },
     {
       "name": "serverpod_auth_idp_client",
-      "version": "3.0.1",
+      "version": "3.1.1",
       "dependencies": [
         "serverpod_auth_core_client",
         "serverpod_client"
@@ -99,7 +99,7 @@
     },
     {
       "name": "serverpod_auth_core_flutter",
-      "version": "3.0.1",
+      "version": "3.1.1",
       "dependencies": [
         "clock",
         "flutter",
@@ -110,7 +110,7 @@
     },
     {
       "name": "serverpod_auth_core_client",
-      "version": "3.0.1",
+      "version": "3.1.1",
       "dependencies": [
         "clock",
         "serverpod_client"
@@ -217,7 +217,7 @@
     },
     {
       "name": "serverpod_serialization",
-      "version": "3.0.1",
+      "version": "3.1.1",
       "dependencies": [
         "uuid",
         "yaml"

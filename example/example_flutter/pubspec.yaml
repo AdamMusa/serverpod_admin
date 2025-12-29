@@ -29,8 +29,8 @@ dependencies:
     sdk: flutter
   example_client:
     path: ../example_client
-  serverpod_flutter: 3.0.1
-  serverpod_auth_idp_flutter: 3.0.1
+  serverpod_flutter: ^3.1.1 
+  serverpod_auth_idp_flutter: ^3.1.1 
   serverpod_admin_dashboard:
     path: ../../serverpod_admin_dashboard
 dev_dependencies:
