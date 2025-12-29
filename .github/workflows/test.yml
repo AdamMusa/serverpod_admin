@@ -1,0 +1,110 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: Test
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  test-server:
+    name: Test Server
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: serverpod_admin_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
+
+      - name: Install dependencies
+        working-directory: serverpod_admin_server
+        run: dart pub get
+
+      - name: Update test configuration for CI
+        working-directory: serverpod_admin_server
+        run: |
+          # Update test.yaml to use standard ports for GitHub Actions
+          sed -i 's/port: 9090/port: 5432/' config/test.yaml
+          sed -i 's/port: 9091/port: 6379/' config/test.yaml
+          sed -i 's/enabled: false/enabled: true/' config/test.yaml
+          # Update passwords.yaml with CI password (postgres for database, empty for redis)
+          cat > config/passwords.yaml << EOF
+          test:
+            database: 'postgres'
+            redis: ''
+          EOF
+
+      - name: Analyze server source
+        working-directory: serverpod_admin_server
+        run: dart analyze
+
+      - name: Run server tests
+        working-directory: serverpod_admin_server
+        run: dart test
+
+  test-dashboard:
+    name: Test Dashboard
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dart-lang/setup-dart@9a04e6d73cca37bd455e0608d7e5092f881fd603
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+
+      - name: Install dependencies
+        working-directory: serverpod_admin_dashboard
+        run: flutter pub get
+
+      - name: Analyze dashboard source
+        working-directory: serverpod_admin_dashboard
+        run: flutter analyze
+
+      - name: Run dashboard tests
+        working-directory: serverpod_admin_dashboard
+        run: flutter test
+
+  test-all:
+    name: Test All
+    runs-on: ubuntu-latest
+    needs: [test-server, test-dashboard]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: All tests passed
+        run: echo "✅ All tests passed successfully!"
+
