@@ -1,23 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:serverpod_admin_dashboard/src/controller/auth_controller.dart';
-import 'package:serverpod_admin_dashboard/src/controller/login_controller.dart';
-import 'package:serverpod_admin_dashboard/src/services/login_service.dart';
 
 /// Login screen for the admin dashboard.
 /// Matches the design system with consistent colors, spacing, and styling.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({
-    required this.loginService,
     required this.authController,
     this.title = 'Serverpod Admin',
     this.subtitle,
     super.key,
   });
 
-  /// Login service for performing authentication.
-  final LoginService loginService;
-
-  /// Auth controller to update authentication state.
+  /// Auth controller for managing authentication and login form state.
   final AuthController authController;
 
   /// Title displayed on the login screen.
@@ -32,40 +26,10 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  late final LoginController _loginController;
-
-  @override
-  void initState() {
-    super.initState();
-    _loginController = LoginController(loginService: widget.loginService);
-  }
-
-  @override
-  void dispose() {
-    _loginController.dispose();
-    super.dispose();
-  }
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
-
-    final response = await _loginController.performLogin();
-
-    if (!mounted) return;
-
-    // Check if user is superuser or staff
-    if (response != null) {
-      final isSuperuser = response.isSuperuser;
-      final isStaff = response.isStaff;
-
-      if (isSuperuser || isStaff) {
-        // Login successful - user has admin access, navigate to dashboard
-        widget.authController.authenticate();
-      } else {
-        // User doesn't have admin privileges
-        _loginController.setError('Access denied. Admin privileges required.');
-      }
-    }
+    await widget.authController.login();
   }
 
   @override
@@ -91,7 +55,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   color: theme.colorScheme.primary,
                 ),
                 const SizedBox(height: 24),
-
                 // Title
                 Text(
                   widget.title,
@@ -101,7 +64,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-
                 if (widget.subtitle != null) ...[
                   const SizedBox(height: 8),
                   Text(
@@ -112,9 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     textAlign: TextAlign.center,
                   ),
                 ],
-
                 const SizedBox(height: 48),
-
                 // Login Form Card
                 Container(
                   padding: const EdgeInsets.all(24),
@@ -129,15 +89,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Form(
                     key: _formKey,
                     child: AnimatedBuilder(
-                      animation: _loginController,
+                      animation: widget.authController,
                       builder: (context, _) {
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             // Email Field
                             TextFormField(
-                              controller: _loginController.usernameController,
-                              enabled: !_loginController.isLoading,
+                              controller: widget.authController.emailController,
+                              enabled: !widget.authController.isLoading,
                               keyboardType: TextInputType.emailAddress,
                               textInputAction: TextInputAction.next,
                               decoration: InputDecoration(
@@ -163,14 +123,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                 }
                               },
                             ),
-
                             const SizedBox(height: 20),
-
                             // Password Field
                             TextFormField(
-                              controller: _loginController.passwordController,
-                              enabled: !_loginController.isLoading,
-                              obscureText: _loginController.obscurePassword,
+                              controller:
+                                  widget.authController.passwordController,
+                              enabled: !widget.authController.isLoading,
+                              obscureText:
+                                  widget.authController.obscurePassword,
                               textInputAction: TextInputAction.done,
                               decoration: InputDecoration(
                                 labelText: 'Password',
@@ -178,12 +138,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 prefixIcon: const Icon(Icons.lock_outline),
                                 suffixIcon: IconButton(
                                   icon: Icon(
-                                    _loginController.obscurePassword
+                                    widget.authController.obscurePassword
                                         ? Icons.visibility_outlined
                                         : Icons.visibility_off_outlined,
                                   ),
-                                  onPressed:
-                                      _loginController.toggleObscurePassword,
+                                  onPressed: widget
+                                      .authController.toggleObscurePassword,
                                 ),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -205,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               },
                             ),
 
-                            if (_loginController.errorMessage != null) ...[
+                            if (widget.authController.errorMessage != null) ...[
                               const SizedBox(height: 20),
                               Container(
                                 padding: const EdgeInsets.all(12),
@@ -223,7 +183,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
-                                        _loginController.errorMessage!,
+                                        widget.authController.errorMessage!,
                                         style:
                                             theme.textTheme.bodySmall?.copyWith(
                                           color: theme.colorScheme.error,
@@ -234,15 +194,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                             ],
-
                             const SizedBox(height: 24),
-
                             // Login Button
                             FilledButton.icon(
-                              onPressed: _loginController.isLoading
+                              onPressed: widget.authController.isLoading
                                   ? null
                                   : _handleLogin,
-                              icon: _loginController.isLoading
+                              icon: widget.authController.isLoading
                                   ? const SizedBox(
                                       width: 18,
                                       height: 18,
@@ -255,7 +213,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                     )
                                   : const Icon(Icons.login),
-                              label: Text(_loginController.isLoading
+                              label: Text(widget.authController.isLoading
                                   ? 'Signing in...'
                                   : 'Sign In'),
                               style: FilledButton.styleFrom(
@@ -272,9 +230,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
                 // Footer Text
                 Text(
                   'Serverpod Admin Dashboard',

@@ -29,7 +29,6 @@ void main() {
   client = Client(serverUrl)
     ..connectivityMonitor = FlutterConnectivityMonitor()
     ..authSessionManager = FlutterAuthSessionManager();
-  print("Host url is : ${client.host}");
   client.auth.initialize();
 
   runApp(

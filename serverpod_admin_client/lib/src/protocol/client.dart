@@ -14,8 +14,6 @@ import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'dart:async' as _i2;
 import 'package:serverpod_admin_client/src/protocol/admin/admin_resource.dart'
     as _i3;
-import 'package:serverpod_admin_client/src/protocol/admin/admin_response.dart'
-    as _i4;
 
 /// {@category Endpoint}
 class EndpointAdmin extends _i1.EndpointRef {
@@ -101,43 +99,15 @@ class EndpointAdmin extends _i1.EndpointRef {
   );
 }
 
-/// Login endpoint for admin dashboard authentication.
-/// This endpoint does not require authentication (it's the login itself).
-/// {@category Endpoint}
-class EndpointAdminLogin extends _i1.EndpointRef {
-  EndpointAdminLogin(_i1.EndpointCaller caller) : super(caller);
-
-  @override
-  String get name => 'serverpod_admin.adminLogin';
-
-  /// Login endpoint that authenticates users via email/password.
-  /// Makes a POST request to the emailIdp/login endpoint.
-  _i2.Future<_i4.AdminResponse?> login(
-    String email,
-    String password,
-  ) => caller.callServerEndpoint<_i4.AdminResponse?>(
-    'serverpod_admin.adminLogin',
-    'login',
-    {
-      'email': email,
-      'password': password,
-    },
-  );
-}
-
 class Caller extends _i1.ModuleEndpointCaller {
   Caller(_i1.ServerpodClientShared client) : super(client) {
     admin = EndpointAdmin(this);
-    adminLogin = EndpointAdminLogin(this);
   }
 
   late final EndpointAdmin admin;
 
-  late final EndpointAdminLogin adminLogin;
-
   @override
   Map<String, _i1.EndpointRef> get endpointRefLookup => {
     'serverpod_admin.admin': admin,
-    'serverpod_admin.adminLogin': adminLogin,
   };
 }

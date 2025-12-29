@@ -17,8 +17,6 @@ import 'package:serverpod/serverpod.dart' as _i2;
 import 'dart:async' as _i3;
 import 'package:serverpod_admin_server/src/generated/admin/admin_resource.dart'
     as _i4;
-import 'package:serverpod_admin_server/src/generated/admin/admin_response.dart'
-    as _i5;
 import 'package:serverpod_admin_server/src/generated/protocol.dart';
 import 'package:serverpod_admin_server/src/generated/endpoints.dart';
 export 'package:serverpod_test/serverpod_test_public_exports.dart';
@@ -127,8 +125,6 @@ void withServerpod(
 
 class TestEndpoints {
   late final _AdminEndpoint admin;
-
-  late final _AdminLoginEndpoint adminLogin;
 }
 
 class _InternalTestEndpoints extends TestEndpoints
@@ -139,10 +135,6 @@ class _InternalTestEndpoints extends TestEndpoints
     _i2.EndpointDispatch endpoints,
   ) {
     admin = _AdminEndpoint(
-      endpoints,
-      serializationManager,
-    );
-    adminLogin = _AdminLoginEndpoint(
       endpoints,
       serializationManager,
     );
@@ -390,52 +382,6 @@ class _AdminEndpoint {
                   _localCallContext.arguments,
                 )
                 as _i3.Future<bool>);
-        return _localReturnValue;
-      } finally {
-        await _localUniqueSession.close();
-      }
-    });
-  }
-}
-
-class _AdminLoginEndpoint {
-  _AdminLoginEndpoint(
-    this._endpointDispatch,
-    this._serializationManager,
-  );
-
-  final _i2.EndpointDispatch _endpointDispatch;
-
-  final _i2.SerializationManager _serializationManager;
-
-  _i3.Future<_i5.AdminResponse?> login(
-    _i1.TestSessionBuilder sessionBuilder,
-    String email,
-    String password,
-  ) async {
-    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
-      var _localUniqueSession =
-          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
-            endpoint: 'adminLogin',
-            method: 'login',
-          );
-      try {
-        var _localCallContext = await _endpointDispatch.getMethodCallContext(
-          createSessionCallback: (_) => _localUniqueSession,
-          endpointPath: 'adminLogin',
-          methodName: 'login',
-          parameters: _i1.testObjectToJson({
-            'email': email,
-            'password': password,
-          }),
-          serializationManager: _serializationManager,
-        );
-        var _localReturnValue =
-            await (_localCallContext.method.call(
-                  _localUniqueSession,
-                  _localCallContext.arguments,
-                )
-                as _i3.Future<_i5.AdminResponse?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

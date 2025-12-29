@@ -12,7 +12,6 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
 import '../admin/endpoint/admin.dart' as _i2;
-import '../admin/endpoint/admin_login_endpoint.dart' as _i3;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -22,12 +21,6 @@ class Endpoints extends _i1.EndpointDispatch {
         ..initialize(
           server,
           'admin',
-          'serverpod_admin',
-        ),
-      'adminLogin': _i3.AdminLoginEndpoint()
-        ..initialize(
-          server,
-          'adminLogin',
           'serverpod_admin',
         ),
     };
@@ -188,37 +181,6 @@ class Endpoints extends _i1.EndpointDispatch {
                 params['resourceKey'],
                 params['id'],
               ),
-        ),
-      },
-    );
-    connectors['adminLogin'] = _i1.EndpointConnector(
-      name: 'adminLogin',
-      endpoint: endpoints['adminLogin']!,
-      methodConnectors: {
-        'login': _i1.MethodConnector(
-          name: 'login',
-          params: {
-            'email': _i1.ParameterDescription(
-              name: 'email',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-            'password': _i1.ParameterDescription(
-              name: 'password',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async =>
-                  (endpoints['adminLogin'] as _i3.AdminLoginEndpoint).login(
-                    session,
-                    params['email'],
-                    params['password'],
-                  ),
         ),
       },
     );

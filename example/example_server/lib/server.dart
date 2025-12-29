@@ -19,7 +19,6 @@ void run(List<String> args) async {
   // Initialize authentication services for the server.
   // Token managers will be used to validate and issue authentication keys,
   // and the identity providers will be the authentication options available for users.
-  registerAdminModule();
 
   pod.initializeAuthServices(
     tokenManagerBuilders: [
@@ -45,6 +44,9 @@ void run(List<String> args) async {
 
   // Start the server.
   await pod.start();
+  registerAdminModule();
+  // await findOrCreateAndLinkEmail();
+
   // await createAdminUser();
 }
 
@@ -72,35 +74,52 @@ void _sendPasswordResetCode(
   session.log('[EmailIdp] Password reset code ($email): $verificationCode');
 }
 
-Future<void> createAdminUser() async {
-  final session = await Serverpod.instance.createSession();
+Future<void> findOrCreateAndLinkEmail() async {
+  // Create a manual session for internal work
+  var session = await Serverpod.instance.createSession();
 
-  final emailIdp = AuthServices.instance.emailIdp;
-  final admin = emailIdp.admin;
+  // Use a nullable ID or UuidValue to track the target user
+  UuidValue? authUserId;
 
-  // 1) Create an AuthUser first (if you don't already have one)
-  final authUser = await AuthServices.instance.authUsers.create(session);
+  try {
+    final emailAdmin = AuthServices.instance.emailIdp.admin;
+    const email = 'adammusaaly@gmail.com';
+    const password = 'Adaforlan';
 
-  // 2) Create an email authentication account for that user
-  await admin.createEmailAuthentication(
-    session,
-    authUserId: authUser.id,
-    email: 'adammusaaly@gmail.com',
-    password: 'Adaforlan',
-  );
+    // 1. Check if the email account already exists
+    final emailAccount = await emailAdmin.findAccount(
+      session,
+      email: email,
+    );
 
-  await AdminScope.db.insertRow(
-    session,
-    AdminScope(
-      userId: authUser.id.toString(),
-      isStaff: true,
-      isSuperuser: true,
-    ),
-  );
-  print("Admin user created successfully.");
-  // Optionally: set or change password later
-  // await admin.setPassword(session, email: 'user@example.com', password: 'newPassword');
+    if (emailAccount == null) {
+      // 2. Create a new AuthUser if no account exists
+      final authUser = await AuthServices.instance.authUsers.create(session);
+      authUserId = authUser.id;
+
+      // 3. Create the email authentication for the new user
+      await emailAdmin.createEmailAuthentication(
+        session,
+        authUserId: authUserId,
+        email: email,
+        password: password,
+      );
+    } else {
+      // If account exists, get the ID from the existing record
+      authUserId = emailAccount.authUserId;
+    }
+
+    // 4. Update the user to have admin scopes using the identified ID
+    await AuthServices.instance.authUsers.update(
+      session,
+      authUserId: authUserId,
+      scopes: {Scope.admin},
+    );
+    print("User $email updated to admin successfully.");
+  } catch (e) {
+    print("Error creating internal admin: $e");
+  } finally {
+    // IMPORTANT: Always close manual sessions to prevent memory leaks
+    await session.close();
+  }
 }
-// {"className":"serverpod_auth_idp.EmailAccountLoginException","data":{"__className__":"serverpod_auth_idp.EmailAccountLoginException","reason":"invalidCredentials"}}%
-
-// {"className":"serverpod_auth_idp.EmailAccountLoginException","data":{"__className__":"serverpod_auth_idp.EmailAccountLoginException","reason":"invalidCredentials"}}%

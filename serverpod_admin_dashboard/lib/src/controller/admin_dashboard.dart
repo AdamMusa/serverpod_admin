@@ -111,6 +111,7 @@ class AdminDashboardController extends ChangeNotifier {
       resourcesError = null;
     } catch (error) {
       resourcesError = 'Unable to load resources. Please try again.';
+      print("Error loading resources: $error");
       resources = const [];
       selectedResource = null;
       records = const [];

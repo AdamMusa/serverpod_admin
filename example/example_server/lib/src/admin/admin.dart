@@ -7,6 +7,9 @@ void registerAdminModule() {
     registry.register<Person>();
     registry.register<Comment>();
     registry.register<Setting>();
+
+    print("Admin module registered");
+    print(registry.registeredResourceMetadata);
     // Add any model you want to manage!
   });
 }

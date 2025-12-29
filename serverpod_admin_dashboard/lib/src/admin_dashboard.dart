@@ -9,7 +9,7 @@ import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
 import 'package:serverpod_admin_dashboard/src/screens/home.dart';
 import 'package:serverpod_admin_dashboard/src/screens/home_operations.dart';
 import 'package:serverpod_admin_dashboard/src/screens/login_screen.dart';
-import 'package:serverpod_admin_dashboard/src/services/login_service.dart';
+import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 /// Lightweight customization for sidebar items.
 /// Allows customizing the label and icon for specific resources by their key.
@@ -182,9 +182,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
   late final admin_client.EndpointAdmin _adminEndpoint =
       _resolveAdminEndpoint(widget.client);
 
-  late final LoginService _loginService = LoginService(client: widget.client);
-
-  late final AuthController _authController = AuthController();
+  late final AuthController _authController =
+      AuthController(client: widget.client);
 
   late final AdminDashboardController _controller = AdminDashboardController(
     adminEndpoint: _adminEndpoint,
@@ -193,7 +192,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   @override
   void dispose() {
-    _authController.dispose();
+    _authController.removeListener(_onAuthStateChanged);
+    // Note: Don't dispose _authController here as it might be used elsewhere
     super.dispose();
   }
 
@@ -273,11 +273,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
   @override
   void initState() {
     super.initState();
-    // Load resources when authenticated
     _authController.addListener(_onAuthStateChanged);
   }
 
   void _onAuthStateChanged() {
+    print(
+        "_onAuthStateChanged called - isAuthenticated: ${_authController.isAuthenticated}, adminResponse: ${_authController.adminResponse}");
     if (_authController.isAuthenticated) {
       _controller.loadResources();
     }
@@ -308,7 +309,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   customFooterBuilder: widget.customFooterBuilder,
                 )
               : LoginScreen(
-                  loginService: _loginService,
                   authController: _authController,
                   title: widget.loginTitle ?? 'Serverpod Admin',
                   subtitle: widget.loginSubtitle,

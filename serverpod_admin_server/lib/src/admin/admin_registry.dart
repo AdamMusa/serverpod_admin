@@ -70,8 +70,20 @@ class AdminRegistry {
       List.unmodifiable(_entriesByKey.keys);
 
   /// Returns metadata for all registered entries.
-  List<AdminResource> get registeredResourceMetadata =>
-      registeredEntries.map((entry) => entry.metadata).toList(growable: false);
+  List<AdminResource> get registeredResourceMetadata {
+    final result = <AdminResource>[];
+    for (final entry in registeredEntries) {
+      try {
+        result.add(entry.metadata);
+      } catch (e, stackTrace) {
+        // If metadata generation fails for one entry, skip it but continue with others
+        // This prevents one failing entry from hiding all other resources
+        print('Error generating metadata for ${entry.type}: $e');
+        print(stackTrace);
+      }
+    }
+    return List.unmodifiable(result);
+  }
 
   /// Removes all registered entries. Primarily useful during hot-reload or when
   /// reconfiguring the module at runtime.

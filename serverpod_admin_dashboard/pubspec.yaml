@@ -13,6 +13,7 @@ dependencies:
   serverpod_admin_client:
     path: ../serverpod_admin_client
   # serverpod_admin_client: ^1.0.5
+  serverpod_auth_idp_flutter: ^3.0.1
 
 
 
