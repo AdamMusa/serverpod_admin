@@ -31,7 +31,7 @@ class ForeignKeyDropdown extends StatelessWidget {
     if (relatedResource == null) {
       // Resource not found, show disabled dropdown
       return DropdownButtonFormField<String>(
-        value: value,
+        initialValue: value,
         decoration: InputDecoration(
           labelText: column.name,
           hintText: 'Related resource not found',
@@ -43,7 +43,7 @@ class ForeignKeyDropdown extends StatelessWidget {
           disabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
-              color: theme.colorScheme.error.withOpacity(0.5),
+              color: theme.colorScheme.error.withValues(alpha: 0.5),
             ),
           ),
         ),
@@ -59,7 +59,7 @@ class ForeignKeyDropdown extends StatelessWidget {
     }
 
     return DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
       decoration: InputDecoration(
         labelText: column.name,
         hintText: 'Select ${column.name}',

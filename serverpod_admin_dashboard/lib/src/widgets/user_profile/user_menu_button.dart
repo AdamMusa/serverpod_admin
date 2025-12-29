@@ -86,7 +86,7 @@ class UserMenuButton extends StatelessWidget {
       if (i > 0 && menuItems[i].isDestructive) {
         popupItems.add(
           PopupMenuDivider(
-            color: theme.dividerColor.withOpacity(0.1),
+            color: theme.dividerColor.withValues(alpha: 0.1),
           ),
         );
       }

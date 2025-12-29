@@ -101,7 +101,7 @@ class _DefaultEditDialogState extends State<DefaultEditDialog> {
                 ),
                 border: Border(
                   bottom: BorderSide(
-                    color: theme.dividerColor.withOpacity(0.1),
+                    color: theme.dividerColor.withValues(alpha: 0.1),
                     width: 1,
                   ),
                 ),
@@ -199,7 +199,7 @@ class _DefaultEditDialogState extends State<DefaultEditDialog> {
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: theme.dividerColor.withOpacity(0.1),
+                    color: theme.dividerColor.withValues(alpha: 0.1),
                     width: 1,
                   ),
                 ),

@@ -22,7 +22,7 @@ class Footer extends StatelessWidget {
           Text(
             'Brought to you with love by ',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
           Text(

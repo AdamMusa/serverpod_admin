@@ -24,8 +24,8 @@ class RecordsErrorState extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    theme.colorScheme.errorContainer.withOpacity(0.4),
-                    theme.colorScheme.errorContainer.withOpacity(0.2),
+                    theme.colorScheme.errorContainer.withValues(alpha: 0.4),
+                    theme.colorScheme.errorContainer.withValues(alpha: 0.2),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -33,7 +33,7 @@ class RecordsErrorState extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: theme.colorScheme.error.withOpacity(0.1),
+                    color: theme.colorScheme.error.withValues(alpha: 0.1),
                     blurRadius: 20,
                     spreadRadius: 2,
                   ),
@@ -49,10 +49,10 @@ class RecordsErrorState extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               decoration: BoxDecoration(
-                color: theme.colorScheme.errorContainer.withOpacity(0.2),
+                color: theme.colorScheme.errorContainer.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: theme.colorScheme.error.withOpacity(0.3),
+                  color: theme.colorScheme.error.withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
@@ -87,7 +87,7 @@ class RecordsErrorState extends StatelessWidget {
               child: Text(
                 errorMessage,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.8),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,

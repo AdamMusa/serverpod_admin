@@ -63,7 +63,18 @@ jobs:
 
       - name: Analyze dashboard source
         working-directory: serverpod_admin_dashboard
-        run: flutter analyze
+        run: |
+          # Run analyze and filter out expected path dependency warning for monorepo
+          OUTPUT=$(flutter analyze 2>&1) || true
+          FILTERED=$(echo "$OUTPUT" | grep -v "Publishable packages can't have 'path' dependencies")
+          echo "$FILTERED"
+          # Count real issues (excluding path dependency warning)
+          REAL_ISSUES=$(echo "$FILTERED" | grep -cE "(error|warning|info) •" || echo "0")
+          if [ "$REAL_ISSUES" -gt "0" ]; then
+            echo "Found $REAL_ISSUES analysis issue(s)"
+            exit 1
+          fi
+          echo "Analysis passed (path dependency warning ignored for monorepo)"
 
   server_integration_tests:
     name: Server integration tests

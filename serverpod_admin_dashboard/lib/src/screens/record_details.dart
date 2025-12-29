@@ -29,7 +29,7 @@ class RecordDetails extends StatelessWidget {
         color: theme.scaffoldBackgroundColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: theme.dividerColor.withOpacity(0.1),
+          color: theme.dividerColor.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -45,7 +45,7 @@ class RecordDetails extends StatelessWidget {
               ),
               border: Border(
                 bottom: BorderSide(
-                  color: theme.dividerColor.withOpacity(0.1),
+                  color: theme.dividerColor.withValues(alpha: 0.1),
                   width: 1,
                 ),
               ),
@@ -188,7 +188,7 @@ class RecordDetails extends StatelessWidget {
       separatorBuilder: (context, index) => Divider(
         height: 1,
         thickness: 0.5,
-        color: theme.dividerColor.withOpacity(0.3),
+        color: theme.dividerColor.withValues(alpha: 0.3),
       ),
       itemBuilder: (context, index) {
         final column = columns[index];
@@ -212,7 +212,7 @@ class RecordDetails extends StatelessWidget {
                       size: 18,
                       color: isPrimary
                           ? theme.colorScheme.primary
-                          : theme.textTheme.bodyMedium?.color?.withOpacity(0.6),
+                          : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                     ),
                     const SizedBox(width: 8),
                     Flexible(
@@ -231,7 +231,7 @@ class RecordDetails extends StatelessWidget {
                         padding: EdgeInsets.zero,
                         visualDensity: VisualDensity.compact,
                         backgroundColor:
-                            theme.colorScheme.primary.withOpacity(0.1),
+                            theme.colorScheme.primary.withValues(alpha: 0.1),
                         labelStyle: TextStyle(
                           color: theme.colorScheme.primary,
                           fontSize: 10,
@@ -246,7 +246,7 @@ class RecordDetails extends StatelessWidget {
                         padding: EdgeInsets.zero,
                         visualDensity: VisualDensity.compact,
                         backgroundColor:
-                            theme.colorScheme.secondary.withOpacity(0.1),
+                            theme.colorScheme.secondary.withValues(alpha: 0.1),
                         labelStyle: TextStyle(
                           color: theme.colorScheme.secondary,
                           fontSize: 10,
@@ -263,7 +263,7 @@ class RecordDetails extends StatelessWidget {
                   isEmpty ? '(empty)' : formattedValue,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: isEmpty
-                        ? theme.textTheme.bodyMedium?.color?.withOpacity(0.5)
+                        ? theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5)
                         : null,
                   ),
                 ),

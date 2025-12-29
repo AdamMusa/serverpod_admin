@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:serverpod_admin_client/serverpod_admin_client.dart'
-    hide AdminResource;
-import 'package:serverpod_admin_client/serverpod_admin_client.dart'
     as admin_client;
 import 'package:serverpod_admin_dashboard/src/controller/admin_dashboard.dart';
 import 'package:serverpod_admin_dashboard/src/controller/auth_controller.dart';

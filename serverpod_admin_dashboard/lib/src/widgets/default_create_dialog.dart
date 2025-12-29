@@ -82,7 +82,7 @@ class _DefaultCreateDialogState extends State<DefaultCreateDialog> {
                 ),
                 border: Border(
                   bottom: BorderSide(
-                    color: theme.dividerColor.withOpacity(0.1),
+                    color: theme.dividerColor.withValues(alpha: 0.1),
                     width: 1,
                   ),
                 ),
@@ -180,7 +180,7 @@ class _DefaultCreateDialogState extends State<DefaultCreateDialog> {
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: theme.dividerColor.withOpacity(0.1),
+                    color: theme.dividerColor.withValues(alpha: 0.1),
                     width: 1,
                   ),
                 ),

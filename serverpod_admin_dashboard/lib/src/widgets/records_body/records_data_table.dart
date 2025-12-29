@@ -32,7 +32,7 @@ class RecordsDataTable extends StatelessWidget {
           fontWeight: FontWeight.w700,
         ),
         headingRowColor: WidgetStateProperty.resolveWith(
-          (states) => theme.dividerColor.withOpacity(0.05),
+          (states) => theme.dividerColor.withValues(alpha: 0.05),
         ),
         dataTextStyle: theme.textTheme.bodyMedium,
         dividerThickness: 0.6,

@@ -69,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(
                     widget.subtitle!,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -82,7 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: isDark ? const Color(0xFF181B2C) : Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: theme.dividerColor.withOpacity(0.1),
+                      color: theme.dividerColor.withValues(alpha: 0.1),
                       width: 1,
                     ),
                   ),

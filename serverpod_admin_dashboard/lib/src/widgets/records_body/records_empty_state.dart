@@ -30,8 +30,8 @@ class RecordsEmptyState extends StatelessWidget {
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 color: isSearchResult
-                    ? theme.colorScheme.secondaryContainer.withOpacity(0.3)
-                    : theme.colorScheme.primaryContainer.withOpacity(0.3),
+                    ? theme.colorScheme.secondaryContainer.withValues(alpha: 0.3)
+                    : theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -58,7 +58,7 @@ class RecordsEmptyState extends StatelessWidget {
                   ? 'Try adjusting your search query to find what you\'re looking for.'
                   : 'This table is empty. Create your first record to get started.',
               style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
               textAlign: TextAlign.center,
             ),
@@ -79,13 +79,13 @@ class RecordsEmptyState extends StatelessWidget {
                     Icon(
                       Icons.info_outline,
                       size: 18,
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       'Searching for: "$searchQuery"',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
                   ],

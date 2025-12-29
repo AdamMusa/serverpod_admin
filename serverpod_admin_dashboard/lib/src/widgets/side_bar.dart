@@ -49,7 +49,7 @@ class Sidebar extends StatelessWidget {
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color: theme.dividerColor.withOpacity(0.1),
+                  color: theme.dividerColor.withValues(alpha: 0.1),
                   width: 1,
                 ),
               ),
@@ -136,7 +136,7 @@ class Sidebar extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               color: isSelected
-                  ? theme.colorScheme.primary.withOpacity(0.08)
+                  ? theme.colorScheme.primary.withValues(alpha: 0.08)
                   : Colors.transparent,
               border: Border(
                 left: BorderSide(
@@ -156,7 +156,7 @@ class Sidebar extends StatelessWidget {
                     size: 20,
                     color: isSelected
                         ? theme.colorScheme.primary
-                        : theme.iconTheme.color?.withOpacity(0.6),
+                        : theme.iconTheme.color?.withValues(alpha: 0.6),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -191,21 +191,21 @@ class Sidebar extends StatelessWidget {
             Icon(
               Icons.inbox_outlined,
               size: 48,
-              color: theme.iconTheme.color?.withOpacity(0.3),
+              color: theme.iconTheme.color?.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 16),
             Text(
               'No Resources',
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w500,
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'Register resources in your Serverpod server',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.5),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
               textAlign: TextAlign.center,
             ),

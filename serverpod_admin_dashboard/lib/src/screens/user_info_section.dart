@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:serverpod_admin_client/serverpod_admin_client.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
 import '../widgets/user_profile/dialogs/coming_soon_dialog.dart';
@@ -65,7 +64,7 @@ class UserInfoSection extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(
           top: BorderSide(
-            color: theme.dividerColor.withOpacity(0.1),
+            color: theme.dividerColor.withValues(alpha: 0.1),
             width: 1,
           ),
         ),
