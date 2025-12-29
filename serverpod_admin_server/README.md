@@ -10,6 +10,10 @@ You've built an amazing Serverpod app with powerful endpoints, robust models, an
 
 ## 🏠 Admin Dashboard Overview
 
+Secure login screen for admin users. Only users with the `serverpod.admin` scope can access the dashboard.
+
+![Admin Login](https://raw.githubusercontent.com/AdamMusa/serverpod_admin/main/images/login.png)
+
 Browse and manage all your data with a beautiful, intuitive interface.
 
 ![Admin Dashboard](https://raw.githubusercontent.com/AdamMusa/serverpod_admin/main/images/posts.png)
@@ -27,7 +31,6 @@ Edit record with a clean, user-friendly interface.
 
 Delete record with a clean, user-friendly interface.
 ![Admin Dashboard](https://raw.githubusercontent.com/AdamMusa/serverpod_admin/main/images/delete.png)
-
 
 View detailed information about any record.
 
@@ -102,7 +105,7 @@ void registerAdminModule() {
     registry.register<Post>();
     registry.register<Person>();
     registry.register<Comment>();
-    registry.register<Comment>();
+    registry.register<Setting>();
     // Add any model you want to manage!
   });
 }
@@ -110,18 +113,103 @@ void registerAdminModule() {
 
 **Call `registerAdminModule()` in your `server.dart` file just after `pod.start()`**
 
+### Setting Up Authentication
+
+Serverpod Admin uses `serverpod_auth_idp` for authentication. Make sure you have it configured in your server:
+
+```dart
+pod.initializeAuthServices(
+  tokenManagerBuilders: [
+    JwtConfigFromPasswords(),
+  ],
+  identityProviderBuilders: [
+    EmailIdpConfigFromPasswords(
+      sendRegistrationVerificationCode: _sendRegistrationCode,
+      sendPasswordResetVerificationCode: _sendPasswordResetCode,
+    ),
+  ],
+);
+```
+
+### Creating an Admin User
+
+To access the admin panel, users must have the `serverpod.admin` scope. Here's how to create an admin user:
+
+```dart
+import 'package:serverpod/serverpod.dart';
+import 'package:serverpod_auth_idp_server/core.dart';
+import 'package:serverpod_auth_idp_server/providers/email.dart';
+
+Future<void> findOrCreateAndLinkEmail() async {
+  // Create a manual session for internal work
+  var session = await Serverpod.instance.createSession();
+
+  // Use a nullable ID or UuidValue to track the target user
+  UuidValue? authUserId;
+
+  try {
+    final emailAdmin = AuthServices.instance.emailIdp.admin;
+    const email = 'admin@example.com';
+    const password = 'your-secure-password';
+
+    // 1. Check if the email account already exists
+    final emailAccount = await emailAdmin.findAccount(
+      session,
+      email: email,
+    );
+
+    if (emailAccount == null) {
+      // 2. Create a new AuthUser if no account exists
+      final authUser = await AuthServices.instance.authUsers.create(session);
+      authUserId = authUser.id;
+
+      // 3. Create the email authentication for the new user
+      await emailAdmin.createEmailAuthentication(
+        session,
+        authUserId: authUserId,
+        email: email,
+        password: password,
+      );
+    } else {
+      // If account exists, get the ID from the existing record
+      authUserId = emailAccount.authUserId;
+    }
+
+    // 4. Update the user to have admin scopes using the identified ID
+    await AuthServices.instance.authUsers.update(
+      session,
+      authUserId: authUserId,
+      scopes: {Scope.admin},
+    );
+
+    print("User $email updated to admin successfully.");
+  } catch (e) {
+    print("Error creating internal admin: $e");
+  } finally {
+    // IMPORTANT: Always close manual sessions to prevent memory leaks
+    await session.close();
+  }
+}
+```
+
+**Call `findOrCreateAndLinkEmail()` in your `server.dart` file after `pod.start()` to create your first admin user.**
+
 ### Using the Admin Dashboard (Flutter)
 
 ```dart
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   client = Client('http://localhost:8080/')
-    ..connectivityMonitor = FlutterConnectivityMonitor();
+    ..connectivityMonitor = FlutterConnectivityMonitor()
+    ..authSessionManager = FlutterAuthSessionManager();
+  client.auth.initialize();
   runApp(AdminDashboard(client: client));
 }
 ```
 
-**That's it!** You now have a fully working admin panel for your Serverpod app! 🚀🎉
+**That's it!** You now have a fully working admin panel with authentication for your Serverpod app! 🚀🎉
+
+The admin dashboard will automatically show a login screen for unauthenticated users. Only users with the `serverpod.admin` scope can access the admin panel.
 
 ---
 
@@ -352,12 +440,35 @@ Widget CustomEditDialog({
 
 ---
 
+## 🔒 Security & Access Control
+
+### Role-Based Access Control
+
+Serverpod Admin implements strict role-based access control:
+
+- ✅ **Admin-Only Access** – By default, **all access requires the `serverpod.admin` scope**
+- ✅ **Secure by Default** – Without admin privileges, users cannot access any part of the admin panel
+- ✅ **Authentication Required** – The dashboard automatically shows a login screen for unauthenticated users
+- ✅ **Scope Validation** – Users must have the `serverpod.admin` scope to access any admin functionality
+
+**Important:** Without the `serverpod.admin` scope, users will see an error message and cannot access the admin panel, even if they successfully authenticate with email/password.
+
+### Login Flow
+
+1. User enters email and password on the login screen
+2. Authentication is handled via `serverpod_auth_idp` (EmailAuthController)
+3. Upon successful authentication, the system checks for the `serverpod.admin` scope
+4. If the user has admin scope, they're granted access to the dashboard
+5. If the user lacks admin scope, they see an error: "User does not have admin privileges"
+
+---
+
 ## 🔮 What's Next?
 
 This is a **proof of concept** that's already stable and production-ready. We're actively working on:
 
 - ✅ **Export/Import** – Data portability built-in
-- ✅ **Role-Based Access** – Secure your admin panel
+- ✅ **Role-Based Access** – Secure your admin panel (✅ **Implemented**)
 - ✅ **Comprehensive Testing** – Ensuring reliability
 
 ---

@@ -17,7 +17,6 @@ class AuthController extends ChangeNotifier {
   bool _isLoading = false;
   bool _obscurePassword = true;
   String? _errorMessage;
-  AdminResponse? _adminResponse;
 
   // Authentication state
   bool get isAuthenticated => _isAuthenticated;
@@ -26,7 +25,6 @@ class AuthController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get obscurePassword => _obscurePassword;
   String? get errorMessage => _errorMessage;
-  AdminResponse? get adminResponse => _adminResponse;
 
   /// Handles the login process using EmailAuthController.
   /// Validates the form and authenticates the user.
@@ -61,17 +59,17 @@ class AuthController extends ChangeNotifier {
       controller.passwordController.text = passwordController.text;
       await controller.login();
 
-      // If authentication was successful, authenticate() will be called
-      // which sets _isAuthenticated and notifies listeners
-      if (_isAuthenticated) {
+      // authenticate() is called from onAuthenticated callback if successful
+      // and it already handles setting _isLoading and notifying listeners
+      // So we only need to handle the case where login completed but
+      // authentication failed (no admin scope)
+      if (!_isAuthenticated && _errorMessage == null) {
+        // Login completed but authenticate() wasn't called (shouldn't happen)
         _isLoading = false;
         notifyListeners();
-        return true;
       }
 
-      _isLoading = false;
-      notifyListeners();
-      return false;
+      return _isAuthenticated;
     } catch (e) {
       _errorMessage = e.toString();
       _isLoading = false;
@@ -87,10 +85,12 @@ class AuthController extends ChangeNotifier {
     if (user != null && user.scopeNames.contains('serverpod.admin')) {
       _isAuthenticated = true;
       _errorMessage = null;
+      _isLoading = false;
       notifyListeners();
     } else {
       _errorMessage = 'User does not have admin privileges';
       _isAuthenticated = false;
+      _isLoading = false;
       notifyListeners();
     }
   }

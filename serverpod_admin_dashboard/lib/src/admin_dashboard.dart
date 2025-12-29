@@ -278,7 +278,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   void _onAuthStateChanged() {
     print(
-        "_onAuthStateChanged called - isAuthenticated: ${_authController.isAuthenticated}, adminResponse: ${_authController.adminResponse}");
+        "_onAuthStateChanged called - isAuthenticated: ${_authController.isAuthenticated}}");
     if (_authController.isAuthenticated) {
       _controller.loadResources();
     }
