@@ -99,7 +99,7 @@
     },
     {
       "name": "serverpod_auth_idp_flutter",
-      "version": "3.1.1",
+      "version": "3.2.2",
       "dependencies": [
         "animations",
         "email_validator",
@@ -111,7 +111,6 @@
         "google_sign_in_web",
         "pinput",
         "provider",
-        "serverpod_auth_core_client",
         "serverpod_auth_core_flutter",
         "serverpod_auth_idp_client",
         "sign_in_with_apple"
@@ -126,7 +125,7 @@
     },
     {
       "name": "serverpod_client",
-      "version": "3.1.1",
+      "version": "3.2.2",
       "dependencies": [
         "collection",
         "http",
@@ -236,7 +235,7 @@
     },
     {
       "name": "meta",
-      "version": "1.16.0",
+      "version": "1.17.0",
       "dependencies": []
     },
     {
@@ -417,7 +416,7 @@
     },
     {
       "name": "test_api",
-      "version": "0.7.6",
+      "version": "0.7.7",
       "dependencies": [
         "async",
         "boolean_selector",
@@ -516,7 +515,7 @@
     },
     {
       "name": "serverpod_auth_idp_client",
-      "version": "3.1.1",
+      "version": "3.2.2",
       "dependencies": [
         "serverpod_auth_core_client",
         "serverpod_client"
@@ -524,21 +523,13 @@
     },
     {
       "name": "serverpod_auth_core_flutter",
-      "version": "3.1.1",
+      "version": "3.2.2",
       "dependencies": [
         "clock",
         "flutter",
         "flutter_secure_storage",
         "meta",
         "serverpod_auth_core_client"
-      ]
-    },
-    {
-      "name": "serverpod_auth_core_client",
-      "version": "3.1.1",
-      "dependencies": [
-        "clock",
-        "serverpod_client"
       ]
     },
     {
@@ -631,7 +622,7 @@
     },
     {
       "name": "serverpod_serialization",
-      "version": "3.1.1",
+      "version": "3.2.2",
       "dependencies": [
         "uuid",
         "yaml"
@@ -791,6 +782,14 @@
         "flutter",
         "meta",
         "plugin_platform_interface"
+      ]
+    },
+    {
+      "name": "serverpod_auth_core_client",
+      "version": "3.2.2",
+      "dependencies": [
+        "clock",
+        "serverpod_client"
       ]
     },
     {
