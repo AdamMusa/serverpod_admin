@@ -14,6 +14,9 @@ dependencies:
     path: ../serverpod_admin_client
   # serverpod_admin_client: ^1.0.6
   serverpod_auth_idp_flutter: ^3.1.1
+  csv: ^8.0.0
+  excel: ^4.0.6
+  file_selector: ^1.1.0
 
 
 

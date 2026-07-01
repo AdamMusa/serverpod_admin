@@ -153,6 +153,14 @@ class _HomeState extends State<Home> {
       onSearchChanged: widget.controller.setSearchQuery,
       onClearSearch: widget.controller.clearSearch,
       onAdd: () => operations.showCreateDialog(selectedResource),
+      onImport: () => operations.importRecords(selectedResource),
+      onExport: (format) {
+        operations.exportRecords(
+          selectedResource,
+          widget.controller.filteredRecords,
+          format,
+        );
+      },
       onEdit: (record) => operations.showEditDialog(selectedResource, record),
       onDelete: (record) =>
           operations.showDeleteConfirmation(selectedResource, record),

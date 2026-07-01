@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
+import 'package:serverpod_admin_dashboard/src/helpers/tabular_data.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/records_body/records_body.dart';
 
 /// Widget that displays a resource's records with search, add, edit, and delete functionality.
@@ -17,6 +18,8 @@ class RecordsView extends StatefulWidget {
     this.searchQuery,
     this.onSearchChanged,
     this.onClearSearch,
+    this.onImport,
+    this.onExport,
     super.key,
   });
 
@@ -32,6 +35,8 @@ class RecordsView extends StatefulWidget {
   final String? searchQuery;
   final void Function(String)? onSearchChanged;
   final VoidCallback? onClearSearch;
+  final VoidCallback? onImport;
+  final void Function(TabularFileFormat format)? onExport;
 
   @override
   State<RecordsView> createState() => _RecordsViewState();
@@ -153,6 +158,42 @@ class _RecordsViewState extends State<RecordsView> {
           _buildSearchInput(context),
           const SizedBox(width: 12),
         ],
+        IconButton.filledTonal(
+          tooltip: 'Import CSV or XLSX',
+          onPressed: widget.onImport,
+          icon: const Icon(Icons.upload_file_outlined),
+        ),
+        const SizedBox(width: 8),
+        MenuAnchor(
+          builder: (context, controller, child) {
+            return IconButton.filledTonal(
+              tooltip: 'Export records',
+              onPressed: widget.records.isEmpty
+                  ? null
+                  : () {
+                      if (controller.isOpen) {
+                        controller.close();
+                      } else {
+                        controller.open();
+                      }
+                    },
+              icon: const Icon(Icons.download_outlined),
+            );
+          },
+          menuChildren: [
+            MenuItemButton(
+              leadingIcon: const Icon(Icons.table_chart_outlined),
+              onPressed: () => widget.onExport?.call(TabularFileFormat.csv),
+              child: const Text('CSV'),
+            ),
+            MenuItemButton(
+              leadingIcon: const Icon(Icons.grid_on_outlined),
+              onPressed: () => widget.onExport?.call(TabularFileFormat.xlsx),
+              child: const Text('XLSX'),
+            ),
+          ],
+        ),
+        const SizedBox(width: 12),
         _buildAddRecordButton(context),
       ],
     );
@@ -255,7 +296,8 @@ class _RecordsViewState extends State<RecordsView> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                color:
+                    theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
                 shape: BoxShape.circle,
               ),
               child: Icon(

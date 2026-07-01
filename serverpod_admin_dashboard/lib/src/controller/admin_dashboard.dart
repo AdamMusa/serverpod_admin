@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:serverpod_admin_client/serverpod_admin_client.dart'
     as admin_client;
 import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
+import 'package:serverpod_admin_dashboard/src/helpers/tabular_data.dart';
 
 /// Controller holding all shared admin dashboard state and behavior.
 class AdminDashboardController extends ChangeNotifier {
@@ -214,6 +215,39 @@ class AdminDashboardController extends ChangeNotifier {
     await loadRecords(resource);
   }
 
+  Future<TabularImportResult> importRecords(
+    AdminResource resource,
+    List<Map<String, String>> rows,
+  ) async {
+    var created = 0;
+    var updated = 0;
+    var skipped = 0;
+
+    for (final row in rows) {
+      final payload = _cleanImportRow(resource, row);
+      if (payload.isEmpty) {
+        skipped++;
+        continue;
+      }
+
+      final primaryValue = resolvePrimaryKeyValue(resource, payload);
+      if (primaryValue == null) {
+        await adminEndpoint.create(resource.key, payload);
+        created++;
+      } else {
+        await adminEndpoint.update(resource.key, payload);
+        updated++;
+      }
+    }
+
+    await loadRecords(resource);
+    return TabularImportResult(
+      created: created,
+      updated: updated,
+      skipped: skipped,
+    );
+  }
+
   /// Resolves the primary key value from a record.
   String? resolvePrimaryKeyValue(
     AdminResource resource,
@@ -231,5 +265,22 @@ class AdminDashboardController extends ChangeNotifier {
     final raw = record[primaryColumn.name];
     if (raw == null || raw.isEmpty) return null;
     return raw;
+  }
+
+  Map<String, String> _cleanImportRow(
+    AdminResource resource,
+    Map<String, String> row,
+  ) {
+    final columnNames = resource.columns.map((column) => column.name).toSet();
+    final payload = <String, String>{};
+
+    for (final entry in row.entries) {
+      final key = entry.key.trim();
+      final value = entry.value.trim();
+      if (!columnNames.contains(key) || value.isEmpty) continue;
+      payload[key] = value;
+    }
+
+    return payload;
   }
 }

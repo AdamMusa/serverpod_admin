@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:serverpod_admin_dashboard/src/admin_dashboard.dart';
 import 'package:serverpod_admin_dashboard/src/controller/admin_dashboard.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
+import 'package:serverpod_admin_dashboard/src/helpers/tabular_data.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/default_create_dialog.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/default_delete_dialog.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/default_edit_dialog.dart';
@@ -139,6 +140,57 @@ class HomeOperations {
       if (confirmed == true) {
         // Deletion handled in the dialog's onConfirm callback
       }
+    }
+  }
+
+  Future<void> importRecords(AdminResource resource) async {
+    try {
+      final file = await TabularDataHelper.pickImportFile();
+      if (file == null) return;
+
+      final result = await controller.importRecords(resource, file.rows);
+      if (!context.mounted) return;
+
+      _showSnackBar(
+        'Imported ${result.imported} ${resource.tableName} rows '
+        '(${result.created} created, ${result.updated} updated, '
+        '${result.skipped} skipped).',
+        isError: false,
+      );
+    } catch (error) {
+      debugPrint('Failed to import ${resource.key}: $error');
+      if (!context.mounted) return;
+      _showSnackBar(
+        'Failed to import ${resource.tableName}: $error',
+        isError: true,
+      );
+    }
+  }
+
+  Future<void> exportRecords(
+    AdminResource resource,
+    List<Map<String, String>> records,
+    TabularFileFormat format,
+  ) async {
+    try {
+      final saved = await TabularDataHelper.saveExportFile(
+        resource: resource,
+        records: records,
+        format: format,
+      );
+      if (!saved || !context.mounted) return;
+
+      _showSnackBar(
+        '${resource.tableName} exported as ${format.extension.toUpperCase()}.',
+        isError: false,
+      );
+    } catch (error) {
+      debugPrint('Failed to export ${resource.key}: $error');
+      if (!context.mounted) return;
+      _showSnackBar(
+        'Failed to export ${resource.tableName}: $error',
+        isError: true,
+      );
     }
   }
 
