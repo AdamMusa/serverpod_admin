@@ -4,6 +4,7 @@ import 'package:serverpod_admin_dashboard/src/controller/admin_dashboard.dart';
 import 'package:serverpod_admin_dashboard/src/screens/home_operations.dart';
 import 'package:serverpod_admin_dashboard/src/screens/record_details.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/footer.dart';
+import 'package:serverpod_admin_dashboard/src/widgets/jobs_view.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/records_view.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/side_bar.dart';
 import 'package:serverpod_admin_client/serverpod_admin_client.dart';
@@ -139,6 +140,20 @@ class _HomeState extends State<Home> {
         context,
         widget.controller,
         operations,
+      );
+    }
+
+    if (selectedResource.key == serverpodJobsResourceKey) {
+      return JobsView(
+        resource: selectedResource,
+        records: widget.controller.records,
+        isLoading: widget.controller.isRecordsLoading,
+        errorMessage: widget.controller.recordsError,
+        onView: (record) =>
+            operations.showDetailsPage(selectedResource, record),
+        onEdit: (record) => operations.showEditDialog(selectedResource, record),
+        onDiscard: (record) =>
+            operations.showDeleteConfirmation(selectedResource, record),
       );
     }
 
