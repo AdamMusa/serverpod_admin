@@ -138,54 +138,22 @@ To access the admin panel, users must have the `serverpod.admin` scope. Here's h
 ```dart
 import 'dart:io';
 
-import 'package:serverpod/serverpod.dart';
-import 'package:serverpod_auth_idp_server/core.dart';
-import 'package:serverpod_auth_idp_server/providers/email.dart';
+import 'package:serverpod_admin_server/serverpod_admin_server.dart';
 
 Future<void> findOrCreateAndLinkEmail() async {
-  final session = await Serverpod.instance.createSession();
+  final email = Platform.environment['SERVERPOD_ADMIN_EMAIL'];
+  final password = Platform.environment['SERVERPOD_ADMIN_PASSWORD'];
 
-  try {
-    final emailAdmin = AuthServices.instance.emailIdp.admin;
-    final email = Platform.environment['SERVERPOD_ADMIN_EMAIL'];
-    final password = Platform.environment['SERVERPOD_ADMIN_PASSWORD'];
-
-    if (email == null || password == null) {
-      throw StateError(
-        'Set SERVERPOD_ADMIN_EMAIL and SERVERPOD_ADMIN_PASSWORD first.',
-      );
-    }
-
-    final emailAccount = await emailAdmin.findAccount(
-      session,
-      email: email,
+  if (email == null || password == null) {
+    throw StateError(
+      'Set SERVERPOD_ADMIN_EMAIL and SERVERPOD_ADMIN_PASSWORD first.',
     );
-
-    final authUserId = emailAccount?.authUserId ??
-        (await AuthServices.instance.authUsers.create(session)).id;
-
-    if (emailAccount == null) {
-      await emailAdmin.createEmailAuthentication(
-        session,
-        authUserId: authUserId,
-        email: email,
-        password: password,
-      );
-    }
-
-    await AuthServices.instance.authUsers.update(
-      session,
-      authUserId: authUserId,
-      scopes: {Scope.admin},
-    );
-
-    print("User $email updated to admin successfully.");
-  } catch (e) {
-    print("Error creating internal admin: $e");
-  } finally {
-    // IMPORTANT: Always close manual sessions to prevent memory leaks
-    await session.close();
   }
+
+  await AdminUser.create(
+    email: email,
+    password: password,
+  );
 }
 ```
 

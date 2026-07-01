@@ -1,46 +1,7 @@
 import 'dart:io';
 
 import 'package:serverpod/serverpod.dart';
-import 'package:serverpod_auth_idp_server/core.dart';
-import 'package:serverpod_auth_idp_server/providers/email.dart';
-
-Future<void> findOrCreateAndLinkEmail({
-  required String email,
-  required String password,
-}) async {
-  final session = await Serverpod.instance.createSession();
-
-  try {
-    final emailAdmin = AuthServices.instance.emailIdp.admin;
-    final existingAccount = await emailAdmin.findAccount(
-      session,
-      email: email,
-    );
-
-    final authUserId =
-        existingAccount?.authUserId ??
-        (await AuthServices.instance.authUsers.create(session)).id;
-
-    if (existingAccount == null) {
-      await emailAdmin.createEmailAuthentication(
-        session,
-        authUserId: authUserId,
-        email: email,
-        password: password,
-      );
-    }
-
-    await AuthServices.instance.authUsers.update(
-      session,
-      authUserId: authUserId,
-      scopes: {Scope.admin},
-    );
-
-    stdout.writeln('Admin user ready: $email');
-  } finally {
-    await session.close();
-  }
-}
+import 'package:serverpod_admin_server/serverpod_admin_server.dart';
 
 Future<void> createDevAdminUserFromEnvironment() async {
   if (Serverpod.instance.runMode != 'development') return;
@@ -58,8 +19,9 @@ Future<void> createDevAdminUserFromEnvironment() async {
     return;
   }
 
-  await findOrCreateAndLinkEmail(
+  await AdminUser.create(
     email: email.trim(),
     password: password,
   );
+  stdout.writeln('Admin user ready: ${email.trim()}');
 }
