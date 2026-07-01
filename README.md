@@ -136,46 +136,43 @@ pod.initializeAuthServices(
 To access the admin panel, users must have the `serverpod.admin` scope. Here's how to create an admin user:
 
 ```dart
+import 'dart:io';
+
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
 
 Future<void> findOrCreateAndLinkEmail() async {
-  // Create a manual session for internal work
-  var session = await Serverpod.instance.createSession();
-
-  // Use a nullable ID or UuidValue to track the target user
-  UuidValue? authUserId;
+  final session = await Serverpod.instance.createSession();
 
   try {
     final emailAdmin = AuthServices.instance.emailIdp.admin;
-    const email = 'admin@example.com';
-    const password = 'your-secure-password';
+    final email = Platform.environment['SERVERPOD_ADMIN_EMAIL'];
+    final password = Platform.environment['SERVERPOD_ADMIN_PASSWORD'];
 
-    // 1. Check if the email account already exists
+    if (email == null || password == null) {
+      throw StateError(
+        'Set SERVERPOD_ADMIN_EMAIL and SERVERPOD_ADMIN_PASSWORD first.',
+      );
+    }
+
     final emailAccount = await emailAdmin.findAccount(
       session,
       email: email,
     );
 
-    if (emailAccount == null) {
-      // 2. Create a new AuthUser if no account exists
-      final authUser = await AuthServices.instance.authUsers.create(session);
-      authUserId = authUser.id;
+    final authUserId = emailAccount?.authUserId ??
+        (await AuthServices.instance.authUsers.create(session)).id;
 
-      // 3. Create the email authentication for the new user
+    if (emailAccount == null) {
       await emailAdmin.createEmailAuthentication(
         session,
         authUserId: authUserId,
         email: email,
         password: password,
       );
-    } else {
-      // If account exists, get the ID from the existing record
-      authUserId = emailAccount.authUserId;
     }
 
-    // 4. Update the user to have admin scopes using the identified ID
     await AuthServices.instance.authUsers.update(
       session,
       authUserId: authUserId,
@@ -192,7 +189,7 @@ Future<void> findOrCreateAndLinkEmail() async {
 }
 ```
 
-**Call `findOrCreateAndLinkEmail()` in your `server.dart` file after `pod.start()` to create your first admin user.**
+**Call `findOrCreateAndLinkEmail()` in your `server.dart` file after `pod.start()` to create your first admin user. Keep this as a development/bootstrap helper, and remove or guard it once your admin user exists.**
 
 ### Using the Admin Dashboard (Flutter)
 

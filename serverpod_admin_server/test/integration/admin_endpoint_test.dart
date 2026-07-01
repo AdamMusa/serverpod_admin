@@ -169,6 +169,30 @@ void main() {
       ),
     );
 
+    final nonAdminSessionBuilder = sessionBuilder.copyWith(
+      authentication: AuthenticationOverride.authenticationInfo(
+        '00000000-0000-0000-0000-000000000002',
+        {},
+      ),
+    );
+
+    group('authorization', () {
+      test('should reject unauthenticated sessions', () async {
+        expect(
+          () => endpoints.admin.resources(sessionBuilder),
+          throwsA(anything),
+        );
+      });
+
+      test('should reject authenticated sessions without admin scope',
+          () async {
+        expect(
+          () => endpoints.admin.resources(nonAdminSessionBuilder),
+          throwsA(anything),
+        );
+      });
+    });
+
     group('resources', () {
       test('should return list of registered resources', () async {
         final resources =

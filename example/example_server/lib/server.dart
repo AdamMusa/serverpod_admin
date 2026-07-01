@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:example_server/src/admin/admin.dart';
+import 'package:example_server/src/admin/dev_admin_user.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
@@ -43,9 +44,7 @@ void run(List<String> args) async {
   // Start the server.
   await pod.start();
   registerAdminModule();
-  // await findOrCreateAndLinkEmail();
-
-  // await createAdminUser();
+  await createDevAdminUserFromEnvironment();
 }
 
 void _sendRegistrationCode(
@@ -70,54 +69,4 @@ void _sendPasswordResetCode(
   // NOTE: Here you call your mail service to send the verification code to
   // the user. For testing, we will just log the verification code.
   session.log('[EmailIdp] Password reset code ($email): $verificationCode');
-}
-
-Future<void> findOrCreateAndLinkEmail() async {
-  // Create a manual session for internal work
-  var session = await Serverpod.instance.createSession();
-
-  // Use a nullable ID or UuidValue to track the target user
-  UuidValue? authUserId;
-
-  try {
-    final emailAdmin = AuthServices.instance.emailIdp.admin;
-    const email = 'adammusaaly@gmail.com';
-    const password = 'Adaforlan';
-
-    // 1. Check if the email account already exists
-    final emailAccount = await emailAdmin.findAccount(
-      session,
-      email: email,
-    );
-
-    if (emailAccount == null) {
-      // 2. Create a new AuthUser if no account exists
-      final authUser = await AuthServices.instance.authUsers.create(session);
-      authUserId = authUser.id;
-
-      // 3. Create the email authentication for the new user
-      await emailAdmin.createEmailAuthentication(
-        session,
-        authUserId: authUserId,
-        email: email,
-        password: password,
-      );
-    } else {
-      // If account exists, get the ID from the existing record
-      authUserId = emailAccount.authUserId;
-    }
-
-    // 4. Update the user to have admin scopes using the identified ID
-    await AuthServices.instance.authUsers.update(
-      session,
-      authUserId: authUserId,
-      scopes: {Scope.admin},
-    );
-    print("User $email updated to admin successfully.");
-  } catch (e) {
-    print("Error creating internal admin: $e");
-  } finally {
-    // IMPORTANT: Always close manual sessions to prevent memory leaks
-    await session.close();
-  }
 }
