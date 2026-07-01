@@ -445,10 +445,26 @@ packages:
     dependency: transitive
     description:
       name: relic
-      sha256: "400bc37b0ee5f8d02c911fb4213a5f3cb3f39496fc806c81f22ad25f1930bd15"
+      sha256: d917b188dd1b6838c630d1904a1e26b040e6647406f2aab01b10fdf0ca051c12
       url: "https://pub.dev"
     source: hosted
-    version: "0.14.0"
+    version: "1.2.0"
+  relic_core:
+    dependency: transitive
+    description:
+      name: relic_core
+      sha256: c2f7638d56fdf144a035d17eb8e93fb30fe53bd105fd81c31393f8be4f43ecdc
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.0"
+  relic_io:
+    dependency: transitive
+    description:
+      name: relic_io
+      sha256: d64a9f309943200ec7a45b2a127cbc5abf4dd6603159a179396d66b932a15f1f
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.0"
   retry:
     dependency: transitive
     description:
@@ -461,10 +477,10 @@ packages:
     dependency: "direct main"
     description:
       name: serverpod
-      sha256: "01036b06059934595e4bb7d7865b0ece9bf58511eaf9d4f475eb124b175a5a27"
+      sha256: b3399c5538199ab8ff239acaacdc8cf872b40948ff0a15ed1c4cdbc6cf4b1d85
       url: "https://pub.dev"
     source: hosted
-    version: "3.1.1"
+    version: "3.4.10"
   serverpod_admin_server:
     dependency: "direct main"
     description:
@@ -476,50 +492,50 @@ packages:
     dependency: transitive
     description:
       name: serverpod_auth_core_server
-      sha256: d4dcb01ebbb733139652aa6602e044ea75f835c3572cca05bb124e6d903459e0
+      sha256: bbade09879b162168618820e6963dc9695df0dcc2589e05039e48fc8292e3aef
       url: "https://pub.dev"
     source: hosted
-    version: "3.1.1"
+    version: "3.4.10"
   serverpod_auth_idp_server:
     dependency: "direct main"
     description:
       name: serverpod_auth_idp_server
-      sha256: d5170b61e362f92ed28f701c548a6fdca22f03135bfcf35e950233c2f07beec5
+      sha256: a9409d032a66e6974d9d90c56c41d8ab4be3ef099a65eb9baae305e1dd809ec1
       url: "https://pub.dev"
     source: hosted
-    version: "3.1.1"
+    version: "3.4.10"
   serverpod_lints:
     dependency: transitive
     description:
       name: serverpod_lints
-      sha256: "45d67a8314e6b325096679ef4626d2c5d2cc1a70abb1b4005c6fcec49a2c14be"
+      sha256: "679114a37782644052ac67b795407a21e63cb72bbf29bcd8de3f8d5e8b0d5753"
       url: "https://pub.dev"
     source: hosted
-    version: "3.1.1"
+    version: "3.4.10"
   serverpod_serialization:
     dependency: transitive
     description:
       name: serverpod_serialization
-      sha256: b1d17f55c5b0c7b44bf3dbc1c9525307560a6a5333c0947b45dedcea3e7fe822
+      sha256: cea9464a28adcdba861ba5bf481d6bde59b14b6d3bd6c9df2f18794065f37951
       url: "https://pub.dev"
     source: hosted
-    version: "3.1.1"
+    version: "3.4.10"
   serverpod_shared:
     dependency: transitive
     description:
       name: serverpod_shared
-      sha256: "87b765057e44801fc4c908ac124faa4fd2cccde4738a3c298effed59990c897f"
+      sha256: "7dedc2cc971903bcca691cd582a62f25aca1e79d871f00b8589c0c145fb1c01d"
       url: "https://pub.dev"
     source: hosted
-    version: "3.1.1"
+    version: "3.4.10"
   serverpod_test:
     dependency: "direct dev"
     description:
       name: serverpod_test
-      sha256: "6ab93efcb4a7cecc859d8fcb4b8f4591c930f2f4c9c56a7ad0d60616ebbff660"
+      sha256: "3156b1d7fbcc75b686b31768141945c3d84c678f70a9706040f286bd87e295b7"
       url: "https://pub.dev"
     source: hosted
-    version: "3.1.1"
+    version: "3.4.10"
   shelf:
     dependency: transitive
     description:
@@ -624,14 +640,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.4.0"
-  system_resources:
+  system_resources_2:
     dependency: transitive
     description:
-      name: system_resources
-      sha256: "7e78cf8ef224c1e0b6bf4462322b6739fea2274fef928cbcbf21ae5e5a8272d8"
+      name: system_resources_2
+      sha256: "3f1d7da26ece139d03e8679ca5d99faceadfdbb4edc108244aa4cc362b9181ef"
       url: "https://pub.dev"
     source: hosted
-    version: "1.6.0"
+    version: "2.2.2"
   term_glyph:
     dependency: transitive
     description:
@@ -676,10 +692,10 @@ packages:
     dependency: transitive
     description:
       name: uuid
-      sha256: a11b666489b1954e01d992f3d601b1804a33937b5a8fe677bd26b8a9f96f96e8
+      sha256: "1fef9e8e11e2991bb773070d4656b7bd5d850967a2456cfc83cf47925ba79489"
       url: "https://pub.dev"
     source: hosted
-    version: "4.5.2"
+    version: "4.5.3"
   vm_service:
     dependency: transitive
     description:

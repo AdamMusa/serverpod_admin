@@ -9,11 +9,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  serverpod_client: ^3.1.1
+  serverpod_client: ^3.4.10
   serverpod_admin_client:
     path: ../serverpod_admin_client
   # serverpod_admin_client: ^1.0.6
-  serverpod_auth_idp_flutter: ^3.1.1
+  serverpod_auth_idp_flutter: ^3.4.10
   csv: ^8.0.0
   excel: ^4.0.6
   file_selector: ^1.1.0
