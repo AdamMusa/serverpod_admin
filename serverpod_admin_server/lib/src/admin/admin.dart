@@ -6,6 +6,10 @@ typedef AdminConfigurator = void Function(AdminRegistry registry);
 
 AdminConfigurator? _adminConfigurator;
 
+/// When true, Serverpod's persisted future-call jobs table is included in the
+/// admin resources.
+bool jobs = false;
+
 /// Sets the callback used to register resources with the admin module. This
 /// should be invoked by the host server during startup.
 void configureAdminModule(AdminConfigurator configurator) {
@@ -13,22 +17,6 @@ void configureAdminModule(AdminConfigurator configurator) {
   // Clear any previously registered resources so the configurator can rebuild
   // state, e.g. during hot-reload scenarios.
   AdminRegistry().reset();
-}
-
-/// Configures the admin module.
-///
-/// Use [jobs] to include Serverpod's persisted future-call jobs table in the
-/// admin resources. Use [resources] to register application tables.
-void set({
-  bool jobs = false,
-  AdminConfigurator? resources,
-}) {
-  configureAdminModule((registry) {
-    resources?.call(registry);
-    if (jobs) {
-      registry.registerServerpodJobs();
-    }
-  });
 }
 
 List<AdminEntryBase> adminRegister() {
@@ -42,5 +30,8 @@ List<AdminEntryBase> adminRegister() {
 
   final registry = AdminRegistry();
   configurator(registry);
+  if (jobs) {
+    registry.registerServerpodJobs();
+  }
   return registry.registeredEntries;
 }
