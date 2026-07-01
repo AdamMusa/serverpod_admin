@@ -101,7 +101,7 @@ import 'package:serverpod_admin_server/serverpod_admin_server.dart' as admin;
 import 'package:use_serverpod_admin_server/src/generated/protocol.dart';
 
 void registerAdminModule() {
-  admin.configureAdminModule((registry) {
+  admin.set(jobs: true, resources: (registry) {
     registry.register<Post>();
     registry.register<Person>();
     registry.register<Comment>();
@@ -110,6 +110,11 @@ void registerAdminModule() {
   });
 }
 ```
+
+Set `jobs: true` to show Serverpod's persisted future-call jobs table
+(`serverpod_future_call`) in the admin resources. Scheduled jobs can be
+updated/rescheduled by editing their row and canceled/discarded by deleting
+their row.
 
 **Call `registerAdminModule()` in your `server.dart` file just after `pod.start()`**
 

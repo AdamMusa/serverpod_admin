@@ -15,6 +15,22 @@ void configureAdminModule(AdminConfigurator configurator) {
   AdminRegistry().reset();
 }
 
+/// Configures the admin module.
+///
+/// Use [jobs] to include Serverpod's persisted future-call jobs table in the
+/// admin resources. Use [resources] to register application tables.
+void set({
+  bool jobs = false,
+  AdminConfigurator? resources,
+}) {
+  configureAdminModule((registry) {
+    resources?.call(registry);
+    if (jobs) {
+      registry.registerServerpodJobs();
+    }
+  });
+}
+
 List<AdminEntryBase> adminRegister() {
   final configurator = _adminConfigurator;
   if (configurator == null) {

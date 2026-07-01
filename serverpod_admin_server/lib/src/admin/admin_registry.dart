@@ -1,4 +1,5 @@
 import 'package:serverpod/serverpod.dart';
+import 'package:serverpod/protocol.dart';
 import 'package:serverpod_admin_server/src/admin/admin_entry.dart';
 import 'package:serverpod_admin_server/src/admin/admin_entry_base.dart';
 
@@ -59,6 +60,39 @@ class AdminRegistry {
     );
     _entries[type] = entry;
     _entriesByKey[entry.resourceKey] = entry;
+  }
+
+  /// Registers Serverpod's persisted future-call jobs table.
+  ///
+  /// This exposes the `serverpod_future_call` table through the same generic
+  /// admin resource metadata and CRUD pipeline as application tables.
+  void registerServerpodJobs() {
+    register<FutureCallEntry>(
+      table: FutureCallEntry.t,
+      fromJson: FutureCallEntry.fromJson,
+      listRows: (session) => FutureCallEntry.db.find(
+        session,
+        orderBy: (table) => table.time,
+      ),
+      findRowById: (session, id) async {
+        final normalizedId =
+            id is int ? id : (id is String ? int.tryParse(id) : null);
+        if (normalizedId == null) return null;
+        return FutureCallEntry.db.findById(session, normalizedId);
+      },
+      createRow: (session, row) => FutureCallEntry.db.insertRow(session, row),
+      updateRow: (session, row) => FutureCallEntry.db.updateRow(session, row),
+      deleteById: (session, id) async {
+        final normalizedId =
+            id is int ? id : (id is String ? int.tryParse(id) : null);
+        if (normalizedId == null) return;
+        await FutureCallEntry.db.deleteWhere(
+          session,
+          where: (table) => table.id.equals(normalizedId),
+        );
+      },
+      resourceKey: 'serverpod_future_call',
+    );
   }
 
   /// Returns the registered CRUD resources.
