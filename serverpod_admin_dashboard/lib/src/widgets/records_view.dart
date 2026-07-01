@@ -108,12 +108,34 @@ class _RecordsViewState extends State<RecordsView> {
           ),
         ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _buildResourceInfo(context),
-          _buildActionButtons(context),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 720;
+          if (compact) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildResourceInfo(context),
+                const SizedBox(height: 16),
+                _buildActionButtons(context, compact: true),
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: _buildResourceInfo(context)),
+              const SizedBox(width: 16),
+              Flexible(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: _buildActionButtons(context),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -151,19 +173,19 @@ class _RecordsViewState extends State<RecordsView> {
     );
   }
 
-  Widget _buildActionButtons(BuildContext context) {
-    return Row(
+  Widget _buildActionButtons(BuildContext context, {bool compact = false}) {
+    return Wrap(
+      alignment: compact ? WrapAlignment.start : WrapAlignment.end,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 8,
+      runSpacing: 8,
       children: [
-        if (widget.onSearchChanged != null) ...[
-          _buildSearchInput(context),
-          const SizedBox(width: 12),
-        ],
+        if (widget.onSearchChanged != null) _buildSearchInput(context, compact),
         IconButton.filledTonal(
           tooltip: 'Import CSV or XLSX',
           onPressed: widget.onImport,
           icon: const Icon(Icons.upload_file_outlined),
         ),
-        const SizedBox(width: 8),
         MenuAnchor(
           builder: (context, controller, child) {
             return IconButton.filledTonal(
@@ -193,18 +215,20 @@ class _RecordsViewState extends State<RecordsView> {
             ),
           ],
         ),
-        const SizedBox(width: 12),
-        _buildAddRecordButton(context),
+        _buildAddRecordButton(context, compact: compact),
       ],
     );
   }
 
-  Widget _buildSearchInput(BuildContext context) {
+  Widget _buildSearchInput(BuildContext context, bool compact) {
     final theme = Theme.of(context);
     final hasSearchQuery = (widget.searchQuery ?? '').isNotEmpty;
 
-    return SizedBox(
-      width: 300,
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        minWidth: compact ? 220 : 240,
+        maxWidth: compact ? 360 : 300,
+      ),
       child: TextField(
         controller: _searchController,
         decoration: InputDecoration(
@@ -253,11 +277,12 @@ class _RecordsViewState extends State<RecordsView> {
     );
   }
 
-  Widget _buildAddRecordButton(BuildContext context) {
+  Widget _buildAddRecordButton(BuildContext context, {bool compact = false}) {
+    final tableName = widget.resource!.tableName;
     return FilledButton.icon(
       onPressed: widget.onAdd,
       icon: const Icon(Icons.add),
-      label: Text('Add ${widget.resource!.tableName}'),
+      label: Text(compact ? 'Add' : 'Add $tableName'),
     );
   }
 
