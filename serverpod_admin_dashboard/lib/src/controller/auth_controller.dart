@@ -49,7 +49,7 @@ class AuthController extends ChangeNotifier {
           authenticate();
         },
         onError: (error) {
-          _errorMessage = error.toString();
+          _errorMessage = loginErrorMessage(error);
           _isLoading = false;
           notifyListeners();
         },
@@ -64,17 +64,37 @@ class AuthController extends ChangeNotifier {
       // authentication failed (no admin scope)
       if (!_isAuthenticated && _errorMessage == null) {
         // Login completed but authenticate() wasn't called (shouldn't happen)
+        _errorMessage = 'Incorrect email or password';
         _isLoading = false;
         notifyListeners();
       }
 
       return _isAuthenticated;
     } catch (e) {
-      _errorMessage = e.toString();
+      _errorMessage = loginErrorMessage(e);
       _isLoading = false;
       notifyListeners();
       return false;
     }
+  }
+
+  @visibleForTesting
+  static String loginErrorMessage(Object error) {
+    final message = error.toString().toLowerCase();
+    final isCredentialError = message.contains('password') ||
+        message.contains('credential') ||
+        message.contains('invalid') ||
+        message.contains('unauthorized') ||
+        message.contains('authentication') ||
+        message.contains('authstate') ||
+        message.contains('platformexception') ||
+        message.contains('-34018');
+
+    if (isCredentialError) {
+      return 'Incorrect email or password';
+    }
+
+    return 'Unable to sign in. Please try again.';
   }
 
   /// Authenticates the user if they have the required admin scope.
