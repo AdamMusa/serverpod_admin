@@ -81,14 +81,20 @@ class AuthController extends ChangeNotifier {
   @visibleForTesting
   static String loginErrorMessage(Object error) {
     final message = error.toString().toLowerCase();
+    final isSessionStorageError =
+        message.contains('platformexception') && message.contains('-34018');
+
+    if (isSessionStorageError) {
+      return 'Sign-in succeeded, but the app could not save the session. '
+          'Enable Keychain Sharing for the app and try again.';
+    }
+
     final isCredentialError = message.contains('password') ||
         message.contains('credential') ||
         message.contains('invalid') ||
         message.contains('unauthorized') ||
         message.contains('authentication') ||
-        message.contains('authstate') ||
-        message.contains('platformexception') ||
-        message.contains('-34018');
+        message.contains('authstate');
 
     if (isCredentialError) {
       return 'Incorrect email or password';
