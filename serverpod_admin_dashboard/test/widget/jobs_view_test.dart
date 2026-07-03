@@ -209,4 +209,54 @@ void main() {
     expect(find.byTooltip('Pause job'), findsNothing);
     expect(find.byTooltip('Reschedule job'), findsNothing);
   });
+
+  testWidgets('paginates job rows with shared admin controls', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1400, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final futureTime = DateTime.now().toUtc().add(const Duration(hours: 1));
+    final records = List.generate(12, (index) {
+      final jobNumber = index + 1;
+      return {
+        'id': '$jobNumber',
+        'name': 'ScheduledJob$jobNumber',
+        'time': futureTime.add(Duration(minutes: index)).toIso8601String(),
+        'serverId': 'server-1',
+        'identifier': 'scheduled-$jobNumber',
+      };
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 1200,
+            height: 700,
+            child: JobsView(
+              resource: resource,
+              records: records,
+              isLoading: false,
+              errorMessage: null,
+              onView: (_) {},
+              onEdit: (_) {},
+              onDiscard: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Showing 1-10 of 12'), findsOneWidget);
+    expect(find.text('Page 1 of 2'), findsOneWidget);
+    expect(find.text('ScheduledJob1'), findsOneWidget);
+    expect(find.text('ScheduledJob11'), findsNothing);
+
+    await tester.tap(find.byTooltip('Next page'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Showing 11-12 of 12'), findsOneWidget);
+    expect(find.text('Page 2 of 2'), findsOneWidget);
+    expect(find.text('ScheduledJob1'), findsNothing);
+    expect(find.text('ScheduledJob11'), findsOneWidget);
+  });
 }

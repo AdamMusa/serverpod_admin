@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:serverpod_admin_dashboard/src/controller/pagination.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
+import 'package:serverpod_admin_dashboard/src/widgets/pagination_controls.dart';
 
 const serverpodJobsResourceKey = 'serverpod_future_call';
 
@@ -40,15 +42,32 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
     length: 6,
     vsync: this,
   );
+  late final PaginationController _paginationController = PaginationController(
+    rowsPerPage: 10,
+    rowsPerPageOptions: const [5, 10, 25, 50],
+  );
   final TextEditingController _jobFilterController = TextEditingController();
   final TextEditingController _serverFilterController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    _paginationController.setTotalRecords(_visibleRecords.length);
+  }
+
+  @override
   void dispose() {
     _tabController.dispose();
+    _paginationController.dispose();
     _jobFilterController.dispose();
     _serverFilterController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant JobsView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _updateVisibleRecordCount();
   }
 
   @override
@@ -99,7 +118,10 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
             controller: _tabController,
             isScrollable: true,
             tabAlignment: TabAlignment.start,
-            onTap: (_) => setState(() {}),
+            onTap: (_) {
+              _resetPagination();
+              setState(() {});
+            },
             tabs: [
               Tab(text: 'Scheduled jobs ($scheduled)'),
               Tab(text: 'Ready jobs ($due)'),
@@ -152,7 +174,10 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
           border: const OutlineInputBorder(),
           isDense: true,
         ),
-        onChanged: (_) => setState(() {}),
+        onChanged: (_) {
+          _resetPagination();
+          setState(() {});
+        },
       ),
     );
   }
@@ -172,30 +197,67 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
       return const Center(child: Text('No jobs found.'));
     }
 
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Scrollbar(
-        thumbVisibility: true,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: SingleChildScrollView(
-            child: DataTable(
-              columnSpacing: 48,
-              horizontalMargin: 12,
-              columns: const [
-                DataColumn(label: Text('Job')),
-                DataColumn(label: Text('Status')),
-                DataColumn(label: Text('Server')),
-                DataColumn(label: Text('Scheduled')),
-                DataColumn(label: Text('Identifier')),
-                DataColumn(label: Text('Actions')),
-              ],
-              rows: records.map(_buildRow).toList(),
-            ),
+    return ListenableBuilder(
+      listenable: _paginationController,
+      builder: (context, _) {
+        final pagedRecords = _paginationController.getPageItems(records);
+
+        return Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              Expanded(
+                child: Scrollbar(
+                  thumbVisibility: true,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SingleChildScrollView(
+                      child: DataTable(
+                        columnSpacing: 48,
+                        horizontalMargin: 12,
+                        columns: const [
+                          DataColumn(label: Text('Job')),
+                          DataColumn(label: Text('Status')),
+                          DataColumn(label: Text('Server')),
+                          DataColumn(label: Text('Scheduled')),
+                          DataColumn(label: Text('Identifier')),
+                          DataColumn(label: Text('Actions')),
+                        ],
+                        rows: pagedRecords.map(_buildRow).toList(),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              PaginationControls(
+                currentPage: _paginationController.currentPage,
+                totalPages: _paginationController.totalPages,
+                startRecord: _paginationController.startRecord,
+                endRecord: _paginationController.endRecord,
+                totalRecords: _paginationController.totalRecords,
+                rowsPerPage: _paginationController.rowsPerPage,
+                rowsPerPageOptions: _paginationController.rowsPerPageOptions,
+                onRowsPerPageChanged: (value) {
+                  _paginationController.setRowsPerPage(value ?? 10);
+                },
+                onPrevious: _paginationController.goToPreviousPage,
+                onNext: _paginationController.goToNextPage,
+              ),
+            ],
           ),
-        ),
-      ),
+        );
+      },
     );
+  }
+
+  void _updateVisibleRecordCount() {
+    _paginationController.setTotalRecords(_visibleRecords.length);
+  }
+
+  void _resetPagination() {
+    _paginationController.reset();
+    _updateVisibleRecordCount();
   }
 
   DataRow _buildRow(Map<String, String> record) {
@@ -418,6 +480,7 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
   void _clearFilters() {
     _jobFilterController.clear();
     _serverFilterController.clear();
+    _resetPagination();
     setState(() {});
   }
 }
