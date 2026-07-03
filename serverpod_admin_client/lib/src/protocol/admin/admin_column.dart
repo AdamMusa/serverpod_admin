@@ -35,8 +35,10 @@ abstract class AdminColumn implements _i1.SerializableModel {
     return AdminColumn(
       name: jsonSerialization['name'] as String,
       dataType: jsonSerialization['dataType'] as String,
-      hasDefault: jsonSerialization['hasDefault'] as bool,
-      isPrimary: jsonSerialization['isPrimary'] as bool,
+      hasDefault: _i1.BoolJsonExtension.fromJson(
+        jsonSerialization['hasDefault'],
+      ),
+      isPrimary: _i1.BoolJsonExtension.fromJson(jsonSerialization['isPrimary']),
       foreignKeyTable: jsonSerialization['foreignKeyTable'] as String?,
       defaultValue: jsonSerialization['defaultValue'] as String?,
     );

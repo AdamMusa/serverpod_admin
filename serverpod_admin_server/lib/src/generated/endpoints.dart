@@ -12,6 +12,10 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
 import '../admin/endpoint/admin.dart' as _i2;
+import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+    as _i3;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _i4;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -184,5 +188,9 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
+    modules['serverpod_auth_idp'] = _i3.Endpoints()
+      ..initializeEndpoints(server);
+    modules['serverpod_auth_core'] = _i4.Endpoints()
+      ..initializeEndpoints(server);
   }
 }

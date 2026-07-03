@@ -12,11 +12,15 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
 import 'package:serverpod/protocol.dart' as _i2;
-import 'admin/admin_column.dart' as _i3;
-import 'admin/admin_resource.dart' as _i4;
-import 'module_class.dart' as _i5;
+import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+    as _i3;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _i4;
+import 'admin/admin_column.dart' as _i5;
+import 'admin/admin_resource.dart' as _i6;
+import 'module_class.dart' as _i7;
 import 'package:serverpod_admin_server/src/generated/admin/admin_resource.dart'
-    as _i6;
+    as _i8;
 export 'admin/admin_column.dart';
 export 'admin/admin_resource.dart';
 export 'module_class.dart';
@@ -28,7 +32,10 @@ class Protocol extends _i1.SerializationManagerServer {
 
   static final Protocol _instance = Protocol._();
 
-  static final List<_i2.TableDefinition> targetTableDefinitions = [];
+  static final List<_i2.TableDefinition> targetTableDefinitions = [
+    ..._i3.Protocol.targetTableDefinitions,
+    ..._i4.Protocol.targetTableDefinitions,
+  ];
 
   static String? getClassNameFromObjectJson(dynamic data) {
     if (data is! Map) return null;
@@ -59,31 +66,31 @@ class Protocol extends _i1.SerializationManagerServer {
       }
     }
 
-    if (t == _i3.AdminColumn) {
-      return _i3.AdminColumn.fromJson(data) as T;
+    if (t == _i5.AdminColumn) {
+      return _i5.AdminColumn.fromJson(data) as T;
     }
-    if (t == _i4.AdminResource) {
-      return _i4.AdminResource.fromJson(data) as T;
+    if (t == _i6.AdminResource) {
+      return _i6.AdminResource.fromJson(data) as T;
     }
-    if (t == _i5.ModuleClass) {
-      return _i5.ModuleClass.fromJson(data) as T;
+    if (t == _i7.ModuleClass) {
+      return _i7.ModuleClass.fromJson(data) as T;
     }
-    if (t == _i1.getType<_i3.AdminColumn?>()) {
-      return (data != null ? _i3.AdminColumn.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i5.AdminColumn?>()) {
+      return (data != null ? _i5.AdminColumn.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i4.AdminResource?>()) {
-      return (data != null ? _i4.AdminResource.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i6.AdminResource?>()) {
+      return (data != null ? _i6.AdminResource.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i5.ModuleClass?>()) {
-      return (data != null ? _i5.ModuleClass.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i7.ModuleClass?>()) {
+      return (data != null ? _i7.ModuleClass.fromJson(data) : null) as T;
     }
-    if (t == List<_i3.AdminColumn>) {
-      return (data as List).map((e) => deserialize<_i3.AdminColumn>(e)).toList()
+    if (t == List<_i5.AdminColumn>) {
+      return (data as List).map((e) => deserialize<_i5.AdminColumn>(e)).toList()
           as T;
     }
-    if (t == List<_i6.AdminResource>) {
+    if (t == List<_i8.AdminResource>) {
       return (data as List)
-              .map((e) => deserialize<_i6.AdminResource>(e))
+              .map((e) => deserialize<_i8.AdminResource>(e))
               .toList()
           as T;
     }
@@ -115,6 +122,12 @@ class Protocol extends _i1.SerializationManagerServer {
           as T;
     }
     try {
+      return _i3.Protocol().deserialize<T>(data, t);
+    } on _i1.DeserializationTypeNotFoundException catch (_) {}
+    try {
+      return _i4.Protocol().deserialize<T>(data, t);
+    } on _i1.DeserializationTypeNotFoundException catch (_) {}
+    try {
       return _i2.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     return super.deserialize<T>(data, t);
@@ -122,9 +135,9 @@ class Protocol extends _i1.SerializationManagerServer {
 
   static String? getClassNameForType(Type type) {
     return switch (type) {
-      _i3.AdminColumn => 'AdminColumn',
-      _i4.AdminResource => 'AdminResource',
-      _i5.ModuleClass => 'ModuleClass',
+      _i5.AdminColumn => 'AdminColumn',
+      _i6.AdminResource => 'AdminResource',
+      _i7.ModuleClass => 'ModuleClass',
       _ => null,
     };
   }
@@ -142,16 +155,24 @@ class Protocol extends _i1.SerializationManagerServer {
     }
 
     switch (data) {
-      case _i3.AdminColumn():
+      case _i5.AdminColumn():
         return 'AdminColumn';
-      case _i4.AdminResource():
+      case _i6.AdminResource():
         return 'AdminResource';
-      case _i5.ModuleClass():
+      case _i7.ModuleClass():
         return 'ModuleClass';
     }
     className = _i2.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod.$className';
+    }
+    className = _i3.Protocol().getClassNameForObject(data);
+    if (className != null) {
+      return 'serverpod_auth_idp.$className';
+    }
+    className = _i4.Protocol().getClassNameForObject(data);
+    if (className != null) {
+      return 'serverpod_auth_core.$className';
     }
     return null;
   }
@@ -163,23 +184,43 @@ class Protocol extends _i1.SerializationManagerServer {
       return super.deserializeByClassName(data);
     }
     if (dataClassName == 'AdminColumn') {
-      return deserialize<_i3.AdminColumn>(data['data']);
+      return deserialize<_i5.AdminColumn>(data['data']);
     }
     if (dataClassName == 'AdminResource') {
-      return deserialize<_i4.AdminResource>(data['data']);
+      return deserialize<_i6.AdminResource>(data['data']);
     }
     if (dataClassName == 'ModuleClass') {
-      return deserialize<_i5.ModuleClass>(data['data']);
+      return deserialize<_i7.ModuleClass>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
       return _i2.Protocol().deserializeByClassName(data);
+    }
+    if (dataClassName.startsWith('serverpod_auth_idp.')) {
+      data['className'] = dataClassName.substring(19);
+      return _i3.Protocol().deserializeByClassName(data);
+    }
+    if (dataClassName.startsWith('serverpod_auth_core.')) {
+      data['className'] = dataClassName.substring(20);
+      return _i4.Protocol().deserializeByClassName(data);
     }
     return super.deserializeByClassName(data);
   }
 
   @override
   _i1.Table? getTableForType(Type t) {
+    {
+      var table = _i3.Protocol().getTableForType(t);
+      if (table != null) {
+        return table;
+      }
+    }
+    {
+      var table = _i4.Protocol().getTableForType(t);
+      if (table != null) {
+        return table;
+      }
+    }
     {
       var table = _i2.Protocol().getTableForType(t);
       if (table != null) {
@@ -195,4 +236,22 @@ class Protocol extends _i1.SerializationManagerServer {
 
   @override
   String getModuleName() => 'serverpod_admin';
+
+  /// Maps any `Record`s known to this [Protocol] to their JSON representation
+  ///
+  /// Throws in case the record type is not known.
+  ///
+  /// This method will return `null` (only) for `null` inputs.
+  Map<String, dynamic>? mapRecordToJson(Record? record) {
+    if (record == null) {
+      return null;
+    }
+    try {
+      return _i3.Protocol().mapRecordToJson(record);
+    } catch (_) {}
+    try {
+      return _i4.Protocol().mapRecordToJson(record);
+    } catch (_) {}
+    throw Exception('Unsupported record type ${record.runtimeType}');
+  }
 }

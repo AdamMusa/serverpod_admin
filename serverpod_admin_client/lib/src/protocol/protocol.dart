@@ -16,6 +16,10 @@ import 'admin/admin_resource.dart' as _i3;
 import 'module_class.dart' as _i4;
 import 'package:serverpod_admin_client/src/protocol/admin/admin_resource.dart'
     as _i5;
+import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
+    as _i6;
+import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
+    as _i7;
 export 'admin/admin_column.dart';
 export 'admin/admin_resource.dart';
 export 'module_class.dart';
@@ -112,6 +116,12 @@ class Protocol extends _i1.SerializationManager {
               : null)
           as T;
     }
+    try {
+      return _i6.Protocol().deserialize<T>(data, t);
+    } on _i1.DeserializationTypeNotFoundException catch (_) {}
+    try {
+      return _i7.Protocol().deserialize<T>(data, t);
+    } on _i1.DeserializationTypeNotFoundException catch (_) {}
     return super.deserialize<T>(data, t);
   }
 
@@ -144,6 +154,14 @@ class Protocol extends _i1.SerializationManager {
       case _i4.ModuleClass():
         return 'ModuleClass';
     }
+    className = _i6.Protocol().getClassNameForObject(data);
+    if (className != null) {
+      return 'serverpod_auth_idp.$className';
+    }
+    className = _i7.Protocol().getClassNameForObject(data);
+    if (className != null) {
+      return 'serverpod_auth_core.$className';
+    }
     return null;
   }
 
@@ -162,6 +180,32 @@ class Protocol extends _i1.SerializationManager {
     if (dataClassName == 'ModuleClass') {
       return deserialize<_i4.ModuleClass>(data['data']);
     }
+    if (dataClassName.startsWith('serverpod_auth_idp.')) {
+      data['className'] = dataClassName.substring(19);
+      return _i6.Protocol().deserializeByClassName(data);
+    }
+    if (dataClassName.startsWith('serverpod_auth_core.')) {
+      data['className'] = dataClassName.substring(20);
+      return _i7.Protocol().deserializeByClassName(data);
+    }
     return super.deserializeByClassName(data);
+  }
+
+  /// Maps any `Record`s known to this [Protocol] to their JSON representation
+  ///
+  /// Throws in case the record type is not known.
+  ///
+  /// This method will return `null` (only) for `null` inputs.
+  Map<String, dynamic>? mapRecordToJson(Record? record) {
+    if (record == null) {
+      return null;
+    }
+    try {
+      return _i6.Protocol().mapRecordToJson(record);
+    } catch (_) {}
+    try {
+      return _i7.Protocol().mapRecordToJson(record);
+    } catch (_) {}
+    throw Exception('Unsupported record type ${record.runtimeType}');
   }
 }
