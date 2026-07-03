@@ -7,6 +7,9 @@ name: Serverpod Admin CI
 
 on:
   workflow_dispatch:
+  release:
+    types:
+      - published
   push:
     branches:
       - main
@@ -198,3 +201,12 @@ jobs:
         with:
           name: serverpod_admin_dashboard_web
           path: serverpod_admin_dashboard_web.zip
+
+      - name: Attach admin app to GitHub release
+        if: github.event_name == 'release'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            serverpod_admin_dashboard_web.zip \
+            --clobber
