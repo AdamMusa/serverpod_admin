@@ -194,6 +194,45 @@ class HomeOperations {
     }
   }
 
+  Future<void> runJobNow(
+    AdminResource resource,
+    Map<String, String> record,
+  ) async {
+    await _updateJobTime(
+      resource,
+      record,
+      DateTime.now().toUtc(),
+      successMessage: '${record['name'] ?? 'Job'} queued to run now.',
+      errorMessage: 'Failed to queue job.',
+    );
+  }
+
+  Future<void> pauseJob(
+    AdminResource resource,
+    Map<String, String> record,
+  ) async {
+    await _updateJobTime(
+      resource,
+      record,
+      DateTime.utc(9999, 12, 31, 23, 59, 59),
+      successMessage: '${record['name'] ?? 'Job'} paused.',
+      errorMessage: 'Failed to pause job.',
+    );
+  }
+
+  Future<void> resumeJob(
+    AdminResource resource,
+    Map<String, String> record,
+  ) async {
+    await _updateJobTime(
+      resource,
+      record,
+      DateTime.now().toUtc(),
+      successMessage: '${record['name'] ?? 'Job'} resumed.',
+      errorMessage: 'Failed to resume job.',
+    );
+  }
+
   Future<bool> _createRecord(
     AdminResource resource,
     Map<String, String> payload,
@@ -237,6 +276,34 @@ class HomeOperations {
         isError: true,
       );
       return false;
+    }
+  }
+
+  Future<void> _updateJobTime(
+    AdminResource resource,
+    Map<String, String> record,
+    DateTime time, {
+    required String successMessage,
+    required String errorMessage,
+  }) async {
+    final primaryValue = controller.resolvePrimaryKeyValue(resource, record);
+    if (primaryValue == null) {
+      debugPrint('Unable to resolve primary key for ${resource.key}.');
+      return;
+    }
+
+    final payload = Map<String, String>.from(record)
+      ..['id'] = primaryValue
+      ..['time'] = time.toIso8601String();
+
+    try {
+      await controller.updateRecord(resource, payload);
+      if (!context.mounted) return;
+      _showSnackBar(successMessage, isError: false);
+    } catch (error) {
+      debugPrint('$errorMessage ${resource.key}: $error');
+      if (!context.mounted) return;
+      _showSnackBar('$errorMessage $error', isError: true);
     }
   }
 

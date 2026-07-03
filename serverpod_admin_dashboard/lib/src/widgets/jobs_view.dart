@@ -12,6 +12,9 @@ class JobsView extends StatefulWidget {
     required this.onView,
     required this.onEdit,
     required this.onDiscard,
+    this.onRunNow,
+    this.onPause,
+    this.onResume,
     super.key,
   });
 
@@ -22,6 +25,9 @@ class JobsView extends StatefulWidget {
   final void Function(Map<String, String> record)? onView;
   final void Function(Map<String, String> record)? onEdit;
   final void Function(Map<String, String> record)? onDiscard;
+  final void Function(Map<String, String> record)? onRunNow;
+  final void Function(Map<String, String> record)? onPause;
+  final void Function(Map<String, String> record)? onResume;
 
   @override
   State<JobsView> createState() => _JobsViewState();
@@ -29,7 +35,7 @@ class JobsView extends StatefulWidget {
 
 class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
   late final TabController _tabController = TabController(
-    length: 3,
+    length: 4,
     vsync: this,
   );
   final TextEditingController _jobFilterController = TextEditingController();
@@ -71,6 +77,7 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
     final theme = Theme.of(context);
     final scheduled = _scheduledRecords.length;
     final due = _dueRecords.length;
+    final paused = _pausedRecords.length;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(28, 22, 28, 18),
@@ -91,7 +98,8 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
             onTap: (_) => setState(() {}),
             tabs: [
               Tab(text: 'Scheduled jobs ($scheduled)'),
-              Tab(text: 'Due jobs ($due)'),
+              Tab(text: 'Ready jobs ($due)'),
+              Tab(text: 'Paused jobs ($paused)'),
               Tab(text: 'All jobs (${widget.records.length})'),
             ],
           ),
@@ -170,6 +178,7 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
               horizontalMargin: 12,
               columns: const [
                 DataColumn(label: Text('Job')),
+                DataColumn(label: Text('Status')),
                 DataColumn(label: Text('Server')),
                 DataColumn(label: Text('Scheduled')),
                 DataColumn(label: Text('Identifier')),
@@ -188,6 +197,7 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
     final name = record['name'] ?? '';
     final serverId = record['serverId'] ?? '';
     final identifier = record['identifier'] ?? '';
+    final state = _jobState(record);
 
     return DataRow(
       cells: [
@@ -216,6 +226,7 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
             ),
           ),
         ),
+        DataCell(_StatusChip(state: state)),
         DataCell(Text(serverId)),
         DataCell(Text(_scheduledLabel(record))),
         DataCell(Text(identifier.isEmpty ? '-' : identifier)),
@@ -223,9 +234,27 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              if (state == _JobState.paused && widget.onResume != null)
+                IconButton(
+                  tooltip: 'Resume now',
+                  icon: const Icon(Icons.play_circle_outline),
+                  onPressed: () => widget.onResume!(record),
+                )
+              else if (widget.onRunNow != null)
+                IconButton(
+                  tooltip: 'Run now',
+                  icon: const Icon(Icons.play_arrow_outlined),
+                  onPressed: () => widget.onRunNow!(record),
+                ),
+              if (state != _JobState.paused && widget.onPause != null)
+                IconButton(
+                  tooltip: 'Pause job',
+                  icon: const Icon(Icons.pause_circle_outline),
+                  onPressed: () => widget.onPause!(record),
+                ),
               if (widget.onEdit != null)
                 IconButton(
-                  tooltip: 'Update job',
+                  tooltip: 'Reschedule job',
                   icon: const Icon(Icons.edit_calendar_outlined),
                   onPressed: () => widget.onEdit!(record),
                 ),
@@ -251,7 +280,7 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
     final now = DateTime.now().toUtc();
     return widget.records.where((record) {
       final time = DateTime.tryParse(record['time'] ?? '')?.toUtc();
-      return time == null || time.isAfter(now);
+      return time == null || (time.isAfter(now) && !_isPaused(record));
     }).toList();
   }
 
@@ -263,10 +292,15 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
     }).toList();
   }
 
+  List<Map<String, String>> get _pausedRecords {
+    return widget.records.where(_isPaused).toList();
+  }
+
   List<Map<String, String>> get _visibleRecords {
     final base = switch (_tabController.index) {
       0 => _scheduledRecords,
       1 => _dueRecords,
+      2 => _pausedRecords,
       _ => widget.records,
     };
 
@@ -284,6 +318,7 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
   String _scheduledLabel(Map<String, String> record) {
     final time = DateTime.tryParse(record['time'] ?? '')?.toLocal();
     if (time == null) return '-';
+    if (_isPaused(record)) return 'paused';
 
     final now = DateTime.now();
     final difference = time.difference(now);
@@ -297,15 +332,89 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
   String _statusLabel(Map<String, String> record) {
     final time = DateTime.tryParse(record['time'] ?? '')?.toLocal();
     if (time == null) return 'No schedule time';
+    if (_isPaused(record)) return 'Paused';
 
     final difference = time.difference(DateTime.now());
-    if (difference.isNegative) return 'Due ${_scheduledLabel(record)}';
+    if (difference.isNegative) return 'Ready to run';
     return 'Scheduled for ${time.toString()}';
+  }
+
+  bool _isPaused(Map<String, String> record) {
+    final time = DateTime.tryParse(record['time'] ?? '')?.toUtc();
+    return time != null && time.year >= _pausedYear;
+  }
+
+  _JobState _jobState(Map<String, String> record) {
+    if (_isPaused(record)) return _JobState.paused;
+    final time = DateTime.tryParse(record['time'] ?? '')?.toUtc();
+    if (time == null) return _JobState.unknown;
+    if (time.isAfter(DateTime.now().toUtc())) return _JobState.scheduled;
+    return _JobState.ready;
   }
 
   void _clearFilters() {
     _jobFilterController.clear();
     _serverFilterController.clear();
     setState(() {});
+  }
+}
+
+const _pausedYear = 9999;
+
+enum _JobState { scheduled, ready, paused, unknown }
+
+class _StatusChip extends StatelessWidget {
+  const _StatusChip({required this.state});
+
+  final _JobState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final (label, icon, color) = switch (state) {
+      _JobState.ready => (
+          'Ready',
+          Icons.bolt_outlined,
+          theme.colorScheme.tertiary,
+        ),
+      _JobState.paused => (
+          'Paused',
+          Icons.pause_circle_outline,
+          theme.colorScheme.secondary,
+        ),
+      _JobState.unknown => (
+          'Unknown',
+          Icons.help_outline,
+          theme.colorScheme.outline,
+        ),
+      _JobState.scheduled => (
+          'Scheduled',
+          Icons.schedule_outlined,
+          theme.colorScheme.primary,
+        ),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

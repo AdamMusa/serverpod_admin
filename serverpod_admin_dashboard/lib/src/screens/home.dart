@@ -152,6 +152,12 @@ class _HomeState extends State<Home> {
           operations.showEditDialog(selectedResource, record);
       final onDiscard = (Map<String, String> record) =>
           operations.showDeleteConfirmation(selectedResource, record);
+      final onRunNow = (Map<String, String> record) =>
+          operations.runJobNow(selectedResource, record);
+      final onPause = (Map<String, String> record) =>
+          operations.pauseJob(selectedResource, record);
+      final onResume = (Map<String, String> record) =>
+          operations.resumeJob(selectedResource, record);
 
       if (widget.customJobsBuilder != null) {
         return widget.customJobsBuilder!(
@@ -176,6 +182,9 @@ class _HomeState extends State<Home> {
         onView: onView,
         onEdit: onEdit,
         onDiscard: onDiscard,
+        onRunNow: onRunNow,
+        onPause: onPause,
+        onResume: onResume,
       );
     }
 
