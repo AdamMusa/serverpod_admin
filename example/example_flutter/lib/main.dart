@@ -28,7 +28,9 @@ void main() {
 
   client = Client(serverUrl)
     ..connectivityMonitor = FlutterConnectivityMonitor()
-    ..authSessionManager = FlutterAuthSessionManager();
+    ..authSessionManager = FlutterAuthSessionManager(
+      storage: _InMemoryAuthSuccessStorage(),
+    );
   client.auth.initialize();
 
   runApp(
@@ -61,4 +63,16 @@ void main() {
       ),
     ),
   );
+}
+
+class _InMemoryAuthSuccessStorage implements ClientAuthSuccessStorage {
+  AuthSuccess? _data;
+
+  @override
+  Future<AuthSuccess?> get() async => _data;
+
+  @override
+  Future<void> set(AuthSuccess? data) async {
+    _data = data;
+  }
 }
