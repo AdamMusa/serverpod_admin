@@ -47,7 +47,6 @@ void run(List<String> args) async {
   await pod.start();
   registerAdminModule();
   await createDevAdminUserFromEnvironment();
-  await seedSampleJobs(pod);
 }
 
 void _sendRegistrationCode(
