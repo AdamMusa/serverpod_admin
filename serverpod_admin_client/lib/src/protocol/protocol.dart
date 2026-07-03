@@ -89,16 +89,16 @@ class Protocol extends _i1.SerializationManager {
               .toList()
           as T;
     }
-    if (t == List<Map<String, String>>) {
-      return (data as List)
-              .map((e) => deserialize<Map<String, String>>(e))
-              .toList()
-          as T;
-    }
     if (t == Map<String, String>) {
       return (data as Map).map(
             (k, v) => MapEntry(deserialize<String>(k), deserialize<String>(v)),
           )
+          as T;
+    }
+    if (t == List<Map<String, String>>) {
+      return (data as List)
+              .map((e) => deserialize<Map<String, String>>(e))
+              .toList()
           as T;
     }
     if (t == Map<String, dynamic>) {

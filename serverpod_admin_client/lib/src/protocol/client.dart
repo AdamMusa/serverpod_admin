@@ -29,6 +29,37 @@ class EndpointAdmin extends _i1.EndpointRef {
         {},
       );
 
+  _i2.Future<Map<String, String>> currentUserProfile() =>
+      caller.callServerEndpoint<Map<String, String>>(
+        'serverpod_admin.admin',
+        'currentUserProfile',
+        {},
+      );
+
+  _i2.Future<Map<String, String>> updateCurrentUserProfile(
+    String userName,
+    String fullName,
+  ) => caller.callServerEndpoint<Map<String, String>>(
+    'serverpod_admin.admin',
+    'updateCurrentUserProfile',
+    {
+      'userName': userName,
+      'fullName': fullName,
+    },
+  );
+
+  _i2.Future<bool> changeCurrentUserPassword(
+    String currentPassword,
+    String newPassword,
+  ) => caller.callServerEndpoint<bool>(
+    'serverpod_admin.admin',
+    'changeCurrentUserPassword',
+    {
+      'currentPassword': currentPassword,
+      'newPassword': newPassword,
+    },
+  );
+
   _i2.Future<List<Map<String, String>>> list(String resourceKey) =>
       caller.callServerEndpoint<List<Map<String, String>>>(
         'serverpod_admin.admin',

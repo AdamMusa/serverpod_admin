@@ -1,4 +1,6 @@
 import 'package:serverpod/serverpod.dart';
+import 'package:serverpod_auth_idp_server/core.dart';
+import 'package:serverpod_auth_idp_server/providers/email.dart';
 import 'package:serverpod_admin_server/src/admin/admin_entry_base.dart';
 
 import '../../admin/admin.dart';
@@ -30,6 +32,70 @@ class AdminEndpoint extends Endpoint {
   Future<List<AdminResource>> resources(Session session) async {
     adminRegister();
     return _registry.registeredResourceMetadata;
+  }
+
+  Future<Map<String, String>> currentUserProfile(Session session) async {
+    return _profileToMap(await _findOrCreateCurrentProfile(session));
+  }
+
+  Future<Map<String, String>> updateCurrentUserProfile(
+    Session session,
+    String userName,
+    String fullName,
+  ) async {
+    final authUserId = session.authenticated!.authUserId;
+    final profiles = AuthServices.instance.userProfiles;
+
+    final normalizedUserName = _blankToNull(userName);
+    final normalizedFullName = _blankToNull(fullName);
+
+    await _findOrCreateCurrentProfile(session);
+    await profiles.changeUserName(session, authUserId, normalizedUserName);
+    final updatedProfile = await profiles.changeFullName(
+      session,
+      authUserId,
+      normalizedFullName,
+    );
+
+    return _profileToMap(updatedProfile);
+  }
+
+  Future<bool> changeCurrentUserPassword(
+    Session session,
+    String currentPassword,
+    String newPassword,
+  ) async {
+    if (currentPassword.isEmpty || newPassword.isEmpty) {
+      throw ArgumentError('Current password and new password are required.');
+    }
+
+    final emailIdp = AuthServices.instance.emailIdp;
+    final account = await emailIdp.utils.getAccount(session);
+    if (account == null) {
+      throw StateError('No email account is linked to this admin user.');
+    }
+
+    late final UuidValue authenticatedUserId;
+    try {
+      authenticatedUserId = await emailIdp.utils.authentication.authenticate(
+        session,
+        email: account.email,
+        password: currentPassword,
+        transaction: null,
+      );
+    } on EmailLoginServerException {
+      throw StateError('Current password is incorrect.');
+    }
+    if (authenticatedUserId != session.authenticated!.authUserId) {
+      throw StateError('Current password is incorrect.');
+    }
+
+    await emailIdp.admin.setPassword(
+      session,
+      email: account.email,
+      password: newPassword,
+    );
+    return true;
   }
 
   Future<List<Map<String, String>>> list(
@@ -162,6 +228,40 @@ class AdminEndpoint extends Endpoint {
       return DateTime.tryParse(value)?.toUtc().toIso8601String();
     }
     return value;
+  }
+
+  String? _blankToNull(String value) {
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
+  }
+
+  Future<UserProfileModel> _findOrCreateCurrentProfile(Session session) async {
+    final authUserId = session.authenticated!.authUserId;
+    final profiles = AuthServices.instance.userProfiles;
+    final profile = await profiles.maybeFindUserProfileByUserId(
+      session,
+      authUserId,
+    );
+    if (profile != null) return profile;
+
+    final account = await AuthServices.instance.emailIdp.utils.getAccount(
+      session,
+    );
+    return profiles.createUserProfile(
+      session,
+      authUserId,
+      UserProfileData(email: account?.email),
+    );
+  }
+
+  Map<String, String> _profileToMap(UserProfileModel profile) {
+    return {
+      'authUserId': profile.authUserId.toString(),
+      'userName': profile.userName ?? '',
+      'fullName': profile.fullName ?? '',
+      'email': profile.email ?? '',
+      'imageUrl': profile.imageUrl?.toString() ?? '',
+    };
   }
 
   List<Map<String, String>> _stringifyRecords(

@@ -42,6 +42,66 @@ class Endpoints extends _i1.EndpointDispatch {
               ) async =>
                   (endpoints['admin'] as _i2.AdminEndpoint).resources(session),
         ),
+        'currentUserProfile': _i1.MethodConnector(
+          name: 'currentUserProfile',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint)
+                  .currentUserProfile(session),
+        ),
+        'updateCurrentUserProfile': _i1.MethodConnector(
+          name: 'updateCurrentUserProfile',
+          params: {
+            'userName': _i1.ParameterDescription(
+              name: 'userName',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'fullName': _i1.ParameterDescription(
+              name: 'fullName',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint)
+                  .updateCurrentUserProfile(
+                    session,
+                    params['userName'],
+                    params['fullName'],
+                  ),
+        ),
+        'changeCurrentUserPassword': _i1.MethodConnector(
+          name: 'changeCurrentUserPassword',
+          params: {
+            'currentPassword': _i1.ParameterDescription(
+              name: 'currentPassword',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'newPassword': _i1.ParameterDescription(
+              name: 'newPassword',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint)
+                  .changeCurrentUserPassword(
+                    session,
+                    params['currentPassword'],
+                    params['newPassword'],
+                  ),
+        ),
         'list': _i1.MethodConnector(
           name: 'list',
           params: {

@@ -1,5 +1,8 @@
 admin:
   - resources:
+  - currentUserProfile:
+  - updateCurrentUserProfile:
+  - changeCurrentUserPassword:
   - list:
   - listPage:
   - find:
