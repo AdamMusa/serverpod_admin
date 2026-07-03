@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:serverpod_admin_dashboard/src/admin_dashboard.dart';
 import 'package:serverpod_admin_dashboard/src/controller/admin_dashboard.dart';
@@ -45,8 +47,11 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  static const _jobsRefreshInterval = Duration(seconds: 2);
+
   HomeOperations? _operations;
   late final TextEditingController _searchController;
+  Timer? _jobsRefreshTimer;
 
   @override
   void initState() {
@@ -55,11 +60,16 @@ class _HomeState extends State<Home> {
       text: widget.controller.searchQuery,
     );
     widget.controller.addListener(_onControllerChanged);
+    _jobsRefreshTimer = Timer.periodic(
+      _jobsRefreshInterval,
+      (_) => _refreshJobsIfVisible(),
+    );
   }
 
   @override
   void dispose() {
     widget.controller.removeListener(_onControllerChanged);
+    _jobsRefreshTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -68,6 +78,18 @@ class _HomeState extends State<Home> {
     if (_searchController.text != widget.controller.searchQuery) {
       _searchController.text = widget.controller.searchQuery;
     }
+  }
+
+  Future<void> _refreshJobsIfVisible() async {
+    if (!mounted) return;
+    final selectedResource = widget.controller.selectedResource;
+    if (selectedResource?.key != serverpodJobsResourceKey) return;
+    if (widget.controller.isResourcesLoading) return;
+
+    await widget.controller.loadRecords(
+      selectedResource!,
+      showLoading: false,
+    );
   }
 
   @override

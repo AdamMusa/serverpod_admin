@@ -31,6 +31,7 @@ class AdminDashboardController extends ChangeNotifier {
   List<Map<String, String>> jobHistory = const [];
   String? recordsError;
   bool isRecordsLoading = false;
+  bool _isRecordsRefreshInFlight = false;
 
   // Search state
   String _searchQuery = '';
@@ -139,10 +140,18 @@ class AdminDashboardController extends ChangeNotifier {
     await loadRecords(resource);
   }
 
-  Future<void> loadRecords(AdminResource resource) async {
-    isRecordsLoading = true;
-    recordsError = null;
-    notifyListeners();
+  Future<void> loadRecords(
+    AdminResource resource, {
+    bool showLoading = true,
+  }) async {
+    if (_isRecordsRefreshInFlight) return;
+    _isRecordsRefreshInFlight = true;
+
+    if (showLoading) {
+      isRecordsLoading = true;
+      recordsError = null;
+      notifyListeners();
+    }
 
     try {
       final loaded = await adminEndpoint.list(resource.key);
@@ -173,14 +182,19 @@ class AdminDashboardController extends ChangeNotifier {
         }
       }
     } catch (error) {
-      recordsError =
-          'Unable to load ${resource.tableName} records. Please try again.';
-      records = const [];
-      if (resource.key == 'serverpod_future_call') {
-        jobHistory = const [];
+      if (showLoading || records.isEmpty) {
+        recordsError =
+            'Unable to load ${resource.tableName} records. Please try again.';
+        records = const [];
+        if (resource.key == 'serverpod_future_call') {
+          jobHistory = const [];
+        }
       }
     } finally {
-      isRecordsLoading = false;
+      _isRecordsRefreshInFlight = false;
+      if (showLoading) {
+        isRecordsLoading = false;
+      }
       notifyListeners();
     }
   }
