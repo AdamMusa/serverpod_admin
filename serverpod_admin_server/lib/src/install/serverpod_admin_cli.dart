@@ -71,6 +71,9 @@ class ServerpodAdminCli {
       stdout.writeln(
         'Serve it with: serveAdminDashboard(pod); // opens at /admin',
       );
+      stdout.writeln(
+        "Custom path: serveAdminDashboard(pod, path: '/customadminpath');",
+      );
     } finally {
       tempDirectory.deleteSync(recursive: true);
     }

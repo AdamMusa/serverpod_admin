@@ -121,6 +121,18 @@ void run(List<String> args) async {
 By default the installer places the build in `web/admin`, and
 `serveAdminDashboard(pod)` serves it at `/admin`.
 
+If you want another route, pass a custom path:
+
+```dart
+admin.serveAdminDashboard(
+  pod,
+  path: '/customadminpath',
+);
+```
+
+The leading slash is optional, so `path: 'customadminpath'` also serves the
+dashboard at `/customadminpath`.
+
 Open:
 
 ```text

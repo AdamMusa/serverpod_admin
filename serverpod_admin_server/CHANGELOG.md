@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.8
+
+- Documented the default `/admin` dashboard route.
+- Added support for custom dashboard paths with or without a leading slash.
+
 ## 1.0.7
 
 - Added prebuilt admin dashboard installer executable: `serverpod_admin install`.
