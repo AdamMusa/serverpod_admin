@@ -485,10 +485,10 @@ packages:
     dependency: "direct main"
     description:
       name: serverpod_admin_server
-      sha256: a2b37d3eceef022eca3da89f384d368ac4d6a74f933a954588053bca444b5e7d
+      sha256: "2c1313c0abf4cbbe431f178f2e5548c0522670e4dab35985df8598ff78010980"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.7"
+    version: "1.0.8"
   serverpod_auth_core_server:
     dependency: transitive
     description:
