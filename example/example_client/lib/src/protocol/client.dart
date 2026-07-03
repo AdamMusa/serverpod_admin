@@ -194,6 +194,13 @@ class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
       'newPassword': newPassword,
     },
   );
+
+  @override
+  _i3.Future<bool> hasAccount() => caller.callServerEndpoint<bool>(
+    'emailIdp',
+    'hasAccount',
+    {},
+  );
 }
 
 /// By extending [RefreshJwtTokensEndpoint], the JWT token refresh endpoint

@@ -17,6 +17,7 @@ class Home extends StatefulWidget {
     this.customSidebarBuilder,
     this.sidebarItemCustomizations,
     this.customBodyBuilder,
+    this.customJobsBuilder,
     this.customDetailsBuilder,
     this.customEditDialogBuilder,
     this.customDeleteDialogBuilder,
@@ -30,6 +31,7 @@ class Home extends StatefulWidget {
   final SidebarBuilder? customSidebarBuilder;
   final Map<String, SidebarItemCustomization>? sidebarItemCustomizations;
   final BodyBuilder? customBodyBuilder;
+  final JobsBuilder? customJobsBuilder;
   final DetailsBuilder? customDetailsBuilder;
   final EditDialogBuilder? customEditDialogBuilder;
   final DeleteDialogBuilder? customDeleteDialogBuilder;
@@ -144,16 +146,36 @@ class _HomeState extends State<Home> {
     }
 
     if (selectedResource.key == serverpodJobsResourceKey) {
+      final onView = (Map<String, String> record) =>
+          operations.showDetailsPage(selectedResource, record);
+      final onEdit = (Map<String, String> record) =>
+          operations.showEditDialog(selectedResource, record);
+      final onDiscard = (Map<String, String> record) =>
+          operations.showDeleteConfirmation(selectedResource, record);
+
+      if (widget.customJobsBuilder != null) {
+        return widget.customJobsBuilder!(
+          context,
+          widget.controller,
+          operations,
+          selectedResource,
+          widget.controller.records,
+          widget.controller.isRecordsLoading,
+          widget.controller.recordsError,
+          onView,
+          onEdit,
+          onDiscard,
+        );
+      }
+
       return JobsView(
         resource: selectedResource,
         records: widget.controller.records,
         isLoading: widget.controller.isRecordsLoading,
         errorMessage: widget.controller.recordsError,
-        onView: (record) =>
-            operations.showDetailsPage(selectedResource, record),
-        onEdit: (record) => operations.showEditDialog(selectedResource, record),
-        onDiscard: (record) =>
-            operations.showDeleteConfirmation(selectedResource, record),
+        onView: onView,
+        onEdit: onEdit,
+        onDiscard: onDiscard,
       );
     }
 

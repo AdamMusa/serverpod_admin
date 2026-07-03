@@ -379,7 +379,7 @@ class SettingRepository {
   /// );
   /// ```
   Future<List<Setting>> find(
-    _i1.Session session, {
+    _i1.DatabaseSession session, {
     _i1.WhereExpressionBuilder<SettingTable>? where,
     int? limit,
     int? offset,
@@ -387,6 +387,8 @@ class SettingRepository {
     bool orderDescending = false,
     _i1.OrderByListBuilder<SettingTable>? orderByList,
     _i1.Transaction? transaction,
+    _i1.LockMode? lockMode,
+    _i1.LockBehavior? lockBehavior,
   }) async {
     return session.db.find<Setting>(
       where: where?.call(Setting.t),
@@ -396,6 +398,8 @@ class SettingRepository {
       limit: limit,
       offset: offset,
       transaction: transaction,
+      lockMode: lockMode,
+      lockBehavior: lockBehavior,
     );
   }
 
@@ -417,13 +421,15 @@ class SettingRepository {
   /// );
   /// ```
   Future<Setting?> findFirstRow(
-    _i1.Session session, {
+    _i1.DatabaseSession session, {
     _i1.WhereExpressionBuilder<SettingTable>? where,
     int? offset,
     _i1.OrderByBuilder<SettingTable>? orderBy,
     bool orderDescending = false,
     _i1.OrderByListBuilder<SettingTable>? orderByList,
     _i1.Transaction? transaction,
+    _i1.LockMode? lockMode,
+    _i1.LockBehavior? lockBehavior,
   }) async {
     return session.db.findFirstRow<Setting>(
       where: where?.call(Setting.t),
@@ -432,18 +438,24 @@ class SettingRepository {
       orderDescending: orderDescending,
       offset: offset,
       transaction: transaction,
+      lockMode: lockMode,
+      lockBehavior: lockBehavior,
     );
   }
 
   /// Finds a single [Setting] by its [id] or null if no such row exists.
   Future<Setting?> findById(
-    _i1.Session session,
+    _i1.DatabaseSession session,
     int id, {
     _i1.Transaction? transaction,
+    _i1.LockMode? lockMode,
+    _i1.LockBehavior? lockBehavior,
   }) async {
     return session.db.findById<Setting>(
       id,
       transaction: transaction,
+      lockMode: lockMode,
+      lockBehavior: lockBehavior,
     );
   }
 
@@ -453,14 +465,20 @@ class SettingRepository {
   ///
   /// This is an atomic operation, meaning that if one of the rows fails to
   /// insert, none of the rows will be inserted.
+  ///
+  /// If [ignoreConflicts] is set to `true`, rows that conflict with existing
+  /// rows are silently skipped, and only the successfully inserted rows are
+  /// returned.
   Future<List<Setting>> insert(
-    _i1.Session session,
+    _i1.DatabaseSession session,
     List<Setting> rows, {
     _i1.Transaction? transaction,
+    bool ignoreConflicts = false,
   }) async {
     return session.db.insert<Setting>(
       rows,
       transaction: transaction,
+      ignoreConflicts: ignoreConflicts,
     );
   }
 
@@ -468,7 +486,7 @@ class SettingRepository {
   ///
   /// The returned [Setting] will have its `id` field set.
   Future<Setting> insertRow(
-    _i1.Session session,
+    _i1.DatabaseSession session,
     Setting row, {
     _i1.Transaction? transaction,
   }) async {
@@ -484,7 +502,7 @@ class SettingRepository {
   /// This is an atomic operation, meaning that if one of the rows fails to
   /// update, none of the rows will be updated.
   Future<List<Setting>> update(
-    _i1.Session session,
+    _i1.DatabaseSession session,
     List<Setting> rows, {
     _i1.ColumnSelections<SettingTable>? columns,
     _i1.Transaction? transaction,
@@ -500,7 +518,7 @@ class SettingRepository {
   /// Optionally, a list of [columns] can be provided to only update those
   /// columns. Defaults to all columns.
   Future<Setting> updateRow(
-    _i1.Session session,
+    _i1.DatabaseSession session,
     Setting row, {
     _i1.ColumnSelections<SettingTable>? columns,
     _i1.Transaction? transaction,
@@ -515,7 +533,7 @@ class SettingRepository {
   /// Updates a single [Setting] by its [id] with the specified [columnValues].
   /// Returns the updated row or null if no row with the given id exists.
   Future<Setting?> updateById(
-    _i1.Session session,
+    _i1.DatabaseSession session,
     int id, {
     required _i1.ColumnValueListBuilder<SettingUpdateTable> columnValues,
     _i1.Transaction? transaction,
@@ -530,7 +548,7 @@ class SettingRepository {
   /// Updates all [Setting]s matching the [where] expression with the specified [columnValues].
   /// Returns the list of updated rows.
   Future<List<Setting>> updateWhere(
-    _i1.Session session, {
+    _i1.DatabaseSession session, {
     required _i1.ColumnValueListBuilder<SettingUpdateTable> columnValues,
     required _i1.WhereExpressionBuilder<SettingTable> where,
     int? limit,
@@ -556,7 +574,7 @@ class SettingRepository {
   /// This is an atomic operation, meaning that if one of the rows fail to
   /// be deleted, none of the rows will be deleted.
   Future<List<Setting>> delete(
-    _i1.Session session,
+    _i1.DatabaseSession session,
     List<Setting> rows, {
     _i1.Transaction? transaction,
   }) async {
@@ -568,7 +586,7 @@ class SettingRepository {
 
   /// Deletes a single [Setting].
   Future<Setting> deleteRow(
-    _i1.Session session,
+    _i1.DatabaseSession session,
     Setting row, {
     _i1.Transaction? transaction,
   }) async {
@@ -580,7 +598,7 @@ class SettingRepository {
 
   /// Deletes all rows matching the [where] expression.
   Future<List<Setting>> deleteWhere(
-    _i1.Session session, {
+    _i1.DatabaseSession session, {
     required _i1.WhereExpressionBuilder<SettingTable> where,
     _i1.Transaction? transaction,
   }) async {
@@ -593,7 +611,7 @@ class SettingRepository {
   /// Counts the number of rows matching the [where] expression. If omitted,
   /// will return the count of all rows in the table.
   Future<int> count(
-    _i1.Session session, {
+    _i1.DatabaseSession session, {
     _i1.WhereExpressionBuilder<SettingTable>? where,
     int? limit,
     _i1.Transaction? transaction,
@@ -601,6 +619,22 @@ class SettingRepository {
     return session.db.count<Setting>(
       where: where?.call(Setting.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+
+  /// Acquires row-level locks on [Setting] rows matching the [where] expression.
+  Future<void> lockRows(
+    _i1.DatabaseSession session, {
+    required _i1.WhereExpressionBuilder<SettingTable> where,
+    required _i1.LockMode lockMode,
+    required _i1.Transaction transaction,
+    _i1.LockBehavior lockBehavior = _i1.LockBehavior.wait,
+  }) async {
+    return session.db.lockRows<Setting>(
+      where: where(Setting.t),
+      lockMode: lockMode,
+      lockBehavior: lockBehavior,
       transaction: transaction,
     );
   }

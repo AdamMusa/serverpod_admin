@@ -45,7 +45,9 @@ abstract class Post implements _i1.SerializableModel {
             ),
       description: jsonSerialization['description'] as String,
       date: _i1.DateTimeJsonExtension.fromJson(jsonSerialization['date']),
-      isPublished: jsonSerialization['isPublished'] as bool,
+      isPublished: jsonSerialization['isPublished'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['isPublished']),
     );
   }
 

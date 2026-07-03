@@ -53,6 +53,10 @@ void main() {
             label: 'Settings',
             icon: Icons.settings,
           ),
+          serverpodJobsResourceKey: SidebarItemCustomization(
+            label: 'Jobs',
+            icon: Icons.work_history,
+          ),
         },
       ),
     ),

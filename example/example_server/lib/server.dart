@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:example_server/src/admin/admin.dart';
 import 'package:example_server/src/admin/dev_admin_user.dart';
+import 'package:example_server/src/jobs/sample_jobs.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
@@ -14,6 +15,7 @@ import 'src/web/routes/root.dart';
 void run(List<String> args) async {
   // Initialize Serverpod and connect it with your generated code.
   final pod = Serverpod(args, Protocol(), Endpoints());
+  registerSampleJobs(pod);
 
   // Initialize authentication services for the server.
   // Token managers will be used to validate and issue authentication keys,
@@ -45,6 +47,7 @@ void run(List<String> args) async {
   await pod.start();
   registerAdminModule();
   await createDevAdminUserFromEnvironment();
+  await seedSampleJobs(pod);
 }
 
 void _sendRegistrationCode(

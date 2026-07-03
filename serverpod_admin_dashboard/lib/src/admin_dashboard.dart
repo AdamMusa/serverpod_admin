@@ -45,6 +45,23 @@ typedef BodyBuilder = Widget Function(
   HomeOperations operations,
 );
 
+/// Builder function for custom Serverpod jobs pane widget.
+///
+/// Receives the selected jobs [AdminResource], current job records, loading
+/// state, error state, and the default callbacks used by [JobsView].
+typedef JobsBuilder = Widget Function(
+  BuildContext context,
+  AdminDashboardController controller,
+  HomeOperations operations,
+  AdminResource resource,
+  List<Map<String, String>> records,
+  bool isLoading,
+  String? errorMessage,
+  void Function(Map<String, String> record) onView,
+  void Function(Map<String, String> record) onEdit,
+  void Function(Map<String, String> record) onDiscard,
+);
+
 /// Builder function for custom record details widget
 ///
 /// Receives the [BuildContext], [AdminDashboardController], [HomeOperations],
@@ -120,6 +137,7 @@ class AdminDashboard extends StatefulWidget {
     this.customSidebarBuilder,
     this.sidebarItemCustomizations,
     this.customBodyBuilder,
+    this.customJobsBuilder,
     this.customDetailsBuilder,
     this.customEditDialogBuilder,
     this.customDeleteDialogBuilder,
@@ -145,6 +163,10 @@ class AdminDashboard extends StatefulWidget {
 
   /// Optional custom body/records pane builder. If provided, replaces the default records pane.
   final BodyBuilder? customBodyBuilder;
+
+  /// Optional custom Serverpod jobs pane builder. If provided, replaces only
+  /// the default jobs dashboard while keeping normal resources on [RecordsView].
+  final JobsBuilder? customJobsBuilder;
 
   /// Optional custom record details builder. If provided, replaces the default record details view.
   final DetailsBuilder? customDetailsBuilder;
@@ -312,6 +334,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   customSidebarBuilder: widget.customSidebarBuilder,
                   sidebarItemCustomizations: widget.sidebarItemCustomizations,
                   customBodyBuilder: widget.customBodyBuilder,
+                  customJobsBuilder: widget.customJobsBuilder,
                   customDetailsBuilder: widget.customDetailsBuilder,
                   customEditDialogBuilder: widget.customEditDialogBuilder,
                   customDeleteDialogBuilder: widget.customDeleteDialogBuilder,

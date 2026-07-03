@@ -8,7 +8,6 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
-
 // ignore_for_file: unnecessary_null_comparison
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
@@ -47,7 +46,9 @@ abstract class Post implements _i1.TableRow<int?>, _i1.ProtocolSerialization {
             ),
       description: jsonSerialization['description'] as String,
       date: _i1.DateTimeJsonExtension.fromJson(jsonSerialization['date']),
-      isPublished: jsonSerialization['isPublished'] as bool,
+      isPublished: jsonSerialization['isPublished'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['isPublished']),
     );
   }
 
@@ -369,7 +370,7 @@ class PostRepository {
   /// );
   /// ```
   Future<List<Post>> find(
-    _i1.Session session, {
+    _i1.DatabaseSession session, {
     _i1.WhereExpressionBuilder<PostTable>? where,
     int? limit,
     int? offset,
@@ -378,6 +379,8 @@ class PostRepository {
     _i1.OrderByListBuilder<PostTable>? orderByList,
     _i1.Transaction? transaction,
     PostInclude? include,
+    _i1.LockMode? lockMode,
+    _i1.LockBehavior? lockBehavior,
   }) async {
     return session.db.find<Post>(
       where: where?.call(Post.t),
@@ -388,6 +391,8 @@ class PostRepository {
       offset: offset,
       transaction: transaction,
       include: include,
+      lockMode: lockMode,
+      lockBehavior: lockBehavior,
     );
   }
 
@@ -409,7 +414,7 @@ class PostRepository {
   /// );
   /// ```
   Future<Post?> findFirstRow(
-    _i1.Session session, {
+    _i1.DatabaseSession session, {
     _i1.WhereExpressionBuilder<PostTable>? where,
     int? offset,
     _i1.OrderByBuilder<PostTable>? orderBy,
@@ -417,6 +422,8 @@ class PostRepository {
     _i1.OrderByListBuilder<PostTable>? orderByList,
     _i1.Transaction? transaction,
     PostInclude? include,
+    _i1.LockMode? lockMode,
+    _i1.LockBehavior? lockBehavior,
   }) async {
     return session.db.findFirstRow<Post>(
       where: where?.call(Post.t),
@@ -426,20 +433,26 @@ class PostRepository {
       offset: offset,
       transaction: transaction,
       include: include,
+      lockMode: lockMode,
+      lockBehavior: lockBehavior,
     );
   }
 
   /// Finds a single [Post] by its [id] or null if no such row exists.
   Future<Post?> findById(
-    _i1.Session session,
+    _i1.DatabaseSession session,
     int id, {
     _i1.Transaction? transaction,
     PostInclude? include,
+    _i1.LockMode? lockMode,
+    _i1.LockBehavior? lockBehavior,
   }) async {
     return session.db.findById<Post>(
       id,
       transaction: transaction,
       include: include,
+      lockMode: lockMode,
+      lockBehavior: lockBehavior,
     );
   }
 
@@ -449,14 +462,20 @@ class PostRepository {
   ///
   /// This is an atomic operation, meaning that if one of the rows fails to
   /// insert, none of the rows will be inserted.
+  ///
+  /// If [ignoreConflicts] is set to `true`, rows that conflict with existing
+  /// rows are silently skipped, and only the successfully inserted rows are
+  /// returned.
   Future<List<Post>> insert(
-    _i1.Session session,
+    _i1.DatabaseSession session,
     List<Post> rows, {
     _i1.Transaction? transaction,
+    bool ignoreConflicts = false,
   }) async {
     return session.db.insert<Post>(
       rows,
       transaction: transaction,
+      ignoreConflicts: ignoreConflicts,
     );
   }
 
@@ -464,7 +483,7 @@ class PostRepository {
   ///
   /// The returned [Post] will have its `id` field set.
   Future<Post> insertRow(
-    _i1.Session session,
+    _i1.DatabaseSession session,
     Post row, {
     _i1.Transaction? transaction,
   }) async {
@@ -480,7 +499,7 @@ class PostRepository {
   /// This is an atomic operation, meaning that if one of the rows fails to
   /// update, none of the rows will be updated.
   Future<List<Post>> update(
-    _i1.Session session,
+    _i1.DatabaseSession session,
     List<Post> rows, {
     _i1.ColumnSelections<PostTable>? columns,
     _i1.Transaction? transaction,
@@ -496,7 +515,7 @@ class PostRepository {
   /// Optionally, a list of [columns] can be provided to only update those
   /// columns. Defaults to all columns.
   Future<Post> updateRow(
-    _i1.Session session,
+    _i1.DatabaseSession session,
     Post row, {
     _i1.ColumnSelections<PostTable>? columns,
     _i1.Transaction? transaction,
@@ -511,7 +530,7 @@ class PostRepository {
   /// Updates a single [Post] by its [id] with the specified [columnValues].
   /// Returns the updated row or null if no row with the given id exists.
   Future<Post?> updateById(
-    _i1.Session session,
+    _i1.DatabaseSession session,
     int id, {
     required _i1.ColumnValueListBuilder<PostUpdateTable> columnValues,
     _i1.Transaction? transaction,
@@ -526,7 +545,7 @@ class PostRepository {
   /// Updates all [Post]s matching the [where] expression with the specified [columnValues].
   /// Returns the list of updated rows.
   Future<List<Post>> updateWhere(
-    _i1.Session session, {
+    _i1.DatabaseSession session, {
     required _i1.ColumnValueListBuilder<PostUpdateTable> columnValues,
     required _i1.WhereExpressionBuilder<PostTable> where,
     int? limit,
@@ -552,7 +571,7 @@ class PostRepository {
   /// This is an atomic operation, meaning that if one of the rows fail to
   /// be deleted, none of the rows will be deleted.
   Future<List<Post>> delete(
-    _i1.Session session,
+    _i1.DatabaseSession session,
     List<Post> rows, {
     _i1.Transaction? transaction,
   }) async {
@@ -564,7 +583,7 @@ class PostRepository {
 
   /// Deletes a single [Post].
   Future<Post> deleteRow(
-    _i1.Session session,
+    _i1.DatabaseSession session,
     Post row, {
     _i1.Transaction? transaction,
   }) async {
@@ -576,7 +595,7 @@ class PostRepository {
 
   /// Deletes all rows matching the [where] expression.
   Future<List<Post>> deleteWhere(
-    _i1.Session session, {
+    _i1.DatabaseSession session, {
     required _i1.WhereExpressionBuilder<PostTable> where,
     _i1.Transaction? transaction,
   }) async {
@@ -589,7 +608,7 @@ class PostRepository {
   /// Counts the number of rows matching the [where] expression. If omitted,
   /// will return the count of all rows in the table.
   Future<int> count(
-    _i1.Session session, {
+    _i1.DatabaseSession session, {
     _i1.WhereExpressionBuilder<PostTable>? where,
     int? limit,
     _i1.Transaction? transaction,
@@ -597,6 +616,22 @@ class PostRepository {
     return session.db.count<Post>(
       where: where?.call(Post.t),
       limit: limit,
+      transaction: transaction,
+    );
+  }
+
+  /// Acquires row-level locks on [Post] rows matching the [where] expression.
+  Future<void> lockRows(
+    _i1.DatabaseSession session, {
+    required _i1.WhereExpressionBuilder<PostTable> where,
+    required _i1.LockMode lockMode,
+    required _i1.Transaction transaction,
+    _i1.LockBehavior lockBehavior = _i1.LockBehavior.wait,
+  }) async {
+    return session.db.lockRows<Post>(
+      where: where(Post.t),
+      lockMode: lockMode,
+      lockBehavior: lockBehavior,
       transaction: transaction,
     );
   }
@@ -608,7 +643,7 @@ class PostAttachRepository {
   /// Creates a relation between this [Post] and the given [Comment]s
   /// by setting each [Comment]'s foreign key `postId` to refer to this [Post].
   Future<void> comments(
-    _i1.Session session,
+    _i1.DatabaseSession session,
     Post post,
     List<_i2.Comment> comment, {
     _i1.Transaction? transaction,
@@ -635,7 +670,7 @@ class PostAttachRowRepository {
   /// Creates a relation between this [Post] and the given [Comment]
   /// by setting the [Comment]'s foreign key `postId` to refer to this [Post].
   Future<void> comments(
-    _i1.Session session,
+    _i1.DatabaseSession session,
     Post post,
     _i2.Comment comment, {
     _i1.Transaction? transaction,

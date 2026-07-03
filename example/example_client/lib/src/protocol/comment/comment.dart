@@ -34,8 +34,8 @@ abstract class Comment implements _i1.SerializableModel {
   factory Comment.fromJson(Map<String, dynamic> jsonSerialization) {
     return Comment(
       id: jsonSerialization['id'] as int?,
-      title: jsonSerialization['title'] as String,
-      description: jsonSerialization['description'] as String,
+      title: jsonSerialization['title'] as String?,
+      description: jsonSerialization['description'] as String?,
       postId: jsonSerialization['postId'] as int,
       date: _i1.DateTimeJsonExtension.fromJson(jsonSerialization['date']),
     );

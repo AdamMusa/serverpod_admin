@@ -210,6 +210,16 @@ class Endpoints extends _i1.EndpointDispatch {
                     newPassword: params['newPassword'],
                   ),
         ),
+        'hasAccount': _i1.MethodConnector(
+          name: 'hasAccount',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['emailIdp'] as _i2.EmailIdpEndpoint)
+                  .hasAccount(session),
+        ),
       },
     );
     connectors['jwtRefresh'] = _i1.EndpointConnector(
