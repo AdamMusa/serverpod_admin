@@ -1,5 +1,4 @@
-import 'package:example_server/src/generated/comment/comment.dart';
-import 'package:example_server/src/generated/post/post.dart';
+import 'package:example_server/src/generated/protocol.dart';
 import 'package:serverpod/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 
