@@ -52,6 +52,16 @@ class Endpoints extends _i1.EndpointDispatch {
               ) async => (endpoints['admin'] as _i2.AdminEndpoint)
                   .currentUserProfile(session),
         ),
+        'futureCallHistory': _i1.MethodConnector(
+          name: 'futureCallHistory',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint)
+                  .futureCallHistory(session),
+        ),
         'updateCurrentUserProfile': _i1.MethodConnector(
           name: 'updateCurrentUserProfile',
           params: {

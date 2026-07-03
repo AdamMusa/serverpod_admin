@@ -1,6 +1,7 @@
 admin:
   - resources:
   - currentUserProfile:
+  - futureCallHistory:
   - updateCurrentUserProfile:
   - changeCurrentUserPassword:
   - list:

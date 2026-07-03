@@ -177,6 +177,7 @@ class _HomeState extends State<Home> {
       return JobsView(
         resource: selectedResource,
         records: widget.controller.records,
+        historyRecords: widget.controller.jobHistory,
         isLoading: widget.controller.isRecordsLoading,
         errorMessage: widget.controller.recordsError,
         onView: onView,

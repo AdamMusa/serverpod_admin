@@ -28,6 +28,7 @@ class AdminDashboardController extends ChangeNotifier {
 
   // Records state
   List<Map<String, String>> records = const [];
+  List<Map<String, String>> jobHistory = const [];
   String? recordsError;
   bool isRecordsLoading = false;
 
@@ -146,6 +147,11 @@ class AdminDashboardController extends ChangeNotifier {
     try {
       final loaded = await adminEndpoint.list(resource.key);
       records = loaded;
+      if (resource.key == 'serverpod_future_call') {
+        jobHistory = await adminEndpoint.futureCallHistory();
+      } else {
+        jobHistory = const [];
+      }
 
       recordsError = null;
       // Update details record if it's the same resource and record still exists
@@ -170,6 +176,9 @@ class AdminDashboardController extends ChangeNotifier {
       recordsError =
           'Unable to load ${resource.tableName} records. Please try again.';
       records = const [];
+      if (resource.key == 'serverpod_future_call') {
+        jobHistory = const [];
+      }
     } finally {
       isRecordsLoading = false;
       notifyListeners();

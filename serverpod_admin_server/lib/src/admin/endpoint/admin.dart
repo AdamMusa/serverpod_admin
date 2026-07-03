@@ -1,4 +1,5 @@
 import 'package:serverpod/serverpod.dart';
+import 'package:serverpod/protocol.dart' show SessionLogEntry;
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
 import 'package:serverpod_admin_server/src/admin/admin_entry_base.dart';
@@ -36,6 +37,18 @@ class AdminEndpoint extends Endpoint {
 
   Future<Map<String, String>> currentUserProfile(Session session) async {
     return _profileToMap(await _findOrCreateCurrentProfile(session));
+  }
+
+  Future<List<Map<String, String>>> futureCallHistory(Session session) async {
+    final entries = await SessionLogEntry.db.find(
+      session,
+      where: (table) => table.endpoint.equals('FutureCall'),
+      orderBy: (table) => table.time,
+      orderDescending: true,
+      limit: 100,
+    );
+
+    return entries.map(_futureCallLogToMap).toList(growable: false);
   }
 
   Future<Map<String, String>> updateCurrentUserProfile(
@@ -261,6 +274,23 @@ class AdminEndpoint extends Endpoint {
       'fullName': profile.fullName ?? '',
       'email': profile.email ?? '',
       'imageUrl': profile.imageUrl?.toString() ?? '',
+    };
+  }
+
+  Map<String, String> _futureCallLogToMap(SessionLogEntry entry) {
+    final error = entry.error ?? '';
+    return {
+      'id': entry.id?.toString() ?? '',
+      'name': entry.method ?? '',
+      'serverId': entry.serverId,
+      'time': entry.time.toUtc().toIso8601String(),
+      'finishedAt': entry.touched.toUtc().toIso8601String(),
+      'duration': entry.duration?.toString() ?? '',
+      'queries': entry.numQueries?.toString() ?? '',
+      'error': error,
+      'stackTrace': entry.stackTrace ?? '',
+      'status': error.isEmpty ? 'finished' : 'failed',
+      'source': 'history',
     };
   }
 

@@ -36,6 +36,13 @@ class EndpointAdmin extends _i1.EndpointRef {
         {},
       );
 
+  _i2.Future<List<Map<String, String>>> futureCallHistory() =>
+      caller.callServerEndpoint<List<Map<String, String>>>(
+        'serverpod_admin.admin',
+        'futureCallHistory',
+        {},
+      );
+
   _i2.Future<Map<String, String>> updateCurrentUserProfile(
     String userName,
     String fullName,

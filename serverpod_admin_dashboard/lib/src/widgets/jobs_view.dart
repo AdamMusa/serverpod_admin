@@ -7,6 +7,7 @@ class JobsView extends StatefulWidget {
   const JobsView({
     required this.resource,
     required this.records,
+    this.historyRecords = const [],
     required this.isLoading,
     required this.errorMessage,
     required this.onView,
@@ -20,6 +21,7 @@ class JobsView extends StatefulWidget {
 
   final AdminResource resource;
   final List<Map<String, String>> records;
+  final List<Map<String, String>> historyRecords;
   final bool isLoading;
   final String? errorMessage;
   final void Function(Map<String, String> record)? onView;
@@ -35,7 +37,7 @@ class JobsView extends StatefulWidget {
 
 class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
   late final TabController _tabController = TabController(
-    length: 4,
+    length: 6,
     vsync: this,
   );
   final TextEditingController _jobFilterController = TextEditingController();
@@ -78,6 +80,8 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
     final scheduled = _scheduledRecords.length;
     final due = _dueRecords.length;
     final paused = _pausedRecords.length;
+    final failed = _failedRecords.length;
+    final finished = _finishedRecords.length;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(28, 22, 28, 18),
@@ -100,7 +104,9 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
               Tab(text: 'Scheduled jobs ($scheduled)'),
               Tab(text: 'Ready jobs ($due)'),
               Tab(text: 'Paused jobs ($paused)'),
-              Tab(text: 'All jobs (${widget.records.length})'),
+              Tab(text: 'Failed jobs ($failed)'),
+              Tab(text: 'Finished jobs ($finished)'),
+              Tab(text: 'All jobs (${_allRecords.length})'),
             ],
           ),
           const SizedBox(height: 16),
@@ -198,6 +204,7 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
     final serverId = record['serverId'] ?? '';
     final identifier = record['identifier'] ?? '';
     final state = _jobState(record);
+    final isHistory = _isHistory(record);
 
     return DataRow(
       cells: [
@@ -217,7 +224,7 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  _statusLabel(record),
+                  isHistory ? _historySubtitle(record) : _statusLabel(record),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
@@ -228,13 +235,22 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
         ),
         DataCell(_StatusChip(state: state)),
         DataCell(Text(serverId)),
-        DataCell(Text(_scheduledLabel(record))),
+        DataCell(
+            Text(isHistory ? _finishedLabel(record) : _scheduledLabel(record))),
         DataCell(Text(identifier.isEmpty ? '-' : identifier)),
         DataCell(
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (state == _JobState.paused && widget.onResume != null)
+              if (isHistory)
+                TextButton.icon(
+                  onPressed: widget.onView == null
+                      ? null
+                      : () => widget.onView!(record),
+                  icon: const Icon(Icons.receipt_long_outlined),
+                  label: const Text('Details'),
+                )
+              else if (state == _JobState.paused && widget.onResume != null)
                 IconButton(
                   tooltip: 'Resume now',
                   icon: const Icon(Icons.play_circle_outline),
@@ -296,12 +312,30 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
     return widget.records.where(_isPaused).toList();
   }
 
+  List<Map<String, String>> get _failedRecords {
+    return widget.historyRecords
+        .where((record) => record['status'] == 'failed')
+        .toList();
+  }
+
+  List<Map<String, String>> get _finishedRecords {
+    return widget.historyRecords
+        .where((record) => record['status'] == 'finished')
+        .toList();
+  }
+
+  List<Map<String, String>> get _allRecords {
+    return [...widget.records, ...widget.historyRecords];
+  }
+
   List<Map<String, String>> get _visibleRecords {
     final base = switch (_tabController.index) {
       0 => _scheduledRecords,
       1 => _dueRecords,
       2 => _pausedRecords,
-      _ => widget.records,
+      3 => _failedRecords,
+      4 => _finishedRecords,
+      _ => _allRecords,
     };
 
     final jobFilter = _jobFilterController.text.trim().toLowerCase();
@@ -310,8 +344,11 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
     return base.where((record) {
       final name = (record['name'] ?? '').toLowerCase();
       final serverId = (record['serverId'] ?? '').toLowerCase();
+      final error = (record['error'] ?? '').toLowerCase();
       return (jobFilter.isEmpty || name.contains(jobFilter)) &&
-          (serverFilter.isEmpty || serverId.contains(serverFilter));
+          (serverFilter.isEmpty ||
+              serverId.contains(serverFilter) ||
+              error.contains(serverFilter));
     }).toList();
   }
 
@@ -345,11 +382,35 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
   }
 
   _JobState _jobState(Map<String, String> record) {
+    if (record['status'] == 'failed') return _JobState.failed;
+    if (record['status'] == 'finished') return _JobState.finished;
     if (_isPaused(record)) return _JobState.paused;
     final time = DateTime.tryParse(record['time'] ?? '')?.toUtc();
     if (time == null) return _JobState.unknown;
     if (time.isAfter(DateTime.now().toUtc())) return _JobState.scheduled;
     return _JobState.ready;
+  }
+
+  bool _isHistory(Map<String, String> record) {
+    return record['source'] == 'history';
+  }
+
+  String _historySubtitle(Map<String, String> record) {
+    final error = record['error'];
+    if (error != null && error.isNotEmpty) return error;
+    final duration = double.tryParse(record['duration'] ?? '');
+    if (duration == null) return 'Finished';
+    return 'Finished in ${duration.toStringAsFixed(2)}s';
+  }
+
+  String _finishedLabel(Map<String, String> record) {
+    final finishedAt = DateTime.tryParse(record['finishedAt'] ?? '')?.toLocal();
+    if (finishedAt == null) return '-';
+    final difference = DateTime.now().difference(finishedAt);
+    if (difference.inDays > 0) return '${difference.inDays}d ago';
+    if (difference.inHours > 0) return '${difference.inHours}h ago';
+    if (difference.inMinutes > 0) return '${difference.inMinutes}m ago';
+    return 'just now';
   }
 
   void _clearFilters() {
@@ -361,7 +422,7 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
 
 const _pausedYear = 9999;
 
-enum _JobState { scheduled, ready, paused, unknown }
+enum _JobState { scheduled, ready, paused, finished, failed, unknown }
 
 class _StatusChip extends StatelessWidget {
   const _StatusChip({required this.state});
@@ -381,6 +442,16 @@ class _StatusChip extends StatelessWidget {
           'Paused',
           Icons.pause_circle_outline,
           theme.colorScheme.secondary,
+        ),
+      _JobState.finished => (
+          'Finished',
+          Icons.check_circle_outline,
+          Colors.green,
+        ),
+      _JobState.failed => (
+          'Failed',
+          Icons.error_outline,
+          theme.colorScheme.error,
         ),
       _JobState.unknown => (
           'Unknown',

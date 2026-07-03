@@ -88,4 +88,78 @@ void main() {
     discardButton.onPressed?.call();
     expect(discarded, isTrue);
   });
+
+  testWidgets('shows failed and finished future call history', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1400, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final now = DateTime.now().toUtc();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 1100,
+            height: 700,
+            child: JobsView(
+              resource: resource,
+              records: const [],
+              historyRecords: [
+                {
+                  'id': '10',
+                  'name': 'FailedReportJob',
+                  'serverId': 'server-1',
+                  'time': now
+                      .subtract(const Duration(minutes: 4))
+                      .toIso8601String(),
+                  'finishedAt': now
+                      .subtract(const Duration(minutes: 3))
+                      .toIso8601String(),
+                  'duration': '1.23',
+                  'error': 'NoMethodError: bad state',
+                  'status': 'failed',
+                  'source': 'history',
+                },
+                {
+                  'id': '11',
+                  'name': 'FinishedDigestJob',
+                  'serverId': 'server-1',
+                  'time': now
+                      .subtract(const Duration(minutes: 2))
+                      .toIso8601String(),
+                  'finishedAt': now
+                      .subtract(const Duration(minutes: 1))
+                      .toIso8601String(),
+                  'duration': '0.42',
+                  'error': '',
+                  'status': 'finished',
+                  'source': 'history',
+                },
+              ],
+              isLoading: false,
+              errorMessage: null,
+              onView: (_) {},
+              onEdit: (_) {},
+              onDiscard: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Failed jobs (1)'), findsOneWidget);
+    expect(find.text('Finished jobs (1)'), findsOneWidget);
+
+    await tester.tap(find.text('Failed jobs (1)'));
+    await tester.pumpAndSettle();
+    expect(find.text('FailedReportJob'), findsOneWidget);
+    expect(find.text('NoMethodError: bad state'), findsOneWidget);
+    expect(find.text('Failed'), findsOneWidget);
+
+    await tester.tap(find.text('Finished jobs (1)'));
+    await tester.pumpAndSettle();
+    expect(find.text('FinishedDigestJob'), findsOneWidget);
+    expect(find.text('Finished in 0.42s'), findsOneWidget);
+    expect(find.text('Finished'), findsOneWidget);
+  });
 }
