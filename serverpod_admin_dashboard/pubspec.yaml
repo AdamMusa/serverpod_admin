@@ -1,6 +1,6 @@
 name: serverpod_admin_dashboard
 description: The missing admin dashboard for Serverpod. A complete Flutter package providing CRUD operations, foreign key relationships, boolean fields, date pickers, pagination, search, and authentication for managing your Serverpod database records.
-version: 0.1.6
+version: 0.1.7
 homepage: https://github.com/AdamMusa/serverpod_admin
 environment:
   sdk: '>=3.5.0 <4.0.0'
@@ -10,9 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   serverpod_client: ^3.4.10
-  serverpod_admin_client:
-    path: ../serverpod_admin_client
-  # serverpod_admin_client: ^1.0.6
+  serverpod_admin_client: ^1.0.7
   serverpod_auth_idp_flutter: ^3.4.10
   csv: ^8.0.0
   excel: ^4.0.6

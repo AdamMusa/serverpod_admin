@@ -52,6 +52,10 @@ No more writing boilerplate CRUD endpoints. Register your models once, and insta
 - **Create & Edit** – Intuitive forms for managing records
 - **Delete** – Safe deletion with proper validation
 - **Pagination** – Handle large datasets effortlessly
+- **CSV/XLSX Import & Export** – Move admin data in and out of your app without custom scripts
+- **Profile Management** – Admin users can update their profile from the dashboard
+- **Password Updates** – Admin users can securely change their password
+- **Job Monitoring UI** – A full Serverpod jobs dashboard for scheduled, ready, paused, failed, finished, and historical jobs
 
 ### 🎨 **Frontend-Agnostic Architecture**
 
@@ -61,6 +65,7 @@ Built with flexibility in mind. The `serverpod_admin_server` exposes a clean API
 
 - **Type-Safe** – Leverages Serverpod's generated protocol classes
 - **Integrated** – Works seamlessly with your existing Serverpod setup
+- **Job-Aware** – Enable `admin.jobs = true` to monitor Serverpod future calls from the admin dashboard
 - **Extensible** – Designed to grow with your needs
 
 ### 🛠️ **Developer Experience First**
@@ -71,7 +76,15 @@ Stop spending days building admin interfaces. Get back to building features that
 
 ## 📦 Installation
 
-### Server Side
+Serverpod Admin has two UI paths:
+
+- **Non-custom / prebuilt UI:** install the ready-made Flutter web dashboard
+  into your Serverpod server and serve it at `/admin`.
+- **Custom Flutter UI:** use `serverpod_admin_dashboard` directly in your own
+  Flutter app when you want to customize layout, theme, sidebar, dialogs, or
+  jobs UI.
+
+### Server Package
 
 Run:
 
@@ -79,10 +92,12 @@ Run:
 flutter pub get serverpod_admin_server
 ```
 
-### Prebuilt Admin UI
+### Option 1: Non-Custom Prebuilt Admin UI
 
-If you want Serverpod to serve the admin dashboard for you, install the
-prebuilt Flutter web app from your Serverpod server package directory:
+Use this when you do not want to build a Flutter admin app yourself. Your
+Serverpod backend serves the admin dashboard directly.
+
+From your Serverpod server package directory:
 
 ```bash
 dart pub global activate serverpod_admin_server
@@ -106,16 +121,30 @@ void run(List<String> args) async {
 By default the installer places the build in `web/admin`, and
 `serveAdminDashboard(pod)` serves it at `/admin`.
 
-### Custom Flutter Dashboard
+Open:
 
-If you want to customize the dashboard UI in your own Flutter app, add the
-dashboard package instead:
+```text
+http://localhost:8082/admin
+```
+
+The prebuilt app talks to your Serverpod API. In local development it maps
+`localhost:8082/admin` to `localhost:8080/` for API calls by default. For
+deployments or custom routing, build the prebuilt app with:
+
+```bash
+flutter build web --wasm --base-href /admin/ --dart-define=SERVER_URL=https://api.example.com/
+```
+
+### Option 2: Custom Flutter Dashboard
+
+Use this when you want to customize the admin UI in your own Flutter app. Add
+the dashboard package:
 
 ```bash
 flutter pub get serverpod_admin_dashboard
 ```
 
-**That's it! You're good to go!** 🚀
+Both options use the same server package, same auth, and same admin endpoints.
 
 ---
 

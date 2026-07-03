@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.7
+
+- Added prebuilt admin dashboard installer executable: `serverpod_admin install`.
+- Added `serveAdminDashboard(pod)` for serving the installed Flutter web admin app at `/admin`.
+- Added admin profile update and password change endpoints.
+- Added Serverpod future-call jobs resource, job history, and job queue actions.
+- Added admin user bootstrap helper support for email/password admin users.
+- Improved CSV/XLSX import/export support and admin-resource data handling.
+
 ## 1.0.6
 
 - Initial version

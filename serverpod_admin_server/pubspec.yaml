@@ -1,6 +1,6 @@
 name: serverpod_admin_server
 description: Server-side package for Serverpod admin dashboard that provides endpoints for CRUD operations, resource discovery, and database record management. Handles payload normalization, foreign key relationships, and record serialization for the admin interface.
-version: 1.0.6
+version: 1.0.7
 homepage: https://github.com/AdamMusa/serverpod_admin
 
 environment:
@@ -9,6 +9,7 @@ environment:
 dependencies:
   archive: ^4.0.7
   serverpod: ^3.4.10
+  serverpod_auth_core_server: ^3.4.10
   serverpod_auth_idp_server: ^3.4.10
 
 dev_dependencies:

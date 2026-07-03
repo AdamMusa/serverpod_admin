@@ -9,8 +9,7 @@ environment:
 dependencies:
   serverpod: ^3.4.10
   serverpod_auth_idp_server: ^3.4.10
-  serverpod_admin_server:
-    path: ../../serverpod_admin_server
+  serverpod_admin_server: ^1.0.7
 
 dev_dependencies:
   lints: '>=3.0.0 <7.0.0'
