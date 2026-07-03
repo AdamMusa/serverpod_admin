@@ -250,6 +250,8 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
                   icon: const Icon(Icons.receipt_long_outlined),
                   label: const Text('Details'),
                 )
+              else if (state == _JobState.ready)
+                const _PendingWorkerLabel()
               else if (state == _JobState.paused && widget.onResume != null)
                 IconButton(
                   tooltip: 'Resume now',
@@ -262,13 +264,13 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
                   icon: const Icon(Icons.play_arrow_outlined),
                   onPressed: () => widget.onRunNow!(record),
                 ),
-              if (state != _JobState.paused && widget.onPause != null)
+              if (state == _JobState.scheduled && widget.onPause != null)
                 IconButton(
                   tooltip: 'Pause job',
                   icon: const Icon(Icons.pause_circle_outline),
                   onPressed: () => widget.onPause!(record),
                 ),
-              if (widget.onEdit != null)
+              if (state != _JobState.ready && widget.onEdit != null)
                 IconButton(
                   tooltip: 'Reschedule job',
                   icon: const Icon(Icons.edit_calendar_outlined),
@@ -372,7 +374,7 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
     if (_isPaused(record)) return 'Paused';
 
     final difference = time.difference(DateTime.now());
-    if (difference.isNegative) return 'Ready to run';
+    if (difference.isNegative) return 'Waiting for worker';
     return 'Scheduled for ${time.toString()}';
   }
 
@@ -485,6 +487,25 @@ class _StatusChip extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PendingWorkerLabel extends StatelessWidget {
+  const _PendingWorkerLabel();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Text(
+        'Waiting for worker',
+        style: theme.textTheme.labelMedium?.copyWith(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

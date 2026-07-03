@@ -162,4 +162,51 @@ void main() {
     expect(find.text('Finished in 0.42s'), findsOneWidget);
     expect(find.text('Finished'), findsOneWidget);
   });
+
+  testWidgets('does not show run now action for ready jobs', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1400, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final dueTime = DateTime.now().toUtc().subtract(const Duration(minutes: 2));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 1100,
+            height: 700,
+            child: JobsView(
+              resource: resource,
+              records: [
+                {
+                  'id': '1',
+                  'name': 'ReadyJob',
+                  'time': dueTime.toIso8601String(),
+                  'serverId': 'server-1',
+                  'identifier': 'ready-1',
+                },
+              ],
+              isLoading: false,
+              errorMessage: null,
+              onView: (_) {},
+              onEdit: (_) {},
+              onDiscard: (_) {},
+              onRunNow: (_) {},
+              onPause: (_) {},
+              onResume: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Ready jobs (1)'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ReadyJob'), findsOneWidget);
+    expect(find.text('Waiting for worker'), findsWidgets);
+    expect(find.byTooltip('Run now'), findsNothing);
+    expect(find.byTooltip('Pause job'), findsNothing);
+    expect(find.byTooltip('Reschedule job'), findsNothing);
+  });
 }
