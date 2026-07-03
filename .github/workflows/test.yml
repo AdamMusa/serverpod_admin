@@ -163,3 +163,38 @@ jobs:
         working-directory: serverpod_admin_dashboard
         run: flutter test --reporter=failures-only
 
+  build_admin_app:
+    name: Build prebuilt admin app
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        flutter-version: ['3.38.4']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ matrix.flutter-version }}
+          cache: true
+
+      - name: Install dependencies
+        working-directory: serverpod_admin_app
+        run: flutter pub get
+
+      - name: Analyze admin app
+        working-directory: serverpod_admin_app
+        run: flutter analyze
+
+      - name: Build Flutter web app
+        working-directory: serverpod_admin_app
+        run: flutter build web --wasm --base-href /admin/
+
+      - name: Package web build
+        working-directory: serverpod_admin_app/build/web
+        run: zip -r ../../../serverpod_admin_dashboard_web.zip .
+
+      - name: Upload admin app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: serverpod_admin_dashboard_web
+          path: serverpod_admin_dashboard_web.zip

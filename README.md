@@ -79,9 +79,37 @@ Run:
 flutter pub get serverpod_admin_server
 ```
 
-### Flutter (Frontend)
+### Prebuilt Admin UI
 
-Run:
+If you want Serverpod to serve the admin dashboard for you, install the
+prebuilt Flutter web app from your Serverpod server package directory:
+
+```bash
+dart pub global activate serverpod_admin_server
+serverpod_admin install
+```
+
+Then serve it from your `server.dart`:
+
+```dart
+import 'package:serverpod_admin_server/serverpod_admin_server.dart' as admin;
+
+void run(List<String> args) async {
+  final pod = Serverpod(args, Protocol(), Endpoints());
+
+  admin.serveAdminDashboard(pod); // /admin
+
+  await pod.start();
+}
+```
+
+By default the installer places the build in `web/admin`, and
+`serveAdminDashboard(pod)` serves it at `/admin`.
+
+### Custom Flutter Dashboard
+
+If you want to customize the dashboard UI in your own Flutter app, add the
+dashboard package instead:
 
 ```bash
 flutter pub get serverpod_admin_dashboard
@@ -166,7 +194,7 @@ Future<void> findOrCreateAndLinkEmail() async {
 
 **Call `findOrCreateAndLinkEmail()` in your `server.dart` file after `pod.start()` to create your first admin user. Keep this as a development/bootstrap helper, and remove or guard it once your admin user exists.**
 
-### Using the Admin Dashboard (Flutter)
+### Using the Custom Flutter Dashboard
 
 ```dart
 Future<void> main() async {
@@ -182,6 +210,22 @@ Future<void> main() async {
 **That's it!** You now have a fully working admin panel with authentication for your Serverpod app! 🚀🎉
 
 The admin dashboard will automatically show a login screen for unauthenticated users. Only users with the `serverpod.admin` scope can access the admin panel.
+
+### Building the Prebuilt UI Yourself
+
+The bundled app lives in `serverpod_admin_app` and is built by GitHub Actions:
+
+```bash
+cd serverpod_admin_app
+flutter build web --wasm --base-href /admin/
+```
+
+The build output is packaged as `serverpod_admin_dashboard_web.zip`. You can
+install a local build with:
+
+```bash
+serverpod_admin install --source serverpod_admin_app/build/web --force
+```
 
 ---
 

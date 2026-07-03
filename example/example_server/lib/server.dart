@@ -4,6 +4,7 @@ import 'package:example_server/src/admin/admin.dart';
 import 'package:example_server/src/admin/dev_admin_user.dart';
 import 'package:example_server/src/jobs/sample_jobs.dart';
 import 'package:serverpod/serverpod.dart';
+import 'package:serverpod_admin_server/serverpod_admin_server.dart' as admin;
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
 
@@ -36,6 +37,7 @@ void run(List<String> args) async {
   );
 
   // Setup a default page at the web root.
+  admin.serveAdminDashboard(pod);
   pod.webServer.addRoute(RootRoute(), '/');
   pod.webServer.addRoute(RootRoute(), '/index.html');
 
