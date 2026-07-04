@@ -199,7 +199,7 @@ jobs:
 
       - name: Build Flutter web app
         working-directory: serverpod_admin_app
-        run: flutter build web --wasm --base-href /admin/
+        run: flutter build web --base-href /admin/
 
       - name: Package web build
         working-directory: serverpod_admin_app/build/web

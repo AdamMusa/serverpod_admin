@@ -150,7 +150,7 @@ The prebuilt app talks to your Serverpod API. In local development it maps
 deployments or custom routing, build the prebuilt app with:
 
 ```bash
-flutter build web --wasm --base-href /admin/ --dart-define=SERVER_URL=https://api.example.com/
+flutter build web --base-href /admin/ --dart-define=SERVER_URL=https://api.example.com/
 ```
 
 ### Option 2: Custom Flutter Dashboard
@@ -264,7 +264,7 @@ The bundled app lives in `serverpod_admin_app` and is built by GitHub Actions:
 
 ```bash
 cd serverpod_admin_app
-flutter build web --wasm --base-href /admin/
+flutter build web --base-href /admin/
 ```
 
 The build output is packaged as `serverpod_admin_dashboard_web.zip`. You can

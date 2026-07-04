@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.11
+
+- Switched the prebuilt dashboard release instructions from WebAssembly output
+  to the standard Flutter web JavaScript build for broader browser
+  compatibility.
+
 ## 1.0.10
 
 - Made `AdminUser.create` reset the password for existing email accounts, so
