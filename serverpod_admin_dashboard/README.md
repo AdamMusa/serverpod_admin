@@ -533,16 +533,6 @@ Serverpod Admin implements strict role-based access control:
 
 ---
 
-## 🔮 What's Next?
-
-This is a **proof of concept** that's already stable and production-ready. We're actively working on:
-
-- ✅ **Export/Import** – Data portability built-in
-- ✅ **Role-Based Access** – Secure your admin panel (✅ **Implemented**)
-- ✅ **Comprehensive Testing** – Ensuring reliability
-
----
-
 ## 💡 The Vision
 
 Serverpod Admin fills the gap that every Serverpod developer has felt. No more custom admin code. No more database dives. Just a beautiful, powerful admin panel that works out of the box.
