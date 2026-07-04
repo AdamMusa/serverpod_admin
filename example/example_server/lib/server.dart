@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:example_server/src/admin/admin.dart';
 import 'package:example_server/src/admin/dev_admin_user.dart';
 import 'package:example_server/src/jobs/sample_jobs.dart';
@@ -10,7 +8,6 @@ import 'package:serverpod_auth_idp_server/providers/email.dart';
 
 import 'src/generated/endpoints.dart';
 import 'src/generated/protocol.dart';
-import 'src/web/routes/root.dart';
 
 /// The starting point of the Serverpod server.
 void run(List<String> args) async {
@@ -36,15 +33,8 @@ void run(List<String> args) async {
     ],
   );
 
-  // Setup a default page at the web root.
   registerAdminModule();
   admin.serveAdminDashboard(pod);
-  pod.webServer.addRoute(RootRoute(), '/');
-  pod.webServer.addRoute(RootRoute(), '/index.html');
-
-  // Serve all files in the web/static relative directory under /.
-  final root = Directory(Uri(path: 'web/static').toFilePath());
-  pod.webServer.addRoute(StaticRoute.directory(root), '/static');
 
   // Start the server.
   await pod.start();
