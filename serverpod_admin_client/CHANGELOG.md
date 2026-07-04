@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.9
+
+- Updated README tutorial with separate non-custom and advanced custom setup
+  paths.
+- Documented local package installer usage with
+  `dart run serverpod_admin_server:serverpod_admin install`.
+
 ## 1.0.8
 
 - Updated the `find` endpoint client signature to send record ids as strings,

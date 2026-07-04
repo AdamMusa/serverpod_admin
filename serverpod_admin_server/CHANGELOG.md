@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.12
+
+- Updated installer documentation to use local package execution with
+  `dart run serverpod_admin_server:serverpod_admin install`.
+- Updated README tutorial with separate non-custom prebuilt dashboard and
+  advanced custom Flutter dashboard setup paths.
+
 ## 1.0.11
 
 - Switched the prebuilt dashboard release instructions from WebAssembly output

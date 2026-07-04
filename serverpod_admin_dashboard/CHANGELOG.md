@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.1.8
+
+- Added dashboard auth restoration so embedded custom Flutter apps keep users
+  signed in across page refreshes when the configured auth session is valid.
+- Improved Serverpod jobs dashboard spacing and finished-job actions.
+- Updated README tutorial with separate non-custom and advanced custom setup
+  paths.
+
 ## 0.1.7
 
 - Added Serverpod jobs dashboard with scheduled, ready, paused, failed, finished, and all-job tabs.
