@@ -19,6 +19,7 @@ Thumbs.db
 
 # Logs
 *.log
+*.rdb
 
 # Environment variables
 .env
@@ -32,4 +33,4 @@ coverage/
 *.g.dart
 *.freezed.dart
 *.mocks.dart
-
+devtools_options.yaml
