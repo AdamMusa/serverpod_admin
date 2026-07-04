@@ -90,7 +90,7 @@ class EndpointAdmin extends _i1.EndpointRef {
 
   _i2.Future<Map<String, dynamic>?> find(
     String resourceKey,
-    Object id,
+    String id,
   ) => caller.callServerEndpoint<Map<String, dynamic>?>(
     'serverpod_admin.admin',
     'find',

@@ -77,6 +77,12 @@ import 'package:serverpod_admin_server/serverpod_admin_server.dart' as admin;
 void run(List<String> args) async {
   final pod = Serverpod(args, Protocol(), Endpoints());
 
+  admin.jobs = true;
+  admin.configureAdminModule((registry) {
+    registry.register<Post>();
+    registry.register<Person>();
+  });
+
   admin.serveAdminDashboard(pod); // /admin
 
   await pod.start();

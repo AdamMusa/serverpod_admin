@@ -37,6 +37,7 @@ void run(List<String> args) async {
   );
 
   // Setup a default page at the web root.
+  registerAdminModule();
   admin.serveAdminDashboard(pod);
   pod.webServer.addRoute(RootRoute(), '/');
   pod.webServer.addRoute(RootRoute(), '/index.html');
@@ -47,7 +48,6 @@ void run(List<String> args) async {
 
   // Start the server.
   await pod.start();
-  registerAdminModule();
   await createDevAdminUserFromEnvironment();
 }
 

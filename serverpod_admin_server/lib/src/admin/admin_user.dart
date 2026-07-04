@@ -78,6 +78,12 @@ class AdminUser {
         email: email,
         password: password,
       );
+    } else {
+      await emailAdmin.setPassword(
+        session,
+        email: email,
+        password: password,
+      );
     }
 
     await AuthServices.instance.authUsers.update(

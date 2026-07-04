@@ -391,12 +391,11 @@ void main() {
           {'name': 'Findable Item', 'value': '99'},
         );
 
-        final idStr = created['id']!;
-        final id = int.parse(idStr);
+        final id = created['id']!;
         final found = await endpoints.admin.find(
           authenticatedSessionBuilder,
           'test_models',
-          id, // Pass as int - endpoint accepts Object
+          id,
         );
 
         expect(found, isNotNull);
@@ -409,7 +408,7 @@ void main() {
         final found = await endpoints.admin.find(
           authenticatedSessionBuilder,
           'test_models',
-          99999,
+          '99999',
         );
 
         expect(found, isNull);
@@ -418,7 +417,7 @@ void main() {
       test('should throw error for invalid resource key', () async {
         expect(
           () => endpoints.admin
-              .find(authenticatedSessionBuilder, 'invalid_resource', 1),
+              .find(authenticatedSessionBuilder, 'invalid_resource', '1'),
           throwsA(isA<ArgumentError>()),
         );
       });
@@ -501,7 +500,7 @@ void main() {
         final found = await endpoints.admin.find(
           authenticatedSessionBuilder,
           'test_models',
-          int.parse(id), // Convert String to int
+          id,
         );
         expect(found, isNull);
       });

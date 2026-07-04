@@ -170,7 +170,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'id': _i1.ParameterDescription(
               name: 'id',
-              type: _i1.getType<Object>(),
+              type: _i1.getType<String>(),
               nullable: false,
             ),
           },

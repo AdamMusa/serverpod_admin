@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.10
+
+- Made `AdminUser.create` reset the password for existing email accounts, so
+  development admin bootstrapping is repeatable.
+- Updated install snippets to configure resources and jobs before serving the
+  prebuilt dashboard.
+
 ## 1.0.9
 
 - Improved `serverpod_admin install` output with a copy-paste `server.dart`

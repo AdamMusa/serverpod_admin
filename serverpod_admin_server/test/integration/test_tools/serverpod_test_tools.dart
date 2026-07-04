@@ -388,7 +388,7 @@ class _AdminEndpoint {
   _i3.Future<Map<String, dynamic>?> find(
     _i1.TestSessionBuilder sessionBuilder,
     String resourceKey,
-    Object id,
+    String id,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =

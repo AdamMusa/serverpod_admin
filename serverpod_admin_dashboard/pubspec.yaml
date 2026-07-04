@@ -10,7 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   serverpod_client: ^3.4.10
-  serverpod_admin_client: ^1.0.7
+  serverpod_admin_client: ^1.0.8
   serverpod_auth_idp_flutter: ^3.4.10
   csv: ^8.0.0
   excel: ^4.0.6

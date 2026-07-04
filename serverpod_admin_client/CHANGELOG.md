@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.8
+
+- Updated the `find` endpoint client signature to send record ids as strings,
+  matching Serverpod 3.4 endpoint deserialization.
+
 ## 1.0.7
 
 - Added client protocol support for admin profile and password operations.

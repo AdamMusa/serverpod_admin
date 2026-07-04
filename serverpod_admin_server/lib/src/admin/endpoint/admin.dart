@@ -141,23 +141,18 @@ class AdminEndpoint extends Endpoint {
   Future<Map<String, dynamic>?> find(
     Session session,
     String resourceKey,
-    Object id,
+    String id,
   ) async {
     final entry = _resolve(resourceKey);
-    // Parse the id to the appropriate type based on the primary key column
-    // Handle both String and already-parsed types
-    Object normalizedId = id;
-    if (id is String) {
-      final primaryColumnMetadata = entry.metadata.columns.firstWhere(
-        (column) => column.isPrimary,
-        orElse: () => entry.metadata.columns.first,
-      );
-      final tableColumn = entry.columns.firstWhere(
-        (column) => column.columnName == primaryColumnMetadata.name,
-        orElse: () => entry.columns.first,
-      );
-      normalizedId = _parseColumnValue(tableColumn, id) ?? id;
-    }
+    final primaryColumnMetadata = entry.metadata.columns.firstWhere(
+      (column) => column.isPrimary,
+      orElse: () => entry.metadata.columns.first,
+    );
+    final tableColumn = entry.columns.firstWhere(
+      (column) => column.columnName == primaryColumnMetadata.name,
+      orElse: () => entry.columns.first,
+    );
+    final normalizedId = _parseColumnValue(tableColumn, id) ?? id;
     final result = await entry.find(session, normalizedId);
     if (result == null) return null;
     return _removeClassName(result);
