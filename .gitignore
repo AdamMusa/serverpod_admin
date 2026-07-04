@@ -33,4 +33,4 @@ coverage/
 *.g.dart
 *.freezed.dart
 *.mocks.dart
-devtools_options.yaml
+serverpod_admin_app/devtools_options.yaml
