@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.1.8
+## 1.0.12
 
 - Added dashboard auth restoration so embedded custom Flutter apps keep users
   signed in across page refreshes when the configured auth session is valid.

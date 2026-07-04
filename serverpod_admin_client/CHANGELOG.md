@@ -2,12 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
-## 1.0.9
+## 1.0.12
 
 - Updated README tutorial with separate non-custom and advanced custom setup
   paths.
 - Documented local package installer usage with
   `dart run serverpod_admin_server:serverpod_admin install`.
+
+## 1.0.9
+
+- Superseded by 1.0.12 to keep the Serverpod Admin package family on the same
+  release version.
 
 ## 1.0.8
 
