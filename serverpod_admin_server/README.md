@@ -210,24 +210,6 @@ users with the `serverpod.admin` scope.
 The prebuilt app talks to your Serverpod API. In local development it maps
 `localhost:8082/admin` to `localhost:8080/` for API calls by default.
 
-### 6. Building the Prebuilt UI Yourself
-
-Most users do not need this. The release bundle is built by GitHub Actions and
-published as `serverpod_admin_dashboard_web.zip`. For local testing:
-
-```bash
-cd serverpod_admin_app
-flutter build web --base-href /admin/
-cd ../your_server_package
-dart run serverpod_admin_server:serverpod_admin install --source ../serverpod_admin_app/build/web --force
-```
-
-For deployments with custom API routing:
-
-```bash
-flutter build web --base-href /admin/ --dart-define=SERVER_URL=https://api.example.com/
-```
-
 ---
 
 ## 🧩 Advanced Custom: Flutter Dashboard Package
