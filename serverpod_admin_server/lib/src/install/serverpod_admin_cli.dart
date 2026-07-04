@@ -68,12 +68,23 @@ class ServerpodAdminCli {
       _extractArchive(archive, target);
 
       stdout.writeln('Installed Serverpod Admin dashboard to ${target.path}');
-      stdout.writeln(
-        'Serve it with: serveAdminDashboard(pod); // opens at /admin',
-      );
-      stdout.writeln(
-        "Custom path: serveAdminDashboard(pod, path: '/customadminpath');",
-      );
+      stdout.writeln('''
+
+Add this to your server.dart:
+
+import 'package:serverpod_admin_server/serverpod_admin_server.dart' as admin;
+
+void run(List<String> args) async {
+  final pod = Serverpod(args, Protocol(), Endpoints());
+
+  admin.serveAdminDashboard(pod); // /admin
+
+  await pod.start();
+}
+
+Custom path:
+  admin.serveAdminDashboard(pod, path: '/customadminpath');
+''');
     } finally {
       tempDirectory.deleteSync(recursive: true);
     }
