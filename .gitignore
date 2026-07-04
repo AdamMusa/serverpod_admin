@@ -35,9 +35,5 @@ coverage/
 *.mocks.dart
 serverpod_admin_app/devtools_options.yaml
 
-# Example app local platform files
-example/example_flutter/ios/Flutter/AppFrameworkInfo.plist
-example/example_flutter/ios/Podfile.lock
-example/example_flutter/ios/Runner/AppDelegate.swift
-example/example_flutter/ios/Runner/Info.plist
-example/example_flutter/macos/Podfile.lock
+# Local examples
+example/
