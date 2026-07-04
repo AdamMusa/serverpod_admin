@@ -34,7 +34,6 @@ coverage/
 *.freezed.dart
 *.mocks.dart
 serverpod_admin_app/devtools_options.yaml
-serverpod_admin_app/pubspec.lock
 
 # Example app local platform files
 example/example_flutter/ios/Flutter/AppFrameworkInfo.plist
