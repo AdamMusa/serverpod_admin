@@ -203,30 +203,39 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
         final pagedRecords = _paginationController.getPageItems(records);
 
         return Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(vertical: 24),
           child: Column(
             children: [
               Expanded(
-                child: Scrollbar(
-                  thumbVisibility: true,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: SingleChildScrollView(
-                      child: DataTable(
-                        columnSpacing: 48,
-                        horizontalMargin: 12,
-                        columns: const [
-                          DataColumn(label: Text('Job')),
-                          DataColumn(label: Text('Status')),
-                          DataColumn(label: Text('Server')),
-                          DataColumn(label: Text('Scheduled')),
-                          DataColumn(label: Text('Identifier')),
-                          DataColumn(label: Text('Actions')),
-                        ],
-                        rows: pagedRecords.map(_buildRow).toList(),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return Scrollbar(
+                      thumbVisibility: true,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minWidth: constraints.maxWidth,
+                          ),
+                          child: SingleChildScrollView(
+                            child: DataTable(
+                              columnSpacing: 48,
+                              horizontalMargin: 0,
+                              columns: const [
+                                DataColumn(label: Text('Job')),
+                                DataColumn(label: Text('Status')),
+                                DataColumn(label: Text('Server')),
+                                DataColumn(label: Text('Scheduled')),
+                                DataColumn(label: Text('Identifier')),
+                                DataColumn(label: Text('Actions')),
+                              ],
+                              rows: pagedRecords.map(_buildRow).toList(),
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 16),
@@ -267,6 +276,8 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
     final identifier = record['identifier'] ?? '';
     final state = _jobState(record);
     final isHistory = _isHistory(record);
+    final isFinished = state == _JobState.finished;
+    final canMutate = !isHistory && !isFinished;
 
     return DataRow(
       cells: [
@@ -304,7 +315,7 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (isHistory)
+              if (isHistory || isFinished)
                 TextButton.icon(
                   onPressed: widget.onView == null
                       ? null
@@ -326,19 +337,23 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
                   icon: const Icon(Icons.play_arrow_outlined),
                   onPressed: () => widget.onRunNow!(record),
                 ),
-              if (state == _JobState.scheduled && widget.onPause != null)
+              if (canMutate &&
+                  state == _JobState.scheduled &&
+                  widget.onPause != null)
                 IconButton(
                   tooltip: 'Pause job',
                   icon: const Icon(Icons.pause_circle_outline),
                   onPressed: () => widget.onPause!(record),
                 ),
-              if (state != _JobState.ready && widget.onEdit != null)
+              if (canMutate &&
+                  state != _JobState.ready &&
+                  widget.onEdit != null)
                 IconButton(
                   tooltip: 'Reschedule job',
                   icon: const Icon(Icons.edit_calendar_outlined),
                   onPressed: () => widget.onEdit!(record),
                 ),
-              if (widget.onDiscard != null)
+              if (canMutate && widget.onDiscard != null)
                 FilledButton.tonalIcon(
                   style: FilledButton.styleFrom(
                     foregroundColor: theme.colorScheme.error,

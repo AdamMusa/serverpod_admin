@@ -14,12 +14,10 @@ import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'admin/admin_column.dart' as _i2;
 import 'admin/admin_resource.dart' as _i3;
 import 'module_class.dart' as _i4;
-import 'package:serverpod_admin_client/src/protocol/admin/admin_resource.dart'
-    as _i5;
 import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
-    as _i6;
+    as _i5;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
-    as _i7;
+    as _i6;
 export 'admin/admin_column.dart';
 export 'admin/admin_resource.dart';
 export 'module_class.dart';
@@ -83,9 +81,9 @@ class Protocol extends _i1.SerializationManager {
       return (data as List).map((e) => deserialize<_i2.AdminColumn>(e)).toList()
           as T;
     }
-    if (t == List<_i5.AdminResource>) {
+    if (t == List<_i3.AdminResource>) {
       return (data as List)
-              .map((e) => deserialize<_i5.AdminResource>(e))
+              .map((e) => deserialize<_i3.AdminResource>(e))
               .toList()
           as T;
     }
@@ -117,10 +115,10 @@ class Protocol extends _i1.SerializationManager {
           as T;
     }
     try {
-      return _i6.Protocol().deserialize<T>(data, t);
+      return _i5.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     try {
-      return _i7.Protocol().deserialize<T>(data, t);
+      return _i6.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     return super.deserialize<T>(data, t);
   }
@@ -154,11 +152,11 @@ class Protocol extends _i1.SerializationManager {
       case _i4.ModuleClass():
         return 'ModuleClass';
     }
-    className = _i6.Protocol().getClassNameForObject(data);
+    className = _i5.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth_idp.$className';
     }
-    className = _i7.Protocol().getClassNameForObject(data);
+    className = _i6.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth_core.$className';
     }
@@ -182,11 +180,11 @@ class Protocol extends _i1.SerializationManager {
     }
     if (dataClassName.startsWith('serverpod_auth_idp.')) {
       data['className'] = dataClassName.substring(19);
-      return _i6.Protocol().deserializeByClassName(data);
+      return _i5.Protocol().deserializeByClassName(data);
     }
     if (dataClassName.startsWith('serverpod_auth_core.')) {
       data['className'] = dataClassName.substring(20);
-      return _i7.Protocol().deserializeByClassName(data);
+      return _i6.Protocol().deserializeByClassName(data);
     }
     return super.deserializeByClassName(data);
   }
@@ -201,10 +199,10 @@ class Protocol extends _i1.SerializationManager {
       return null;
     }
     try {
-      return _i6.Protocol().mapRecordToJson(record);
+      return _i5.Protocol().mapRecordToJson(record);
     } catch (_) {}
     try {
-      return _i7.Protocol().mapRecordToJson(record);
+      return _i6.Protocol().mapRecordToJson(record);
     } catch (_) {}
     throw Exception('Unsupported record type ${record.runtimeType}');
   }

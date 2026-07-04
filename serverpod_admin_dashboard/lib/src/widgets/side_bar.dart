@@ -151,17 +151,15 @@ class Sidebar extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  Icon(
-                    customization?.icon ?? Icons.table_chart_outlined,
-                    size: 20,
-                    color: isSelected
-                        ? theme.colorScheme.primary
-                        : theme.iconTheme.color?.withValues(alpha: 0.6),
+                  _SidebarItemIcon(
+                    icon: customization?.icon,
+                    isSelected: isSelected,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      customization?.label ?? resource.tableName,
+                      customization?.label ??
+                          _formatDefaultResourceLabel(resource.tableName),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight:
                             isSelected ? FontWeight.w600 : FontWeight.w400,
@@ -213,5 +211,47 @@ class Sidebar extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+String _formatDefaultResourceLabel(String value) {
+  final words = value
+      .trim()
+      .split(RegExp(r'[\s_-]+'))
+      .where((word) => word.isNotEmpty)
+      .map(_capitalizeWord)
+      .toList();
+
+  if (words.isEmpty) return value;
+  return words.join(' ');
+}
+
+String _capitalizeWord(String word) {
+  if (word.isEmpty) return word;
+  return word[0].toUpperCase() + word.substring(1);
+}
+
+class _SidebarItemIcon extends StatelessWidget {
+  const _SidebarItemIcon({
+    required this.icon,
+    required this.isSelected,
+  });
+
+  final IconData? icon;
+  final bool isSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = isSelected
+        ? theme.colorScheme.primary
+        : theme.iconTheme.color?.withValues(alpha: 0.6);
+
+    final customIcon = icon;
+    if (customIcon != null) {
+      return Icon(customIcon, size: 20, color: color);
+    }
+
+    return Icon(Icons.label_outline, size: 20, color: color);
   }
 }

@@ -136,19 +136,35 @@ class _HomeState extends State<Home> {
       );
     }
 
+    final canMutateDetails = _canMutateDetails(detailsResource, detailsRecord);
+
     // Default implementation
     return RecordDetails(
       resource: detailsResource,
       record: detailsRecord,
       showAppBar: false,
       onBack: () => widget.controller.closeDetails(),
-      onEdit: (record) {
-        operations.showEditDialog(detailsResource, record);
-      },
-      onDelete: (record) {
-        operations.showDeleteConfirmation(detailsResource, record);
-      },
+      onEdit: canMutateDetails
+          ? (record) {
+              operations.showEditDialog(detailsResource, record);
+            }
+          : null,
+      onDelete: canMutateDetails
+          ? (record) {
+              operations.showDeleteConfirmation(detailsResource, record);
+            }
+          : null,
     );
+  }
+
+  bool _canMutateDetails(
+    AdminResource resource,
+    Map<String, String> record,
+  ) {
+    if (resource.key != serverpodJobsResourceKey) return true;
+    if (record['source'] == 'history') return false;
+    if (record['status'] == 'finished') return false;
+    return true;
   }
 
   /// Builds the records view widget with common callbacks

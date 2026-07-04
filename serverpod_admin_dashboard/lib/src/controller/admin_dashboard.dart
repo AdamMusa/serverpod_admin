@@ -167,18 +167,14 @@ class AdminDashboardController extends ChangeNotifier {
       if (isShowingDetails &&
           detailsResource?.key == resource.key &&
           detailsRecord != null) {
-        final primaryKey = resolvePrimaryKeyValue(resource, detailsRecord!);
-        if (primaryKey != null) {
-          try {
-            final updatedRecord = loaded.firstWhere(
-              (record) =>
-                  resolvePrimaryKeyValue(resource, record) == primaryKey,
-            );
-            detailsRecord = updatedRecord;
-          } catch (_) {
-            // Record was deleted, close details
-            closeDetails();
-          }
+        final updatedRecord = _findUpdatedDetailsRecord(resource);
+        if (updatedRecord != null) {
+          detailsRecord = updatedRecord;
+        } else if (resource.key != 'serverpod_future_call') {
+          // Record was deleted, close details. Job rows can move from the
+          // future-call table into history between refreshes, so keep their
+          // details open even when the active row disappears.
+          closeDetails();
         }
       }
     } catch (error) {
@@ -197,6 +193,38 @@ class AdminDashboardController extends ChangeNotifier {
       }
       notifyListeners();
     }
+  }
+
+  Map<String, String>? _findUpdatedDetailsRecord(AdminResource resource) {
+    final currentDetailsRecord = detailsRecord;
+    if (currentDetailsRecord == null) return null;
+
+    final candidates = resource.key == 'serverpod_future_call'
+        ? [...records, ...jobHistory]
+        : records;
+
+    final primaryKey = resolvePrimaryKeyValue(resource, currentDetailsRecord);
+    if (primaryKey != null) {
+      for (final record in candidates) {
+        if (resolvePrimaryKeyValue(resource, record) == primaryKey) {
+          return record;
+        }
+      }
+    }
+
+    if (resource.key == 'serverpod_future_call') {
+      final name = currentDetailsRecord['name'];
+      final serverId = currentDetailsRecord['serverId'];
+      if (name != null && name.isNotEmpty && serverId != null) {
+        for (final record in candidates) {
+          if (record['name'] == name && record['serverId'] == serverId) {
+            return record;
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
   Future<void> createRecord(

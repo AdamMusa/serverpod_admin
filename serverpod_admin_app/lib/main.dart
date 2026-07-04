@@ -1,15 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:serverpod_admin_app/src/admin_app_client.dart';
 import 'package:serverpod_admin_dashboard/serverpod_admin_dashboard.dart';
+import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
+    as auth_core show AuthStrategy, JwtAuthKeyProvider;
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import 'package:serverpod_flutter/serverpod_flutter.dart';
 
 late final AdminAppClient client;
+late final FlutterAuthSessionManager adminAuthSessionManager;
 
 void main() {
   client = AdminAppClient(resolveServerUrl())
-    ..connectivityMonitor = FlutterConnectivityMonitor()
-    ..authSessionManager = FlutterAuthSessionManager();
+    ..connectivityMonitor = FlutterConnectivityMonitor();
+
+  adminAuthSessionManager = FlutterAuthSessionManager(
+    authKeyProviderDelegates: {
+      auth_core.AuthStrategy.jwt.name: auth_core.JwtAuthKeyProvider(
+        getAuthInfo: () async => adminAuthSessionManager.authInfo,
+        onRefreshAuthInfo: (authSuccess) =>
+            adminAuthSessionManager.updateSignedInUser(authSuccess),
+        refreshEndpoint: client.jwtRefresh,
+      ),
+    },
+  );
+  client.authSessionManager = adminAuthSessionManager;
   client.auth.initialize();
 
   runApp(const ServerpodAdminApp());
@@ -44,9 +58,12 @@ String resolveServerUrl() {
   }
 
   final base = Uri.base;
-  final apiUri = base.hasPort && base.port == 8082
-      ? base.replace(port: 8080, path: '/', query: null, fragment: null)
-      : base.replace(path: '/', query: null, fragment: null);
+  final apiUri = Uri(
+    scheme: base.scheme,
+    host: base.host,
+    port: base.hasPort && base.port == 8082 ? 8080 : base.port,
+    path: '/',
+  );
   return apiUri.toString();
 }
 

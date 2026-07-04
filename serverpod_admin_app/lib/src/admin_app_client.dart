@@ -113,6 +113,25 @@ class EndpointEmailIdp extends auth_idp.EndpointEmailIdpBase {
   }
 }
 
+class EndpointJwtRefresh extends auth_core.EndpointRefreshJwtTokens {
+  EndpointJwtRefresh(super.caller);
+
+  @override
+  String get name => 'jwtRefresh';
+
+  @override
+  Future<auth_core.AuthSuccess> refreshAccessToken({
+    required String refreshToken,
+  }) {
+    return caller.callServerEndpoint<auth_core.AuthSuccess>(
+      'jwtRefresh',
+      'refreshAccessToken',
+      {'refreshToken': refreshToken},
+      authenticated: false,
+    );
+  }
+}
+
 class AdminAppModules {
   AdminAppModules(AdminAppClient client) {
     serverpodAuthCore = auth_core.Caller(client);
@@ -145,15 +164,18 @@ class AdminAppClient extends ServerpodClientShared {
               disconnectStreamsOnLostInternetConnection,
         ) {
     emailIdp = EndpointEmailIdp(this);
+    jwtRefresh = EndpointJwtRefresh(this);
     modules = AdminAppModules(this);
   }
 
   late final EndpointEmailIdp emailIdp;
+  late final EndpointJwtRefresh jwtRefresh;
   late final AdminAppModules modules;
 
   @override
   Map<String, EndpointRef> get endpointRefLookup => {
         'emailIdp': emailIdp,
+        'jwtRefresh': jwtRefresh,
       };
 
   @override

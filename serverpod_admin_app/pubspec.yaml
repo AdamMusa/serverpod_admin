@@ -25,5 +25,9 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
+dependency_overrides:
+  serverpod_admin_client:
+    path: ../serverpod_admin_client
+
 flutter:
   uses-material-design: true

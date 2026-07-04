@@ -680,10 +680,9 @@ packages:
   serverpod_admin_client:
     dependency: "direct main"
     description:
-      name: serverpod_admin_client
-      sha256: "810c70c2275d648bdc90b645ebcf8dd8481c64b576fbb61a4a769bffc26601cc"
-      url: "https://pub.dev"
-    source: hosted
+      path: "../serverpod_admin_client"
+      relative: true
+    source: path
     version: "1.0.8"
   serverpod_admin_dashboard:
     dependency: "direct main"
