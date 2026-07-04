@@ -111,7 +111,7 @@ class TabularDataHelper {
       for (final record in records)
         [for (final header in headers) record[header] ?? ''],
     ];
-    return csv_lib.csv.encode(table);
+    return const csv_lib.ListToCsvConverter().convert(table);
   }
 
   static Uint8List encodeXlsx(
@@ -137,7 +137,9 @@ class TabularDataHelper {
   }
 
   static List<Map<String, String>> decodeCsv(String content) {
-    final rows = csv_lib.Csv(dynamicTyping: false).decode(content.trim());
+    final rows = const csv_lib.CsvToListConverter(
+      shouldParseNumbers: false,
+    ).convert(content.trim());
     return _rowsToMaps(rows);
   }
 
