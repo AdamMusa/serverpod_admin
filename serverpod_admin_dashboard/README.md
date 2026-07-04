@@ -74,42 +74,66 @@ Stop spending days building admin interfaces. Get back to building features that
 
 ---
 
-## 📦 Installation
+## 📦 Tutorial
 
-Serverpod Admin has two UI paths:
+Serverpod Admin has two ways to use the UI:
 
-- **Non-custom / prebuilt UI:** install the ready-made Flutter web dashboard
-  into your Serverpod server and serve it at `/admin`.
-- **Custom Flutter UI:** use `serverpod_admin_dashboard` directly in your own
-  Flutter app when you want to customize layout, theme, sidebar, dialogs, or
-  jobs UI.
+- **Non-Custom:** use the prebuilt Flutter web dashboard served by your
+  Serverpod backend at `/admin`. This is the fastest path and is recommended
+  when you do not need to customize the dashboard UI.
+- **Advanced Custom:** use `serverpod_admin_dashboard` inside your own Flutter
+  app when you want to customize theme, sidebar items, dialogs, details views,
+  record body, or the jobs dashboard.
 
-### Server Package
+Both paths use the same server package, authentication, model registry, import
+and export support, profile/password flows, and jobs monitoring endpoints.
 
-Run:
+---
+
+## 🚀 Non-Custom: Prebuilt `/admin` Dashboard
+
+### 1. Add the Server Package
+
+From your Serverpod server package directory:
 
 ```bash
 dart pub add serverpod_admin_server
 ```
 
-### Option 1: Non-Custom Prebuilt Admin UI
+### 2. Configure Auth, Resources, and Jobs
 
-Use this when you do not want to build a Flutter admin app yourself. Your
-Serverpod backend serves the admin dashboard directly.
-
-From your Serverpod server package directory:
-
-```bash
-dart run serverpod_admin_server:serverpod_admin install
-```
-
-Then serve it from your `server.dart`:
+Serverpod Admin uses `serverpod_auth_idp`. Configure auth, register the models
+you want to manage, and enable jobs if you want the Serverpod jobs dashboard.
 
 ```dart
+import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_admin_server/serverpod_admin_server.dart' as admin;
+
+import 'src/generated/endpoints.dart';
+import 'src/generated/protocol.dart';
 
 void run(List<String> args) async {
   final pod = Serverpod(args, Protocol(), Endpoints());
+
+  pod.initializeAuthServices(
+    tokenManagerBuilders: [
+      JwtConfigFromPasswords(),
+    ],
+    identityProviderBuilders: [
+      EmailIdpConfigFromPasswords(
+        sendRegistrationVerificationCode: _sendRegistrationCode,
+        sendPasswordResetVerificationCode: _sendPasswordResetCode,
+      ),
+    ],
+  );
+
+  admin.jobs = true;
+  admin.configureAdminModule((registry) {
+    registry.register<Post>();
+    registry.register<Person>();
+    registry.register<Comment>();
+    registry.register<Setting>();
+  });
 
   admin.serveAdminDashboard(pod); // /admin
 
@@ -117,10 +141,28 @@ void run(List<String> args) async {
 }
 ```
 
-By default the installer places the build in `web/admin`, and
-`serveAdminDashboard(pod)` serves it at `/admin`.
+`admin.jobs = true` shows Serverpod's persisted future-call jobs in the admin
+dashboard, including scheduled, ready, paused, failed, finished, and historical
+jobs.
 
-If you want another route, pass a custom path:
+### 3. Install the Prebuilt Dashboard
+
+From the same Serverpod server package directory:
+
+```bash
+dart run serverpod_admin_server:serverpod_admin install
+```
+
+The installer downloads the prebuilt Flutter web dashboard and places it in
+`web/admin`. `admin.serveAdminDashboard(pod)` serves that folder at `/admin`.
+
+To install to another folder:
+
+```bash
+dart run serverpod_admin_server:serverpod_admin install --target web/customadminpath
+```
+
+To serve another route:
 
 ```dart
 admin.serveAdminDashboard(
@@ -129,93 +171,17 @@ admin.serveAdminDashboard(
 );
 ```
 
-The leading slash is optional, so `path: 'customadminpath'` also serves the
-dashboard at `/customadminpath`.
+### 4. Create Your First Admin User
 
-Open:
-
-```text
-http://localhost:8082/admin
-```
-
-The prebuilt app talks to your Serverpod API. In local development it maps
-`localhost:8082/admin` to `localhost:8080/` for API calls by default. For
-deployments or custom routing, build the prebuilt app with:
-
-```bash
-flutter build web --wasm --base-href /admin/ --dart-define=SERVER_URL=https://api.example.com/
-```
-
-### Option 2: Custom Flutter Dashboard
-
-Use this when you want to customize the admin UI in your own Flutter app. Add
-the dashboard package:
-
-```bash
-flutter pub get serverpod_admin_dashboard
-```
-
-Both options use the same server package, same auth, and same admin endpoints.
-
----
-
-## 🧩 Quick Start
-
-### Registering Models (Server Side)
-
-```dart
-import 'package:serverpod_admin_server/serverpod_admin_server.dart' as admin;
-
-import 'package:use_serverpod_admin_server/src/generated/protocol.dart';
-
-void registerAdminModule() {
-  admin.jobs = true;
-
-  admin.configureAdminModule((registry) {
-    registry.register<Post>();
-    registry.register<Person>();
-    registry.register<Comment>();
-    registry.register<Setting>();
-    // Add any model you want to manage!
-  });
-}
-```
-
-Set `admin.jobs = true` to show Serverpod's persisted future-call jobs table
-(`serverpod_future_call`) in the admin resources. Scheduled jobs can be
-updated/rescheduled by editing their row and canceled/discarded by deleting
-their row.
-
-**Call `registerAdminModule()` in your `server.dart` file just after `pod.start()`**
-
-### Setting Up Authentication
-
-Serverpod Admin uses `serverpod_auth_idp` for authentication. Make sure you have it configured in your server:
-
-```dart
-pod.initializeAuthServices(
-  tokenManagerBuilders: [
-    JwtConfigFromPasswords(),
-  ],
-  identityProviderBuilders: [
-    EmailIdpConfigFromPasswords(
-      sendRegistrationVerificationCode: _sendRegistrationCode,
-      sendPasswordResetVerificationCode: _sendPasswordResetCode,
-    ),
-  ],
-);
-```
-
-### Creating an Admin User
-
-To access the admin panel, users must have the `serverpod.admin` scope. Here's how to create an admin user:
+Admin users must have the `serverpod.admin` scope. Use this as a development or
+bootstrap helper, then remove it or guard it once your admin user exists.
 
 ```dart
 import 'dart:io';
 
 import 'package:serverpod_admin_server/serverpod_admin_server.dart';
 
-Future<void> findOrCreateAndLinkEmail() async {
+Future<void> createAdminUser() async {
   final email = Platform.environment['SERVERPOD_ADMIN_EMAIL'];
   final password = Platform.environment['SERVERPOD_ADMIN_PASSWORD'];
 
@@ -232,40 +198,106 @@ Future<void> findOrCreateAndLinkEmail() async {
 }
 ```
 
-**Call `findOrCreateAndLinkEmail()` in your `server.dart` file after `pod.start()` to create your first admin user. Keep this as a development/bootstrap helper, and remove or guard it once your admin user exists.**
+### 5. Open the Dashboard
 
-### Using the Custom Flutter Dashboard
-
-```dart
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  client = Client('http://localhost:8080/')
-    ..connectivityMonitor = FlutterConnectivityMonitor()
-    ..authSessionManager = FlutterAuthSessionManager();
-  client.auth.initialize();
-  runApp(AdminDashboard(client: client));
-}
+```text
+http://localhost:8082/admin
 ```
 
-**That's it!** You now have a fully working admin panel with authentication for your Serverpod app! 🚀🎉
+The dashboard shows a login screen for unauthenticated users and only allows
+users with the `serverpod.admin` scope.
 
-The admin dashboard will automatically show a login screen for unauthenticated users. Only users with the `serverpod.admin` scope can access the admin panel.
+The prebuilt app talks to your Serverpod API. In local development it maps
+`localhost:8082/admin` to `localhost:8080/` for API calls by default.
 
-### Building the Prebuilt UI Yourself
+### 6. Building the Prebuilt UI Yourself
 
-The bundled app lives in `serverpod_admin_app` and is built by GitHub Actions:
+Most users do not need this. The release bundle is built by GitHub Actions and
+published as `serverpod_admin_dashboard_web.zip`. For local testing:
 
 ```bash
 cd serverpod_admin_app
-flutter build web --wasm --base-href /admin/
+flutter build web --base-href /admin/
+cd ../your_server_package
+dart run serverpod_admin_server:serverpod_admin install --source ../serverpod_admin_app/build/web --force
 ```
 
-The build output is packaged as `serverpod_admin_dashboard_web.zip`. You can
-install a local build with:
+For deployments with custom API routing:
 
 ```bash
-dart run serverpod_admin_server:serverpod_admin install --source serverpod_admin_app/build/web --force
+flutter build web --base-href /admin/ --dart-define=SERVER_URL=https://api.example.com/
 ```
+
+---
+
+## 🧩 Advanced Custom: Flutter Dashboard Package
+
+Use this path when you want to build your own Flutter admin app and customize
+the UI. You still use `serverpod_admin_server` on the backend, but you do not
+need to run the prebuilt dashboard installer.
+
+### 1. Add the Dashboard Package
+
+From your Flutter app:
+
+```bash
+flutter pub add serverpod_admin_dashboard
+```
+
+Your Flutter app also needs the generated client for your Serverpod project,
+including the `serverpod_admin` module client.
+
+### 2. Use `AdminDashboard`
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:serverpod_admin_dashboard/serverpod_admin_dashboard.dart';
+import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
+import 'package:serverpod_flutter/serverpod_flutter.dart';
+
+import 'src/generated/client.dart';
+
+late final Client client;
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  client = Client('http://localhost:8080/')
+    ..connectivityMonitor = FlutterConnectivityMonitor()
+    ..authSessionManager = FlutterAuthSessionManager();
+
+  await client.auth.initialize();
+
+  runApp(
+    AdminDashboard(
+      client: client,
+      title: 'My Admin',
+      sidebarItemCustomizations: const {
+        serverpodJobsResourceKey: SidebarItemCustomization(
+          label: 'Jobs',
+          icon: Icons.work_history,
+        ),
+      },
+    ),
+  );
+}
+```
+
+### 3. Customize What You Need
+
+The custom dashboard path lets you keep the default admin behavior while
+overriding the parts you care about:
+
+- Sidebar labels and icons
+- Theme
+- Resource table/body
+- Details screen
+- Create, edit, and delete dialogs
+- Jobs dashboard section
+- Footer
+
+The authentication behavior is the same as the non-custom path: unauthenticated
+users see login, and only users with `serverpod.admin` can enter.
 
 ---
 
