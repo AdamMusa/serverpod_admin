@@ -4,10 +4,12 @@ import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 /// Controller for managing authentication state and login form.
 /// Uses ChangeNotifier to avoid setState calls.
 class AuthController extends ChangeNotifier {
-  AuthController({required this.client});
+  AuthController({required this.client})
+      : _isAuthenticated = _hasAdminScope(client.auth.authInfo);
+
   final ServerpodClientShared client;
 
-  bool _isAuthenticated = false;
+  bool _isAuthenticated;
 
   // Login form state
   final TextEditingController emailController = TextEditingController();
@@ -24,6 +26,28 @@ class AuthController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get obscurePassword => _obscurePassword;
   String? get errorMessage => _errorMessage;
+
+  Future<void> restoreAuthentication() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await client.auth.initialize();
+      if (client.auth.authInfo == null) {
+        _isAuthenticated = false;
+        _isLoading = false;
+        _errorMessage = null;
+        notifyListeners();
+      } else {
+        authenticate();
+      }
+    } catch (_) {
+      _isAuthenticated = _hasAdminScope(client.auth.authInfo);
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
   /// Handles the login process using EmailAuthController.
   /// Validates the form and authenticates the user.
@@ -107,7 +131,7 @@ class AuthController extends ChangeNotifier {
   /// Called after successful email/password authentication.
   void authenticate() {
     final user = client.auth.authInfo;
-    if (user != null && user.scopeNames.contains('serverpod.admin')) {
+    if (_hasAdminScope(user)) {
       _isAuthenticated = true;
       _errorMessage = null;
       _isLoading = false;
@@ -120,12 +144,18 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  void logout() {
+  Future<void> logout() async {
     _isAuthenticated = false;
     _errorMessage = null;
     emailController.clear();
     passwordController.clear();
     notifyListeners();
+
+    try {
+      await client.auth.signOutDevice();
+    } catch (_) {
+      await client.auth.updateSignedInUser(null);
+    }
   }
 
   void toggleObscurePassword() {
@@ -139,4 +169,8 @@ class AuthController extends ChangeNotifier {
     passwordController.dispose();
     super.dispose();
   }
+}
+
+bool _hasAdminScope(dynamic authInfo) {
+  return authInfo != null && authInfo.scopeNames.contains('serverpod.admin');
 }

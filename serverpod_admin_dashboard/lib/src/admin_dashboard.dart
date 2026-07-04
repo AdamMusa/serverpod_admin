@@ -210,6 +210,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
     initialThemeMode: widget.initialThemeMode,
   );
 
+  bool _isRestoringAuthentication = true;
+
   @override
   void dispose() {
     _authController.removeListener(_onAuthStateChanged);
@@ -294,6 +296,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
   void initState() {
     super.initState();
     _authController.addListener(_onAuthStateChanged);
+    _restoreAuthentication();
+  }
+
+  Future<void> _restoreAuthentication() async {
+    await _authController.restoreAuthentication();
+    if (!mounted) return;
+    setState(() {
+      _isRestoringAuthentication = false;
+    });
   }
 
   void _onAuthStateChanged() {
@@ -327,27 +338,36 @@ class _AdminDashboardState extends State<AdminDashboard> {
           theme: _lightTheme,
           darkTheme: _darkTheme,
           debugShowCheckedModeBanner: false,
-          home: _authController.isAuthenticated
-              ? Home(
-                  controller: _controller,
-                  title: widget.title,
-                  customSidebarBuilder: widget.customSidebarBuilder,
-                  sidebarItemCustomizations: widget.sidebarItemCustomizations,
-                  customBodyBuilder: widget.customBodyBuilder,
-                  customJobsBuilder: widget.customJobsBuilder,
-                  customDetailsBuilder: widget.customDetailsBuilder,
-                  customEditDialogBuilder: widget.customEditDialogBuilder,
-                  customDeleteDialogBuilder: widget.customDeleteDialogBuilder,
-                  customCreateDialogBuilder: widget.customCreateDialogBuilder,
-                  customFooterBuilder: widget.customFooterBuilder,
-                  client: widget.client,
-                  onLogout: _handleLogout,
+          home: _isRestoringAuthentication
+              ? const Scaffold(
+                  body: Center(
+                    child: CircularProgressIndicator(),
+                  ),
                 )
-              : LoginScreen(
-                  authController: _authController,
-                  title: widget.loginTitle ?? 'Serverpod Admin',
-                  subtitle: widget.loginSubtitle,
-                ),
+              : _authController.isAuthenticated
+                  ? Home(
+                      controller: _controller,
+                      title: widget.title,
+                      customSidebarBuilder: widget.customSidebarBuilder,
+                      sidebarItemCustomizations:
+                          widget.sidebarItemCustomizations,
+                      customBodyBuilder: widget.customBodyBuilder,
+                      customJobsBuilder: widget.customJobsBuilder,
+                      customDetailsBuilder: widget.customDetailsBuilder,
+                      customEditDialogBuilder: widget.customEditDialogBuilder,
+                      customDeleteDialogBuilder:
+                          widget.customDeleteDialogBuilder,
+                      customCreateDialogBuilder:
+                          widget.customCreateDialogBuilder,
+                      customFooterBuilder: widget.customFooterBuilder,
+                      client: widget.client,
+                      onLogout: _handleLogout,
+                    )
+                  : LoginScreen(
+                      authController: _authController,
+                      title: widget.loginTitle ?? 'Serverpod Admin',
+                      subtitle: widget.loginSubtitle,
+                    ),
         );
       },
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:serverpod_admin_app/src/admin_app_client.dart';
+import 'package:serverpod_admin_app/src/expiring_auth_success_storage.dart';
 import 'package:serverpod_admin_dashboard/serverpod_admin_dashboard.dart';
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as auth_core show AuthStrategy, JwtAuthKeyProvider;
@@ -9,7 +10,9 @@ import 'package:serverpod_flutter/serverpod_flutter.dart';
 late final AdminAppClient client;
 late final FlutterAuthSessionManager adminAuthSessionManager;
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   client = AdminAppClient(resolveServerUrl())
     ..connectivityMonitor = FlutterConnectivityMonitor();
 
@@ -22,9 +25,12 @@ void main() {
         refreshEndpoint: client.jwtRefresh,
       ),
     },
+    storage: ExpiringAuthSuccessStorage(
+      ttl: const Duration(hours: 4),
+    ),
   );
   client.authSessionManager = adminAuthSessionManager;
-  client.auth.initialize();
+  await client.auth.initialize();
 
   runApp(const ServerpodAdminApp());
 }
