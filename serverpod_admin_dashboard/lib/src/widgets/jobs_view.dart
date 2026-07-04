@@ -220,7 +220,7 @@ class _JobsViewState extends State<JobsView> with TickerProviderStateMixin {
                           child: SingleChildScrollView(
                             child: DataTable(
                               columnSpacing: 48,
-                              horizontalMargin: 0,
+                              horizontalMargin: 24,
                               columns: const [
                                 DataColumn(label: Text('Job')),
                                 DataColumn(label: Text('Status')),
