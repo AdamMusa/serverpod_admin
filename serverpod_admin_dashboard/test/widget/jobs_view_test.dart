@@ -42,7 +42,7 @@ void main() {
   );
 
   testWidgets('shows Serverpod jobs with discard action', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1400, 800));
+    await tester.binding.setSurfaceSize(const Size(1800, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     var discarded = false;
@@ -52,7 +52,7 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: SizedBox(
-            width: 1000,
+            width: 1600,
             height: 700,
             child: JobsView(
               resource: resource,
@@ -82,10 +82,9 @@ void main() {
     expect(find.text('Scheduled jobs (1)'), findsOneWidget);
     expect(find.text('SendEmailJob'), findsOneWidget);
 
-    final discardButton = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Discard'),
-    );
-    discardButton.onPressed?.call();
+    await tester.tap(find.text('Discard'));
+    await tester.pump();
+
     expect(discarded, isTrue);
   });
 
