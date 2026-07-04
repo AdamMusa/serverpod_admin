@@ -183,7 +183,7 @@ Custom path:
 Serverpod Admin
 
 Usage:
-  serverpod_admin install [options]
+  dart run serverpod_admin_server:serverpod_admin install [options]
 
 Options:
   --target <dir>   Install directory. Defaults to web/admin.

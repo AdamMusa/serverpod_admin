@@ -89,7 +89,7 @@ Serverpod Admin has two UI paths:
 Run:
 
 ```bash
-flutter pub get serverpod_admin_server
+dart pub add serverpod_admin_server
 ```
 
 ### Option 1: Non-Custom Prebuilt Admin UI
@@ -100,8 +100,7 @@ Serverpod backend serves the admin dashboard directly.
 From your Serverpod server package directory:
 
 ```bash
-dart pub global activate serverpod_admin_server
-serverpod_admin install
+dart run serverpod_admin_server:serverpod_admin install
 ```
 
 Then serve it from your `server.dart`:
@@ -271,7 +270,7 @@ The build output is packaged as `serverpod_admin_dashboard_web.zip`. You can
 install a local build with:
 
 ```bash
-serverpod_admin install --source serverpod_admin_app/build/web --force
+dart run serverpod_admin_server:serverpod_admin install --source serverpod_admin_app/build/web --force
 ```
 
 ---
