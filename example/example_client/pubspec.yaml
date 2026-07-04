@@ -6,5 +6,5 @@ environment:
 
 dependencies:
   serverpod_auth_idp_client: ^3.4.10
-  serverpod_admin_client: ^1.0.8
+  serverpod_admin_client: ^1.0.12
   serverpod_client: ^3.4.10

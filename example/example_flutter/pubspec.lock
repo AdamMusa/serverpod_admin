@@ -616,18 +616,18 @@ packages:
     dependency: transitive
     description:
       name: serverpod_admin_client
-      sha256: b489f5c1852a13f022a6299949db2ce16d3d87b679d0eaef7e342bf93b52e462
+      sha256: "4f410142ef62fd9ad59d59931512d45fc1510533ea9838d44af607943cd84267"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.7"
+    version: "1.0.12"
   serverpod_admin_dashboard:
     dependency: "direct main"
     description:
       name: serverpod_admin_dashboard
-      sha256: "730e38a49ae1bbcca34bc41eb2ca58e5ce950c71db24971abd0d645cc7dee9e7"
+      sha256: "60673d0b0573c0a137d780f36f38300482a81948d1ec5a05821e5bff13c55679"
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.7"
+    version: "1.0.12"
   serverpod_auth_core_client:
     dependency: transitive
     description:
