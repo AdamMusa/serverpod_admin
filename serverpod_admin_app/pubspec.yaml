@@ -11,8 +11,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter:
     sdk: flutter
-  serverpod_admin_client:
-    path: ../serverpod_admin_client
+  serverpod_admin_client: ^1.0.7
   serverpod_admin_dashboard:
     path: ../serverpod_admin_dashboard
   serverpod_auth_core_client: ^3.4.10
