@@ -84,6 +84,9 @@ void run(List<String> args) async {
 
 Custom path:
   admin.serveAdminDashboard(pod, path: '/customadminpath');
+
+Optional job monitoring:
+  admin.jobs = true;
 ''');
     } finally {
       tempDirectory.deleteSync(recursive: true);
