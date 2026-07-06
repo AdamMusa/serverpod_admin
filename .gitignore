@@ -37,3 +37,9 @@ serverpod_admin_app/devtools_options.yaml
 
 # Local examples
 example/
+!serverpod_admin_client/example/
+!serverpod_admin_client/example/**
+!serverpod_admin_dashboard/example/
+!serverpod_admin_dashboard/example/**
+!serverpod_admin_server/example/
+!serverpod_admin_server/example/**

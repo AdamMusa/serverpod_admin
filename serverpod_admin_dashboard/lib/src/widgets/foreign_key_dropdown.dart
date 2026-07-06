@@ -31,9 +31,7 @@ class ForeignKeyDropdown extends StatelessWidget {
     if (relatedResource == null) {
       // Resource not found, show disabled dropdown
       return DropdownButtonFormField<String>(
-        // ignore: deprecated_member_use
-        // DropdownButtonFormField doesn't support initialValue, only value
-        value: value,
+        initialValue: value,
         decoration: InputDecoration(
           labelText: column.name,
           hintText: 'Related resource not found',
@@ -61,9 +59,7 @@ class ForeignKeyDropdown extends StatelessWidget {
     }
 
     return DropdownButtonFormField<String>(
-      // ignore: deprecated_member_use
-      // DropdownButtonFormField doesn't support initialValue, only value
-      value: value,
+      initialValue: value,
       decoration: InputDecoration(
         labelText: column.name,
         hintText: 'Select ${column.name}',

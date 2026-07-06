@@ -40,6 +40,11 @@ Beautiful empty states when no records are found.
 
 ![Empty State](https://raw.githubusercontent.com/AdamMusa/serverpod_admin/main/images/empty_record.png)
 
+Monitor scheduled, ready, paused, failed, finished, and historical Serverpod
+jobs from the same admin dashboard.
+
+![Serverpod Jobs](https://raw.githubusercontent.com/AdamMusa/serverpod_admin/main/images/jobs.png)
+
 ---
 
 ## ✨ Why Serverpod Admin Matters
