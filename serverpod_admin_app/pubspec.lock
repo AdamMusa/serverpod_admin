@@ -683,14 +683,14 @@ packages:
       path: "../serverpod_admin_client"
       relative: true
     source: path
-    version: "1.0.12"
+    version: "1.0.13"
   serverpod_admin_dashboard:
     dependency: "direct main"
     description:
       path: "../serverpod_admin_dashboard"
       relative: true
     source: path
-    version: "1.0.12"
+    version: "1.0.13"
   serverpod_auth_core_client:
     dependency: "direct main"
     description:

@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.13
+
+- Updated Serverpod server dependencies to 3.4.11.
+
 ## 1.0.12
 
 - Updated installer documentation to use local package execution with

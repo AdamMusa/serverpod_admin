@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.13
+
+- Updated Serverpod dashboard dependencies to 3.4.11.
+
 ## 1.0.12
 
 - Added dashboard auth restoration so embedded custom Flutter apps keep users
