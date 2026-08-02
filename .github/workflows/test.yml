@@ -34,7 +34,7 @@ jobs:
       matrix:
         flutter-version: ['3.38.4', '3.41.2']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: subosito/flutter-action@v2
         with:
@@ -57,7 +57,7 @@ jobs:
       matrix:
         flutter-version: ['3.38.4', '3.41.2']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: subosito/flutter-action@v2
         with:
@@ -119,7 +119,7 @@ jobs:
           - 6379:6379
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: subosito/flutter-action@v2
         with:
@@ -157,7 +157,7 @@ jobs:
       matrix:
         flutter-version: ['3.38.4', '3.41.2']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: subosito/flutter-action@v2
         with:
@@ -179,7 +179,7 @@ jobs:
       matrix:
         flutter-version: ['3.41.2']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: subosito/flutter-action@v2
         with:
