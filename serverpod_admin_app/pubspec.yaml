@@ -4,21 +4,21 @@ version: 0.1.0
 publish_to: none
 
 environment:
-  sdk: '>=3.5.0 <4.0.0'
-  flutter: '>=3.24.0'
+  sdk: '>=3.10.3 <4.0.0'
+  flutter: '>=3.38.4'
 
 dependencies:
   cupertino_icons: ^1.0.8
   flutter:
     sdk: flutter
-  serverpod_admin_client: ^1.0.13
+  serverpod_admin_client: ^1.0.14
   serverpod_admin_dashboard:
     path: ../serverpod_admin_dashboard
-  serverpod_auth_core_client: ^3.4.11
-  serverpod_auth_idp_client: ^3.4.11
-  serverpod_auth_idp_flutter: ^3.4.11
-  serverpod_client: ^3.4.11
-  serverpod_flutter: ^3.4.11
+  serverpod_auth_core_client: ^4.0.0-beta.1
+  serverpod_auth_idp_client: ^4.0.0-beta.1
+  serverpod_auth_idp_flutter: ^4.0.0-beta.1
+  serverpod_client: ^4.0.0-beta.1
+  serverpod_flutter: ^4.0.0-beta.1
   web: ^1.1.1
 
 dev_dependencies:

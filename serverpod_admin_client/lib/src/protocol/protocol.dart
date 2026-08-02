@@ -8,16 +8,19 @@
 // ignore_for_file: type_literal_in_constant_pattern
 // ignore_for_file: use_super_parameters
 // ignore_for_file: invalid_use_of_internal_member
+// ignore_for_file: dead_code, unnecessary_type_check
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'admin/admin_column.dart' as _i2;
 import 'admin/admin_resource.dart' as _i3;
 import 'module_class.dart' as _i4;
-import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
+import 'package:serverpod_admin_client/src/protocol/admin/admin_resource.dart'
     as _i5;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _i6;
+import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
+    as _i7;
 export 'admin/admin_column.dart';
 export 'admin/admin_resource.dart';
 export 'module_class.dart';
@@ -29,6 +32,15 @@ class Protocol extends _i1.SerializationManager {
   factory Protocol() => _instance;
 
   static final Protocol _instance = Protocol._();
+
+  final Set<_i1.SerializationManager> _hostProtocols = {};
+
+  void registerHostProtocol(
+    String projectName,
+    _i1.SerializationManager protocol,
+  ) {
+    _hostProtocols.add(protocol);
+  }
 
   static String? getClassNameFromObjectJson(dynamic data) {
     if (data is! Map) return null;
@@ -81,9 +93,9 @@ class Protocol extends _i1.SerializationManager {
       return (data as List).map((e) => deserialize<_i2.AdminColumn>(e)).toList()
           as T;
     }
-    if (t == List<_i3.AdminResource>) {
+    if (t == List<_i5.AdminResource>) {
       return (data as List)
-              .map((e) => deserialize<_i3.AdminResource>(e))
+              .map((e) => deserialize<_i5.AdminResource>(e))
               .toList()
           as T;
     }
@@ -105,6 +117,9 @@ class Protocol extends _i1.SerializationManager {
           )
           as T;
     }
+    if (t == dynamic) {
+      return deserializeDynamicFieldValue(data) as T;
+    }
     if (t == _i1.getType<Map<String, dynamic>?>()) {
       return (data != null
               ? (data as Map).map(
@@ -115,10 +130,10 @@ class Protocol extends _i1.SerializationManager {
           as T;
     }
     try {
-      return _i5.Protocol().deserialize<T>(data, t);
+      return _i6.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     try {
-      return _i6.Protocol().deserialize<T>(data, t);
+      return _i7.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     return super.deserialize<T>(data, t);
   }
@@ -152,14 +167,6 @@ class Protocol extends _i1.SerializationManager {
       case _i4.ModuleClass():
         return 'ModuleClass';
     }
-    className = _i5.Protocol().getClassNameForObject(data);
-    if (className != null) {
-      return 'serverpod_auth_idp.$className';
-    }
-    className = _i6.Protocol().getClassNameForObject(data);
-    if (className != null) {
-      return 'serverpod_auth_core.$className';
-    }
     return null;
   }
 
@@ -178,16 +185,70 @@ class Protocol extends _i1.SerializationManager {
     if (dataClassName == 'ModuleClass') {
       return deserialize<_i4.ModuleClass>(data['data']);
     }
-    if (dataClassName.startsWith('serverpod_auth_idp.')) {
-      data['className'] = dataClassName.substring(19);
-      return _i5.Protocol().deserializeByClassName(data);
-    }
-    if (dataClassName.startsWith('serverpod_auth_core.')) {
-      data['className'] = dataClassName.substring(20);
-      return _i6.Protocol().deserializeByClassName(data);
-    }
     return super.deserializeByClassName(data);
   }
+
+  @override
+  Object? dynamicFieldToJson(
+    Object? object, {
+    bool forProtocol = false,
+  }) {
+    if ((object is List || object is Set || object is Map) ||
+        getClassNameForObject(object) != null) {
+      return super.dynamicFieldToJson(object, forProtocol: forProtocol);
+    }
+    for (final protocol in _hostProtocols) {
+      final className = protocol.getClassNameForObject(object);
+      if (className == null) continue;
+      final host = protocol.getModuleName();
+      final wrapped = {
+        'className': className.contains('.') ? className : '$host.$className',
+        'data': object,
+      };
+      return forProtocol
+          ? _i1.SerializationManager.toEncodableForProtocol(wrapped)
+          : _i1.SerializationManager.toEncodable(wrapped);
+    }
+    return super.dynamicFieldToJson(object, forProtocol: forProtocol);
+  }
+
+  @override
+  dynamic deserializeDynamicFieldValue(Object? value) {
+    if (value == null) return null;
+    if (value is! Map<String, dynamic> || value['className'] is! String) {
+      throw FormatException(
+        'Dynamic fields are encoded as a Map with className and data, but got '
+        '${value.runtimeType} instead.',
+      );
+    }
+    final className = value['className'] as String;
+    for (final protocol in _hostProtocols) {
+      final host = protocol.getModuleName();
+      final hostPrefix = '$host.';
+      if (className.startsWith(hostPrefix)) {
+        final strippedClassName = className.substring(hostPrefix.length);
+        if (strippedClassName.contains('.')) {
+          throw FormatException(
+            'Dynamic field className must not use multiple prefixes: $className',
+          );
+        }
+        final hostData = Map<String, dynamic>.from(value);
+        hostData['className'] = strippedClassName;
+        return protocol.deserializeByClassName(hostData);
+      }
+    }
+    if (className.contains('.')) {
+      for (final protocol in _hostProtocols) {
+        try {
+          return protocol.deserializeByClassName(value);
+        } on FormatException catch (_) {}
+      }
+    }
+    return deserializeByClassName(value);
+  }
+
+  @override
+  String getModuleName() => 'serverpod_admin';
 
   /// Maps any `Record`s known to this [Protocol] to their JSON representation
   ///
@@ -199,10 +260,10 @@ class Protocol extends _i1.SerializationManager {
       return null;
     }
     try {
-      return _i5.Protocol().mapRecordToJson(record);
+      return _i6.Protocol().mapRecordToJson(record);
     } catch (_) {}
     try {
-      return _i6.Protocol().mapRecordToJson(record);
+      return _i7.Protocol().mapRecordToJson(record);
     } catch (_) {}
     throw Exception('Unsupported record type ${record.runtimeType}');
   }

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.14
+
+- Updated Serverpod server and test dependencies to 4.0.0-beta.1.
+- Confirmed the installer uses the dashboard artifact from the latest GitHub
+  release.
+
 ## 1.0.13
 
 - Updated Serverpod server dependencies to 3.4.11.

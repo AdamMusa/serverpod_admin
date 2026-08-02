@@ -7,9 +7,6 @@ name: Serverpod Admin CI
 
 on:
   workflow_dispatch:
-  release:
-    types:
-      - published
   push:
     branches:
       - main
@@ -35,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        flutter-version: ['3.32.0', '3.38.4']
+        flutter-version: ['3.38.4', '3.41.2']
     steps:
       - uses: actions/checkout@v4
 
@@ -58,7 +55,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        flutter-version: ['3.32.0', '3.38.4']
+        flutter-version: ['3.38.4', '3.41.2']
     steps:
       - uses: actions/checkout@v4
 
@@ -95,7 +92,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        flutter-version: ['3.32.0', '3.38.4']
+        flutter-version: ['3.38.4', '3.41.2']
     services:
       postgres:
         image: postgres:15
@@ -158,7 +155,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        flutter-version: ['3.32.0', '3.38.4']
+        flutter-version: ['3.38.4', '3.41.2']
     steps:
       - uses: actions/checkout@v4
 
@@ -176,11 +173,11 @@ jobs:
         run: flutter test --reporter=failures-only
 
   build_admin_app:
-    name: Build prebuilt admin app
+    name: Build latest prebuilt admin app
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        flutter-version: ['3.38.4']
+        flutter-version: ['3.41.2']
     steps:
       - uses: actions/checkout@v4
 
@@ -192,6 +189,23 @@ jobs:
       - name: Install dependencies
         working-directory: serverpod_admin_app
         run: flutter pub get
+
+      - name: Verify release versions
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          EXPECTED_VERSION="${GITHUB_REF_NAME#v}"
+          for PUBSPEC in \
+            serverpod_admin_client/pubspec.yaml \
+            serverpod_admin_dashboard/pubspec.yaml \
+            serverpod_admin_server/pubspec.yaml
+          do
+            ACTUAL_VERSION="$(sed -n 's/^version: //p' "$PUBSPEC")"
+            if [ "$ACTUAL_VERSION" != "$EXPECTED_VERSION" ]; then
+              echo "::error file=$PUBSPEC::Version $ACTUAL_VERSION does not match tag $GITHUB_REF_NAME"
+              exit 1
+            fi
+          done
 
       - name: Analyze admin app
         working-directory: serverpod_admin_app
@@ -212,20 +226,23 @@ jobs:
           path: serverpod_admin_dashboard_web.zip
 
       - name: Attach admin app to GitHub release
-        if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG_NAME="${GITHUB_REF_NAME}"
-          if [ "${{ github.event_name }}" = "release" ]; then
-            TAG_NAME="${{ github.event.release.tag_name }}"
-          fi
 
-          gh release view "$TAG_NAME" >/dev/null 2>&1 || \
+          if ! gh release view "$TAG_NAME" >/dev/null 2>&1; then
             gh release create "$TAG_NAME" \
+              --draft \
               --title "$TAG_NAME" \
-              --notes "Serverpod Admin release $TAG_NAME"
+              --generate-notes
+          fi
 
           gh release upload "$TAG_NAME" \
             serverpod_admin_dashboard_web.zip \
             --clobber
+
+          gh release edit "$TAG_NAME" \
+            --draft=false \
+            --latest

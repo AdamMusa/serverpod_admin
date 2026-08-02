@@ -12,7 +12,8 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 
-abstract class ModuleClass implements _i1.SerializableModel {
+abstract class ModuleClass
+    implements _i1.SerializableModel, _i1.ProtocolSerialization {
   ModuleClass._({
     required this.name,
     required this.data,
@@ -43,6 +44,15 @@ abstract class ModuleClass implements _i1.SerializableModel {
   });
   @override
   Map<String, dynamic> toJson() {
+    return {
+      '__className__': 'serverpod_admin.ModuleClass',
+      'name': name,
+      'data': data,
+    };
+  }
+
+  @override
+  Map<String, dynamic> toJsonForProtocol() {
     return {
       '__className__': 'serverpod_admin.ModuleClass',
       'name': name,

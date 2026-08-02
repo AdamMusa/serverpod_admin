@@ -1,17 +1,17 @@
 name: serverpod_admin_dashboard
 description: Flutter admin dashboard UI for managing Serverpod records, jobs, and authentication.
-version: 1.0.13
+version: 1.0.14
 homepage: https://github.com/AdamMusa/serverpod_admin
 environment:
-  sdk: '>=3.5.0 <4.0.0'
-  flutter: '>=3.24.0'
+  sdk: '>=3.10.3 <4.0.0'
+  flutter: '>=3.38.4'
 
 dependencies:
   flutter:
     sdk: flutter
-  serverpod_client: ^3.4.11
-  serverpod_admin_client: ^1.0.13
-  serverpod_auth_idp_flutter: ^3.4.11
+  serverpod_client: ^4.0.0-beta.1
+  serverpod_admin_client: ^1.0.14
+  serverpod_auth_idp_flutter: ^4.0.0-beta.1
   csv: '>=6.0.0 <7.0.0'
   excel: ^4.0.6
   file_selector: '>=1.0.3 <1.1.0'
@@ -24,6 +24,10 @@ dev_dependencies:
     sdk: flutter
   mockito: ^5.4.4
   build_runner: ^2.4.8
+
+dependency_overrides:
+  serverpod_admin_client:
+    path: ../serverpod_admin_client
 
 flutter:
   uses-material-design: true

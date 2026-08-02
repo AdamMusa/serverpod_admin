@@ -158,8 +158,9 @@ From the same Serverpod server package directory:
 dart run serverpod_admin_server:serverpod_admin install
 ```
 
-The installer downloads the prebuilt Flutter web dashboard and places it in
-`web/admin`. `admin.serveAdminDashboard(pod)` serves that folder at `/admin`.
+The installer downloads the prebuilt Flutter web dashboard from the latest
+GitHub release and places it in `web/admin`. `admin.serveAdminDashboard(pod)`
+serves that folder at `/admin`.
 
 To install to another folder:
 

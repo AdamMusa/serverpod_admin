@@ -14,7 +14,8 @@ import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import '../admin/admin_column.dart' as _i2;
 import 'package:serverpod_admin_client/src/protocol/protocol.dart' as _i3;
 
-abstract class AdminResource implements _i1.SerializableModel {
+abstract class AdminResource
+    implements _i1.SerializableModel, _i1.ProtocolSerialization {
   AdminResource._({
     required this.key,
     required this.tableName,
@@ -58,6 +59,16 @@ abstract class AdminResource implements _i1.SerializableModel {
       'key': key,
       'tableName': tableName,
       'columns': columns.toJson(valueToJson: (v) => v.toJson()),
+    };
+  }
+
+  @override
+  Map<String, dynamic> toJsonForProtocol() {
+    return {
+      '__className__': 'serverpod_admin.AdminResource',
+      'key': key,
+      'tableName': tableName,
+      'columns': columns.toJson(valueToJson: (v) => v.toJsonForProtocol()),
     };
   }
 

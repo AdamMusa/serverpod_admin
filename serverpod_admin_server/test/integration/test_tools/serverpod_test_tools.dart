@@ -13,9 +13,10 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_test/serverpod_test.dart' as _i1;
 import 'package:serverpod/serverpod.dart' as _i2;
-import 'dart:async' as _i3;
+import 'dart:io' as _i3;
+import 'dart:async' as _i4;
 import 'package:serverpod_admin_server/src/generated/admin/admin_resource.dart'
-    as _i4;
+    as _i5;
 import 'package:serverpod_admin_server/src/generated/protocol.dart';
 import 'package:serverpod_admin_server/src/generated/endpoints.dart';
 export 'package:serverpod_test/serverpod_test_public_exports.dart';
@@ -85,22 +86,34 @@ export 'package:serverpod_test/serverpod_test_public_exports.dart';
 /// and before it is used to start the server. Use this to override particular
 /// settings in the server configuration.
 ///
+/// [databaseInterceptor] Optional interceptor that replaces the default database for each session.
+/// See [Serverpod.databaseInterceptor] for more information.
+///
 /// [testGroupTagsOverride] By default Serverpod test tools tags the `withServerpod` test group with `"integration"`.
 /// This is to provide a simple way to only run unit or integration tests.
 /// This property allows this tag to be overridden to something else. Defaults to `['integration']`.
 ///
 /// [experimentalFeatures] Optionally specify experimental features. See [Serverpod] for more information.
+///
+/// [serverDirectory] The server package directory `config/<runMode>.yaml`, `config/passwords.yaml`,
+/// and `migrations/<module>/...` are resolved against. Defaults to
+/// [Directory.current] at the time the test boots. Pass this when the test
+/// isolate's cwd is not the server package root (e.g. running tests from a
+/// workspace parent directory) so config and migrations are still loaded
+/// from the right place.
 @_i1.isTestGroup
 void withServerpod(
   String testGroupName,
   _i1.TestClosure<TestEndpoints> testClosure, {
   bool? applyMigrations,
   _i2.ServerpodConfig Function(_i2.ServerpodConfig)? configOverride,
+  _i2.DatabaseInterceptor? databaseInterceptor,
   bool? enableSessionLogging,
   _i2.ExperimentalFeatures? experimentalFeatures,
   _i1.RollbackDatabase? rollbackDatabase,
   String? runMode,
   _i2.RuntimeParametersListBuilder? runtimeParametersBuilder,
+  _i3.Directory? serverDirectory,
   _i2.ServerpodLoggingMode? serverpodLoggingMode,
   Duration? serverpodStartTimeout,
   List<String>? testGroupTagsOverride,
@@ -117,9 +130,11 @@ void withServerpod(
       isDatabaseEnabled: true,
       serverpodLoggingMode: serverpodLoggingMode,
       testServerOutputMode: testServerOutputMode,
+      serverDirectory: serverDirectory,
       experimentalFeatures: experimentalFeatures,
       configOverride: configOverride,
       runtimeParametersBuilder: runtimeParametersBuilder,
+      databaseInterceptor: databaseInterceptor,
     ),
     maybeRollbackDatabase: rollbackDatabase,
     maybeEnableSessionLogging: enableSessionLogging,
@@ -157,7 +172,7 @@ class _AdminEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<List<_i4.AdminResource>> resources(
+  _i4.Future<List<_i5.AdminResource>> resources(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -179,7 +194,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i4.AdminResource>>);
+                as _i4.Future<List<_i5.AdminResource>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -187,7 +202,7 @@ class _AdminEndpoint {
     });
   }
 
-  _i3.Future<Map<String, String>> currentUserProfile(
+  _i4.Future<Map<String, String>> currentUserProfile(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -209,7 +224,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<Map<String, String>>);
+                as _i4.Future<Map<String, String>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -217,7 +232,7 @@ class _AdminEndpoint {
     });
   }
 
-  _i3.Future<List<Map<String, String>>> futureCallHistory(
+  _i4.Future<List<Map<String, String>>> futureCallHistory(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -239,7 +254,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<Map<String, String>>>);
+                as _i4.Future<List<Map<String, String>>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -247,7 +262,7 @@ class _AdminEndpoint {
     });
   }
 
-  _i3.Future<Map<String, String>> updateCurrentUserProfile(
+  _i4.Future<Map<String, String>> updateCurrentUserProfile(
     _i1.TestSessionBuilder sessionBuilder,
     String userName,
     String fullName,
@@ -274,7 +289,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<Map<String, String>>);
+                as _i4.Future<Map<String, String>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -282,7 +297,7 @@ class _AdminEndpoint {
     });
   }
 
-  _i3.Future<bool> changeCurrentUserPassword(
+  _i4.Future<bool> changeCurrentUserPassword(
     _i1.TestSessionBuilder sessionBuilder,
     String currentPassword,
     String newPassword,
@@ -309,7 +324,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<bool>);
+                as _i4.Future<bool>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -317,7 +332,7 @@ class _AdminEndpoint {
     });
   }
 
-  _i3.Future<List<Map<String, String>>> list(
+  _i4.Future<List<Map<String, String>>> list(
     _i1.TestSessionBuilder sessionBuilder,
     String resourceKey,
   ) async {
@@ -340,7 +355,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<Map<String, String>>>);
+                as _i4.Future<List<Map<String, String>>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -348,7 +363,7 @@ class _AdminEndpoint {
     });
   }
 
-  _i3.Future<List<Map<String, String>>> listPage(
+  _i4.Future<List<Map<String, String>>> listPage(
     _i1.TestSessionBuilder sessionBuilder,
     String resourceKey,
     int offset,
@@ -377,7 +392,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<Map<String, String>>>);
+                as _i4.Future<List<Map<String, String>>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -385,7 +400,7 @@ class _AdminEndpoint {
     });
   }
 
-  _i3.Future<Map<String, dynamic>?> find(
+  _i4.Future<Map<String, dynamic>?> find(
     _i1.TestSessionBuilder sessionBuilder,
     String resourceKey,
     String id,
@@ -412,7 +427,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<Map<String, dynamic>?>);
+                as _i4.Future<Map<String, dynamic>?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -420,7 +435,7 @@ class _AdminEndpoint {
     });
   }
 
-  _i3.Future<Map<String, String>> create(
+  _i4.Future<Map<String, String>> create(
     _i1.TestSessionBuilder sessionBuilder,
     String resourceKey,
     Map<String, String> data,
@@ -447,7 +462,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<Map<String, String>>);
+                as _i4.Future<Map<String, String>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -455,7 +470,7 @@ class _AdminEndpoint {
     });
   }
 
-  _i3.Future<Map<String, String>> update(
+  _i4.Future<Map<String, String>> update(
     _i1.TestSessionBuilder sessionBuilder,
     String resourceKey,
     Map<String, String> data,
@@ -482,7 +497,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<Map<String, String>>);
+                as _i4.Future<Map<String, String>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -490,7 +505,7 @@ class _AdminEndpoint {
     });
   }
 
-  _i3.Future<bool> delete(
+  _i4.Future<bool> delete(
     _i1.TestSessionBuilder sessionBuilder,
     String resourceKey,
     String id,
@@ -517,7 +532,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<bool>);
+                as _i4.Future<bool>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

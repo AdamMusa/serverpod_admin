@@ -12,7 +12,8 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 
-abstract class AdminColumn implements _i1.SerializableModel {
+abstract class AdminColumn
+    implements _i1.SerializableModel, _i1.ProtocolSerialization {
   AdminColumn._({
     required this.name,
     required this.dataType,
@@ -69,6 +70,19 @@ abstract class AdminColumn implements _i1.SerializableModel {
   });
   @override
   Map<String, dynamic> toJson() {
+    return {
+      '__className__': 'serverpod_admin.AdminColumn',
+      'name': name,
+      'dataType': dataType,
+      'hasDefault': hasDefault,
+      'isPrimary': isPrimary,
+      if (foreignKeyTable != null) 'foreignKeyTable': foreignKeyTable,
+      if (defaultValue != null) 'defaultValue': defaultValue,
+    };
+  }
+
+  @override
+  Map<String, dynamic> toJsonForProtocol() {
     return {
       '__className__': 'serverpod_admin.AdminColumn',
       'name': name,

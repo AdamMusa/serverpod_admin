@@ -43,8 +43,7 @@ class AdminEndpoint extends Endpoint {
     final entries = await SessionLogEntry.db.find(
       session,
       where: (table) => table.endpoint.equals('FutureCall'),
-      orderBy: (table) => table.time,
-      orderDescending: true,
+      orderBy: (table) => table.time.desc(),
       limit: 100,
     );
 

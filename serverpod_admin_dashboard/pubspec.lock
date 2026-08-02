@@ -213,10 +213,10 @@ packages:
     dependency: transitive
     description:
       name: desktop_webview_window
-      sha256: "57cf20d81689d5cbb1adfd0017e96b669398a669d927906073b0e42fc64111c0"
+      sha256: b6fdae2cbf9571879b1761c12f27facaf82e22d0bdc74d049907c2a09a432957
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.3"
+    version: "0.3.0"
   email_validator:
     dependency: transitive
     description:
@@ -420,10 +420,10 @@ packages:
     dependency: transitive
     description:
       name: flutter_web_auth_2
-      sha256: "432ff8c7b2834eaeec3378d99e24a0210b9ac2f453b3f7a7d739a5c09069fba3"
+      sha256: "8f9303471dcd96670878c9b7c0c4e14c37595b2add67465f6a868f17a5872dfc"
       url: "https://pub.dev"
     source: hosted
-    version: "5.0.1"
+    version: "5.0.3"
   flutter_web_auth_2_platform_interface:
     dependency: transitive
     description:
@@ -457,10 +457,10 @@ packages:
     dependency: transitive
     description:
       name: google_fonts
-      sha256: "517b20870220c48752eafa0ba1a797a092fb22df0d89535fd9991e86ee2cdd9c"
+      sha256: e3cb3ee6b47fd2472c23de6da5744796a4da195137759ddb3fbcc9467b7b3c7d
       url: "https://pub.dev"
     source: hosted
-    version: "6.3.2"
+    version: "8.2.1"
   google_identity_services_web:
     dependency: transitive
     description:
@@ -816,59 +816,58 @@ packages:
   serverpod_admin_client:
     dependency: "direct main"
     description:
-      name: serverpod_admin_client
-      sha256: "612f07b6c6ca93a695a109811024c9fcefa1decf8f731b51618ddf973ada834e"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.13"
+      path: "../serverpod_admin_client"
+      relative: true
+    source: path
+    version: "1.0.14"
   serverpod_auth_core_client:
     dependency: transitive
     description:
       name: serverpod_auth_core_client
-      sha256: e67defe54d2cea62b8643a67632069f0c1e0781b106e643be6049118b0e9bac4
+      sha256: b3d7154f990d14d3fcc894f93b5093aba0ef3787be4229d5b85be4aa1a2307cf
       url: "https://pub.dev"
     source: hosted
-    version: "3.4.11"
+    version: "4.0.0-beta.1"
   serverpod_auth_core_flutter:
     dependency: transitive
     description:
       name: serverpod_auth_core_flutter
-      sha256: "2ea2be622b9891eea8d4c12225426b697087642f4a8124b4701f9154fced1d27"
+      sha256: c9be60e80b3367d7fb576f96981b4ee686d824c8eb80aa549766794014e3d582
       url: "https://pub.dev"
     source: hosted
-    version: "3.4.11"
+    version: "4.0.0-beta.1"
   serverpod_auth_idp_client:
     dependency: transitive
     description:
       name: serverpod_auth_idp_client
-      sha256: "92604d72fc1a939d9a549ef7b79712abf6baecce817a84188f84c6df9ebdfe91"
+      sha256: "3e99709e5602821d3bc63d5d77583945ec20c60a71fd33ddfa5d4eb4dbd733ab"
       url: "https://pub.dev"
     source: hosted
-    version: "3.4.11"
+    version: "4.0.0-beta.1"
   serverpod_auth_idp_flutter:
     dependency: "direct main"
     description:
       name: serverpod_auth_idp_flutter
-      sha256: "2106b7333eee63c082e7db4808285eccab35b0636ab9c7fd8f0145017fce9e9b"
+      sha256: "4c02940908c21272c4554131bbca6a2349a261b8ff3f0ed75670f3c917df90d3"
       url: "https://pub.dev"
     source: hosted
-    version: "3.4.11"
+    version: "4.0.0-beta.1"
   serverpod_client:
     dependency: "direct main"
     description:
       name: serverpod_client
-      sha256: d79108bd64df3efea7cae0c6b9473049f308c40236039c0dd7397539062e5191
+      sha256: "3ed6f523d986de081c0a90f592448794b8cc599143a68d434cef31d222eee417"
       url: "https://pub.dev"
     source: hosted
-    version: "3.4.11"
+    version: "4.0.0-beta.1"
   serverpod_serialization:
     dependency: transitive
     description:
       name: serverpod_serialization
-      sha256: e159f298e9b980bfea720fbb91d66d5ad00ff6510f2fcd851932e9942ca0673d
+      sha256: "2307ddd65abef726c47ee7f5468689eae35b73239acec84fa3f1994be44689cf"
       url: "https://pub.dev"
     source: hosted
-    version: "3.4.11"
+    version: "4.0.0-beta.1"
   shelf:
     dependency: transitive
     description:
@@ -1187,5 +1186,5 @@ packages:
     source: hosted
     version: "3.1.2"
 sdks:
-  dart: ">=3.9.0-0 <4.0.0"
-  flutter: ">=3.32.0"
+  dart: ">=3.10.3 <4.0.0"
+  flutter: ">=3.38.4"
