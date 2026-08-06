@@ -6,7 +6,7 @@ import 'package:serverpod_admin_dashboard/src/helpers/dialog_form_helper.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/foreign_key_dropdown.dart';
 
 /// Reusable form field widget for dialog forms.
-/// Handles boolean checkboxes, foreign key dropdowns, date fields, and text fields.
+/// Handles booleans, enums, foreign keys, dates, passwords, and text fields.
 class DialogFormField extends StatelessWidget {
   const DialogFormField({
     required this.column,
@@ -25,6 +25,10 @@ class DialogFormField extends StatelessWidget {
     final isDate = DialogFormHelper.isDateType(column);
     final isForeignKey = column.foreignKeyTable != null;
     final isBoolean = DialogFormHelper.isBooleanType(column);
+    final isEnum = DialogFormHelper.isEnumType(column);
+    final isPassword = DialogFormHelper.isPasswordField(column);
+    final isNullable = column.isNullable == true;
+    final fieldLabel = isNullable ? '${column.name} (optional)' : column.name;
 
     // Boolean checkbox
     if (isBoolean) {
@@ -34,13 +38,54 @@ class DialogFormField extends StatelessWidget {
           animation: formController,
           builder: (context, _) {
             return CheckboxListTile(
-              title: Text(column.name),
+              title: Text(fieldLabel),
               value: formController.booleanValues[column.name] ?? false,
               onChanged: (value) {
                 formController.setBooleanValue(column.name, value ?? false);
               },
               contentPadding: EdgeInsets.zero,
               controlAffinity: ListTileControlAffinity.leading,
+            );
+          },
+        ),
+      );
+    }
+
+    if (isEnum) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: AnimatedBuilder(
+          animation: formController,
+          builder: (context, _) {
+            return DropdownButtonFormField<String>(
+              initialValue: formController.enumValues[column.name],
+              isExpanded: true,
+              decoration: InputDecoration(
+                labelText: fieldLabel,
+                hintText: isNullable
+                    ? 'Optional — select a value'
+                    : 'Select ${column.name}',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                filled: true,
+                fillColor: theme.colorScheme.surfaceContainerHighest,
+              ),
+              items: column.enumValues!
+                  .map(
+                    (value) => DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    ),
+                  )
+                  .toList(growable: false),
+              onChanged: (value) {
+                formController.setEnumValue(column.name, value);
+              },
+              validator: (value) =>
+                  !isNullable && (value == null || value.isEmpty)
+                  ? 'Please select ${column.name}'
+                  : null,
             );
           },
         ),
@@ -79,13 +124,20 @@ class DialogFormField extends StatelessWidget {
           return TextFormField(
             controller: formController.controllers[column.name],
             readOnly: isDate,
-            maxLines: null,
+            obscureText:
+                isPassword &&
+                (formController.obscurePasswordValues[column.name] ?? true),
+            maxLines: isPassword ? 1 : null,
             minLines: 1,
             onTap: isDate ? () => _handleDateTap(context) : null,
             textInputAction: TextInputAction.newline,
             decoration: InputDecoration(
-              labelText: column.name,
-              hintText: isDate ? 'Tap to select date' : 'Enter ${column.name}',
+              labelText: fieldLabel,
+              hintText: isNullable
+                  ? 'Optional — leave empty'
+                  : isDate
+                  ? 'Tap to select date'
+                  : 'Enter ${column.name}',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -95,6 +147,22 @@ class DialogFormField extends StatelessWidget {
                   ? IconButton(
                       icon: const Icon(Icons.calendar_today_outlined),
                       onPressed: () => _handleDateTap(context),
+                    )
+                  : isPassword
+                  ? IconButton(
+                      tooltip:
+                          formController.obscurePasswordValues[column.name] ??
+                              true
+                          ? 'Show password'
+                          : 'Hide password',
+                      icon: Icon(
+                        formController.obscurePasswordValues[column.name] ??
+                                true
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                      ),
+                      onPressed: () =>
+                          formController.togglePasswordVisibility(column.name),
                     )
                   : null,
             ),

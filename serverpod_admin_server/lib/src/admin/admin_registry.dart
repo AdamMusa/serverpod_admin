@@ -23,6 +23,8 @@ class AdminRegistry {
   /// be provided explicitly, but if omitted, they will be resolved from the
   /// host server's [SerializationManager]. This lets host projects register
   /// resources with a simple `register<T>()` call.
+  /// Enum values are discovered automatically for both name- and
+  /// index-serialized enums.
   void register<T extends TableRow>({
     Table? table,
     T Function(JsonMap json)? fromJson,
@@ -47,7 +49,8 @@ class AdminRegistry {
       createRow: createRow ?? (session, row) => session.db.insertRow<T>(row),
       // ignore: invalid_use_of_internal_member
       updateRow: updateRow ?? (session, row) => session.db.updateRow<T>(row),
-      deleteById: deleteById ??
+      deleteById:
+          deleteById ??
           (session, id) async {
             // ignore: invalid_use_of_internal_member
             final row = await session.db.findById<T>(id);
@@ -70,21 +73,21 @@ class AdminRegistry {
     register<FutureCallEntry>(
       table: FutureCallEntry.t,
       fromJson: FutureCallEntry.fromJson,
-      listRows: (session) => FutureCallEntry.db.find(
-        session,
-        orderBy: (table) => table.time,
-      ),
+      listRows: (session) =>
+          FutureCallEntry.db.find(session, orderBy: (table) => table.time),
       findRowById: (session, id) async {
-        final normalizedId =
-            id is int ? id : (id is String ? int.tryParse(id) : null);
+        final normalizedId = id is int
+            ? id
+            : (id is String ? int.tryParse(id) : null);
         if (normalizedId == null) return null;
         return FutureCallEntry.db.findById(session, normalizedId);
       },
       createRow: (session, row) => FutureCallEntry.db.insertRow(session, row),
       updateRow: (session, row) => FutureCallEntry.db.updateRow(session, row),
       deleteById: (session, id) async {
-        final normalizedId =
-            id is int ? id : (id is String ? int.tryParse(id) : null);
+        final normalizedId = id is int
+            ? id
+            : (id is String ? int.tryParse(id) : null);
         if (normalizedId == null) return;
         await FutureCallEntry.db.deleteWhere(
           session,

@@ -1,8 +1,11 @@
 import 'package:serverpod/serverpod.dart';
+import 'package:serverpod/protocol.dart' show LogEntry;
 import 'package:serverpod_admin_server/serverpod_admin_server.dart';
 import 'package:test/test.dart';
 
 import 'test_tools/serverpod_test_tools.dart';
+
+enum TestStatus { pending, approved }
 
 /// Simple test model for admin endpoint testing.
 /// Uses in-memory storage for testing without requiring database migrations.
@@ -11,6 +14,7 @@ abstract class TestModel implements TableRow<int?>, ProtocolSerialization {
     this.id,
     required this.name,
     required this.value,
+    required this.status,
     this.createdAt,
   });
 
@@ -18,6 +22,7 @@ abstract class TestModel implements TableRow<int?>, ProtocolSerialization {
     int? id,
     required String name,
     required int value,
+    required TestStatus status,
     DateTime? createdAt,
   }) = _TestModelImpl;
 
@@ -28,6 +33,11 @@ abstract class TestModel implements TableRow<int?>, ProtocolSerialization {
       id: json['id'] as int?,
       name: (json['name'] ?? json['name']) as String? ?? '',
       value: (json['value'] ?? json['value']) as int? ?? 0,
+      status: switch (json['status']) {
+        int index => TestStatus.values[index],
+        String name => TestStatus.values.byName(name),
+        _ => TestStatus.pending,
+      },
       createdAt: () {
         final value = json['createdAt'] ?? json['created_at'];
         if (value == null) return null;
@@ -45,6 +55,7 @@ abstract class TestModel implements TableRow<int?>, ProtocolSerialization {
 
   String name;
   int value;
+  TestStatus status;
   DateTime? createdAt;
 
   @override
@@ -56,6 +67,7 @@ abstract class TestModel implements TableRow<int?>, ProtocolSerialization {
       if (id != null) 'id': id,
       'name': name,
       'value': value,
+      'status': status,
       if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
     };
   }
@@ -69,6 +81,7 @@ class _TestModelImpl extends TestModel {
     super.id,
     required super.name,
     required super.value,
+    super.status = TestStatus.pending,
     super.createdAt,
   }) : super._();
 }
@@ -77,15 +90,17 @@ class _TestModelTable extends Table<int?> {
   _TestModelTable() : super(tableName: 'test_models') {
     name = ColumnString('name', this);
     value = ColumnInt('value', this);
+    status = ColumnEnum<TestStatus>('status', this, EnumSerialization.byIndex);
     createdAt = ColumnDateTime('created_at', this);
   }
 
   late final ColumnString name;
   late final ColumnInt value;
+  late final ColumnEnum<TestStatus> status;
   late final ColumnDateTime createdAt;
 
   @override
-  List<Column> get columns => [id, name, value, createdAt];
+  List<Column> get columns => [id, name, value, status, createdAt];
 }
 
 // In-memory storage for test data
@@ -110,8 +125,9 @@ void main() {
           listRows: (session) async => _testStorage.values.toList(),
           findRowById: (session, id) async {
             // Handle both int and String ids
-            final intId =
-                id is int ? id : (id is String ? int.tryParse(id) : null);
+            final intId = id is int
+                ? id
+                : (id is String ? int.tryParse(id) : null);
             return intId != null ? _testStorage[intId] : null;
           },
           createRow: (session, row) async {
@@ -144,6 +160,11 @@ void main() {
           deleteById: (session, id) async {
             _testStorage.remove(id as int);
           },
+        );
+        registry.register<LogEntry>(
+          table: LogEntry.t,
+          fromJson: LogEntry.fromJson,
+          resourceKey: 'test_serverpod_logs',
         );
       });
       adminRegister();
@@ -184,19 +205,22 @@ void main() {
         );
       });
 
-      test('should reject authenticated sessions without admin scope',
-          () async {
-        expect(
-          () => endpoints.admin.resources(nonAdminSessionBuilder),
-          throwsA(anything),
-        );
-      });
+      test(
+        'should reject authenticated sessions without admin scope',
+        () async {
+          expect(
+            () => endpoints.admin.resources(nonAdminSessionBuilder),
+            throwsA(anything),
+          );
+        },
+      );
     });
 
     group('resources', () {
       test('should return list of registered resources', () async {
-        final resources =
-            await endpoints.admin.resources(authenticatedSessionBuilder);
+        final resources = await endpoints.admin.resources(
+          authenticatedSessionBuilder,
+        );
 
         expect(resources, isNotEmpty);
         final testModelResource = resources.firstWhere(
@@ -206,23 +230,35 @@ void main() {
 
         expect(testModelResource.tableName, 'test_models');
         expect(testModelResource.columns.length, greaterThan(0));
-        expect(
-          testModelResource.columns.any((c) => c.name == 'name'),
-          isTrue,
+        expect(testModelResource.columns.any((c) => c.name == 'name'), isTrue);
+        expect(testModelResource.columns.any((c) => c.name == 'value'), isTrue);
+      });
+
+      test('should include Serverpod enum values in column metadata', () async {
+        final resources = await endpoints.admin.resources(
+          authenticatedSessionBuilder,
         );
-        expect(
-          testModelResource.columns.any((c) => c.name == 'value'),
-          isTrue,
+        final logResource = resources.firstWhere(
+          (resource) => resource.key == 'test_serverpod_logs',
         );
+        final logLevel = logResource.columns.firstWhere(
+          (column) => column.name == 'logLevel',
+        );
+
+        expect(logLevel.enumValues, [
+          'debug',
+          'info',
+          'warning',
+          'error',
+          'fatal',
+        ]);
+        expect(logLevel.enumSerializedByName, isFalse);
       });
     });
 
     group('create', () {
       test('should create a new record', () async {
-        final data = {
-          'name': 'Test Item',
-          'value': '42',
-        };
+        final data = {'name': 'Test Item', 'value': '42', 'status': '1'};
 
         final created = await endpoints.admin.create(
           authenticatedSessionBuilder,
@@ -233,6 +269,7 @@ void main() {
         expect(created, isNotEmpty);
         expect(created['name'], 'Test Item');
         expect(created['value'], '42');
+        expect(created['status'], 'approved');
         expect(created.containsKey('id'), isTrue);
       });
 
@@ -297,20 +334,16 @@ void main() {
         );
 
         expect(records.length, greaterThanOrEqualTo(2));
-        expect(
-          records.any((r) => r['name'] == 'Item 1'),
-          isTrue,
-        );
-        expect(
-          records.any((r) => r['name'] == 'Item 2'),
-          isTrue,
-        );
+        expect(records.any((r) => r['name'] == 'Item 1'), isTrue);
+        expect(records.any((r) => r['name'] == 'Item 2'), isTrue);
       });
 
       test('should throw error for invalid resource key', () async {
         expect(
-          () => endpoints.admin
-              .list(authenticatedSessionBuilder, 'invalid_resource'),
+          () => endpoints.admin.list(
+            authenticatedSessionBuilder,
+            'invalid_resource',
+          ),
           throwsA(isA<ArgumentError>()),
         );
       });
@@ -416,8 +449,11 @@ void main() {
 
       test('should throw error for invalid resource key', () async {
         expect(
-          () => endpoints.admin
-              .find(authenticatedSessionBuilder, 'invalid_resource', '1'),
+          () => endpoints.admin.find(
+            authenticatedSessionBuilder,
+            'invalid_resource',
+            '1',
+          ),
           throwsA(isA<ArgumentError>()),
         );
       });
@@ -435,11 +471,7 @@ void main() {
         final updated = await endpoints.admin.update(
           authenticatedSessionBuilder,
           'test_models',
-          {
-            'id': id.toString(),
-            'name': 'Updated Name',
-            'value': '2',
-          },
+          {'id': id.toString(), 'name': 'Updated Name', 'value': '2'},
         );
 
         expect(updated['name'], 'Updated Name');
@@ -457,10 +489,7 @@ void main() {
         final updated = await endpoints.admin.update(
           authenticatedSessionBuilder,
           'test_models',
-          {
-            'id': id.toString(),
-            'value': '20',
-          },
+          {'id': id.toString(), 'value': '20'},
         );
 
         expect(updated['name'], 'Partial Update');

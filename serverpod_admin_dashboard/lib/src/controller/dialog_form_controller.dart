@@ -24,6 +24,8 @@ class DialogFormController extends ChangeNotifier {
   final Map<String, String?> _foreignKeyValues = {};
   final Map<String, List<Map<String, String>>> _foreignKeyOptions = {};
   final Map<String, bool> _booleanValues = {};
+  final Map<String, String?> _enumValues = {};
+  final Map<String, bool> _obscurePasswordValues = {};
 
   bool _isSubmitting = false;
   String? _errorMessage;
@@ -35,6 +37,8 @@ class DialogFormController extends ChangeNotifier {
   Map<String, List<Map<String, String>>> get foreignKeyOptions =>
       _foreignKeyOptions;
   Map<String, bool> get booleanValues => _booleanValues;
+  Map<String, String?> get enumValues => _enumValues;
+  Map<String, bool> get obscurePasswordValues => _obscurePasswordValues;
   bool get isSubmitting => _isSubmitting;
   String? get errorMessage => _errorMessage;
 
@@ -47,11 +51,15 @@ class DialogFormController extends ChangeNotifier {
       final initialValue = isEditMode ? (initialValues[column.name] ?? '') : '';
 
       if (DialogFormHelper.isBooleanType(column)) {
-        _booleanValues[column.name] =
-            isEditMode ? DialogFormHelper.parseBoolean(initialValue) : false;
+        _booleanValues[column.name] = isEditMode
+            ? DialogFormHelper.parseBoolean(initialValue)
+            : false;
+      } else if (DialogFormHelper.isEnumType(column)) {
+        _enumValues[column.name] = initialValue.isEmpty ? null : initialValue;
       } else if (column.foreignKeyTable != null) {
-        _foreignKeyValues[column.name] =
-            initialValue.isEmpty ? null : initialValue;
+        _foreignKeyValues[column.name] = initialValue.isEmpty
+            ? null
+            : initialValue;
         _loadForeignKeyOptions(column);
       } else if (DialogFormHelper.isDateType(column)) {
         if (isEditMode && initialValue.isNotEmpty) {
@@ -66,6 +74,9 @@ class DialogFormController extends ChangeNotifier {
       } else {
         _isoValues[column.name] = initialValue;
         _controllers[column.name] = TextEditingController(text: initialValue);
+        if (DialogFormHelper.isPasswordField(column)) {
+          _obscurePasswordValues[column.name] = true;
+        }
       }
     }
   }
@@ -73,8 +84,10 @@ class DialogFormController extends ChangeNotifier {
   Future<void> _loadForeignKeyOptions(AdminColumn column) async {
     if (column.foreignKeyTable == null) return;
 
-    final relatedResource =
-        ForeignKeyHelper.findRelatedResource(adminController, column);
+    final relatedResource = ForeignKeyHelper.findRelatedResource(
+      adminController,
+      column,
+    );
 
     if (relatedResource == null) return;
 
@@ -95,6 +108,17 @@ class DialogFormController extends ChangeNotifier {
 
   void setForeignKeyValue(String columnName, String? value) {
     _foreignKeyValues[columnName] = value;
+    notifyListeners();
+  }
+
+  void setEnumValue(String columnName, String? value) {
+    _enumValues[columnName] = value;
+    notifyListeners();
+  }
+
+  void togglePasswordVisibility(String columnName) {
+    _obscurePasswordValues[columnName] =
+        !(_obscurePasswordValues[columnName] ?? true);
     notifyListeners();
   }
 
@@ -121,8 +145,19 @@ class DialogFormController extends ChangeNotifier {
       if (column.isPrimary) continue;
 
       if (DialogFormHelper.isBooleanType(column)) {
-        payload[column.name] =
-            _booleanValues[column.name] == true ? 'true' : 'false';
+        payload[column.name] = _booleanValues[column.name] == true
+            ? 'true'
+            : 'false';
+      } else if (DialogFormHelper.isEnumType(column)) {
+        final selectedValue = _enumValues[column.name];
+        if (selectedValue != null && selectedValue.isNotEmpty) {
+          if (column.enumSerializedByName == true) {
+            payload[column.name] = selectedValue;
+          } else {
+            final index = column.enumValues!.indexOf(selectedValue);
+            if (index >= 0) payload[column.name] = index.toString();
+          }
+        }
       } else if (column.foreignKeyTable != null) {
         final selectedValue = _foreignKeyValues[column.name];
         if (selectedValue != null && selectedValue.isNotEmpty) {

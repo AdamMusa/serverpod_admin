@@ -1,0 +1,5 @@
+enum: FixtureStatus
+serialized: byName
+values:
+  - draft
+  - published

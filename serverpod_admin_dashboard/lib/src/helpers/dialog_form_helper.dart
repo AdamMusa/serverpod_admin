@@ -14,6 +14,14 @@ class DialogFormHelper {
     return dataType.contains('bool');
   }
 
+  static bool isEnumType(AdminColumn column) {
+    return column.enumValues?.isNotEmpty ?? false;
+  }
+
+  static bool isPasswordField(AdminColumn column) {
+    return column.name.toLowerCase().contains('password');
+  }
+
   static bool parseBoolean(String value) {
     if (value.isEmpty) return false;
     final lower = value.toLowerCase().trim();

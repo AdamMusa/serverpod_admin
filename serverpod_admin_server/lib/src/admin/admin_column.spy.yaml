@@ -6,7 +6,8 @@ fields:
   isPrimary: bool
   foreignKeyTable: String?
   defaultValue: String?
-
-
+  enumValues: List<String>?
+  enumSerializedByName: bool?
+  isNullable: bool?
 
 
