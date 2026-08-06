@@ -3,6 +3,7 @@ import 'package:serverpod/protocol.dart' show SessionLogEntry;
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
 import 'package:serverpod_admin_server/src/admin/admin_entry_base.dart';
+import 'package:serverpod_admin_server/src/admin/admin_value_parser.dart';
 
 import '../../admin/admin.dart';
 import '../admin_registry.dart';
@@ -151,7 +152,7 @@ class AdminEndpoint extends Endpoint {
       (column) => column.columnName == primaryColumnMetadata.name,
       orElse: () => entry.columns.first,
     );
-    final normalizedId = _parseColumnValue(tableColumn, id) ?? id;
+    final normalizedId = parseAdminColumnValue(tableColumn, id) ?? id;
     final result = await entry.find(session, normalizedId);
     if (result == null) return null;
     return _removeClassName(result);
@@ -179,11 +180,7 @@ class AdminEndpoint extends Endpoint {
     return _stringifyRecord(updated);
   }
 
-  Future<bool> delete(
-    Session session,
-    String resourceKey,
-    String id,
-  ) async {
+  Future<bool> delete(Session session, String resourceKey, String id) async {
     final entry = _resolve(resourceKey);
     final primaryColumnMetadata = entry.metadata.columns.firstWhere(
       (column) => column.isPrimary,
@@ -193,7 +190,7 @@ class AdminEndpoint extends Endpoint {
       (column) => column.columnName == primaryColumnMetadata.name,
       orElse: () => entry.columns.first,
     );
-    final normalizedId = _parseColumnValue(tableColumn, id) ?? id;
+    final normalizedId = parseAdminColumnValue(tableColumn, id) ?? id;
     await entry.delete(session, normalizedId);
     return true;
   }
@@ -207,34 +204,9 @@ class AdminEndpoint extends Endpoint {
       final name = column.columnName;
       if (!data.containsKey(name)) continue;
       final value = data[name];
-      normalized[name] = _parseColumnValue(column, value);
+      normalized[name] = parseAdminColumnValue(column, value);
     }
     return normalized;
-  }
-
-  dynamic _parseColumnValue(Column column, String? raw) {
-    if (raw == null) return null;
-    final value = raw.trim();
-    if (value.isEmpty) return null;
-
-    if (column is ColumnInt || column is ColumnBigInt) {
-      return int.tryParse(value);
-    }
-    if (column is ColumnDouble) {
-      return double.tryParse(value);
-    }
-    if (column is ColumnBool) {
-      final lowered = value.toLowerCase();
-      if (lowered == 'true' || lowered == '1' || lowered == 'yes') return true;
-      if (lowered == 'false' || lowered == '0' || lowered == 'no') {
-        return false;
-      }
-      return null;
-    }
-    if (column is ColumnDateTime) {
-      return DateTime.tryParse(value)?.toUtc().toIso8601String();
-    }
-    return value;
   }
 
   String? _blankToNull(String value) {
@@ -290,8 +262,7 @@ class AdminEndpoint extends Endpoint {
 
   List<Map<String, String>> _stringifyRecords(
     List<Map<String, dynamic>> rows,
-  ) =>
-      rows.map(_stringifyRecord).toList();
+  ) => rows.map(_stringifyRecord).toList();
   Map<String, String> _stringifyRecord(Map<String, dynamic> row) {
     return Map.fromEntries(
       row.entries
@@ -313,6 +284,7 @@ class AdminEndpoint extends Endpoint {
     if (value is DateTime) {
       return value.toUtc().toIso8601String();
     }
+    if (value is Enum) return value.name;
     return value.toString();
   }
 }
