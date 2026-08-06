@@ -166,9 +166,15 @@ class DialogFormController extends ChangeNotifier {
       } else if (_controllers.containsKey(column.name)) {
         final controller = _controllers[column.name]!;
         if (DialogFormHelper.isDateType(column)) {
-          payload[column.name] = _isoValues[column.name] ?? '';
+          final value = _isoValues[column.name] ?? '';
+          if (value.isNotEmpty || column.isNullable != true) {
+            payload[column.name] = value;
+          }
         } else {
-          payload[column.name] = controller.text.trim();
+          final value = controller.text;
+          if (value.isNotEmpty || column.isNullable != true) {
+            payload[column.name] = value;
+          }
         }
       }
     }

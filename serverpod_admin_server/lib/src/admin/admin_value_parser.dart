@@ -5,7 +5,6 @@ import 'package:serverpod/serverpod.dart';
 dynamic parseAdminColumnValue(Column column, String? raw) {
   if (raw == null) return null;
   final value = raw.trim();
-  if (value.isEmpty) return null;
 
   if (column is ColumnInt || column is ColumnBigInt) {
     return int.tryParse(value);
@@ -26,5 +25,5 @@ dynamic parseAdminColumnValue(Column column, String? raw) {
       column.serialized == EnumSerialization.byIndex) {
     return int.tryParse(value);
   }
-  return value;
+  return raw;
 }

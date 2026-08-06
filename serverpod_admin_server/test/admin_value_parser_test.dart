@@ -8,6 +8,7 @@ void main() {
   test('N/A is preserved for model validation', () {
     expect(parseAdminColumnValue(table.label, 'N/A'), 'N/A');
     expect(parseAdminColumnValue(table.location, 'N/A'), 'N/A');
+    expect(parseAdminColumnValue(table.label, ' N/A '), ' N/A ');
   });
 
   test('valid EWKT geography values are preserved', () {

@@ -18,6 +18,31 @@ void main() {
     );
   });
 
+  test('omits empty nullable fields and preserves entered text', () {
+    final column = AdminColumn(
+      name: 'currentLocation',
+      dataType: 'GeographyPoint',
+      hasDefault: false,
+      isPrimary: false,
+      isNullable: true,
+    );
+    final resource = AdminResource(
+      key: 'drivers',
+      tableName: 'drivers',
+      columns: [column],
+    );
+    final formController = DialogFormController(
+      resource: resource,
+      adminController: adminController,
+    );
+    addTearDown(formController.dispose);
+
+    expect(formController.buildPayload(), isNot(contains('currentLocation')));
+
+    formController.controllers['currentLocation']!.text = ' N/A ';
+    expect(formController.buildPayload()['currentLocation'], ' N/A ');
+  });
+
   testWidgets('renders enum metadata as a select and serializes its index', (
     tester,
   ) async {
