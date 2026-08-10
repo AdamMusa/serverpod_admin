@@ -79,8 +79,10 @@ class DialogFormController extends ChangeNotifier {
     if (relatedResource == null) return;
 
     try {
-      await adminController.loadRecords(relatedResource);
-      _foreignKeyOptions[column.name] = adminController.records;
+      final records = await adminController.adminEndpoint.list(
+        relatedResource.key,
+      );
+      _foreignKeyOptions[column.name] = records;
       notifyListeners();
     } catch (_) {
       _foreignKeyOptions[column.name] = [];
