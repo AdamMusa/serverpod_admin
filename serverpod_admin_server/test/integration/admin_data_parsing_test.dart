@@ -111,14 +111,14 @@ class _DataTypeTestModelTable extends Table<int?> {
 
   @override
   List<Column> get columns => [
-    id,
-    stringField,
-    intField,
-    bigIntField,
-    doubleField,
-    boolField,
-    dateTimeField,
-  ];
+        id,
+        stringField,
+        intField,
+        bigIntField,
+        doubleField,
+        boolField,
+        dateTimeField,
+      ];
 }
 
 // In-memory storage for test data
@@ -129,10 +129,8 @@ int _nextId = 1;
 const _testAdminUserId = '00000000-0000-0000-0000-000000000001';
 
 void main() {
-  withServerpod('Given Admin endpoint data parsing', (
-    sessionBuilder,
-    endpoints,
-  ) {
+  withServerpod('Given Admin endpoint data parsing',
+      (sessionBuilder, endpoints) {
     setUpAll(() {
       // Clear test storage
       _testStorage.clear();
@@ -192,7 +190,11 @@ void main() {
         final created = await endpoints.admin.create(
           authenticatedSessionBuilder,
           'data_type_test_models',
-          {'string_field': 'Test', 'int_field': '1', 'bool_field': 'true'},
+          {
+            'string_field': 'Test',
+            'int_field': '1',
+            'bool_field': 'true',
+          },
         );
 
         expect(created['boolField'], 'true');
@@ -202,7 +204,11 @@ void main() {
         final created = await endpoints.admin.create(
           authenticatedSessionBuilder,
           'data_type_test_models',
-          {'string_field': 'Test', 'int_field': '1', 'bool_field': '1'},
+          {
+            'string_field': 'Test',
+            'int_field': '1',
+            'bool_field': '1',
+          },
         );
 
         expect(created['boolField'], 'true');
@@ -212,7 +218,11 @@ void main() {
         final created = await endpoints.admin.create(
           authenticatedSessionBuilder,
           'data_type_test_models',
-          {'string_field': 'Test', 'int_field': '1', 'bool_field': 'yes'},
+          {
+            'string_field': 'Test',
+            'int_field': '1',
+            'bool_field': 'yes',
+          },
         );
 
         expect(created['boolField'], 'true');
@@ -222,7 +232,11 @@ void main() {
         final created = await endpoints.admin.create(
           authenticatedSessionBuilder,
           'data_type_test_models',
-          {'string_field': 'Test', 'int_field': '1', 'bool_field': 'false'},
+          {
+            'string_field': 'Test',
+            'int_field': '1',
+            'bool_field': 'false',
+          },
         );
 
         expect(created['boolField'], 'false');
@@ -232,7 +246,11 @@ void main() {
         final created = await endpoints.admin.create(
           authenticatedSessionBuilder,
           'data_type_test_models',
-          {'string_field': 'Test', 'int_field': '1', 'bool_field': '0'},
+          {
+            'string_field': 'Test',
+            'int_field': '1',
+            'bool_field': '0',
+          },
         );
 
         expect(created['boolField'], 'false');
@@ -242,7 +260,11 @@ void main() {
         final created = await endpoints.admin.create(
           authenticatedSessionBuilder,
           'data_type_test_models',
-          {'string_field': 'Test', 'int_field': '1', 'bool_field': 'no'},
+          {
+            'string_field': 'Test',
+            'int_field': '1',
+            'bool_field': 'no',
+          },
         );
 
         expect(created['boolField'], 'false');
@@ -252,7 +274,11 @@ void main() {
         final created = await endpoints.admin.create(
           authenticatedSessionBuilder,
           'data_type_test_models',
-          {'string_field': 'Test', 'int_field': '1', 'bool_field': 'invalid'},
+          {
+            'string_field': 'Test',
+            'int_field': '1',
+            'bool_field': 'invalid',
+          },
         );
 
         // Invalid boolean should be parsed as null, which is omitted from JSON
@@ -265,7 +291,10 @@ void main() {
         final created = await endpoints.admin.create(
           authenticatedSessionBuilder,
           'data_type_test_models',
-          {'string_field': 'Test', 'int_field': '42'},
+          {
+            'string_field': 'Test',
+            'int_field': '42',
+          },
         );
 
         expect(created['intField'], '42');
@@ -275,19 +304,25 @@ void main() {
         final created = await endpoints.admin.create(
           authenticatedSessionBuilder,
           'data_type_test_models',
-          {'string_field': 'Test', 'int_field': '-42'},
+          {
+            'string_field': 'Test',
+            'int_field': '-42',
+          },
         );
 
         expect(created['intField'], '-42');
       });
 
       test('should parse big integers correctly', () async {
-        final created = await endpoints.admin
-            .create(authenticatedSessionBuilder, 'data_type_test_models', {
-              'string_field': 'Test',
-              'int_field': '1',
-              'big_int_field': '9223372036854775807',
-            });
+        final created = await endpoints.admin.create(
+          authenticatedSessionBuilder,
+          'data_type_test_models',
+          {
+            'string_field': 'Test',
+            'int_field': '1',
+            'big_int_field': '9223372036854775807',
+          },
+        );
 
         expect(created['bigIntField'], '9223372036854775807');
       });
@@ -296,7 +331,11 @@ void main() {
         final created = await endpoints.admin.create(
           authenticatedSessionBuilder,
           'data_type_test_models',
-          {'string_field': 'Test', 'int_field': '1', 'double_field': '3.14159'},
+          {
+            'string_field': 'Test',
+            'int_field': '1',
+            'double_field': '3.14159',
+          },
         );
 
         expect(created['doubleField'], '3.14159');
@@ -320,7 +359,10 @@ void main() {
         final created = await endpoints.admin.create(
           authenticatedSessionBuilder,
           'data_type_test_models',
-          {'string_field': 'Test', 'int_field': 'not_a_number'},
+          {
+            'string_field': 'Test',
+            'int_field': 'not_a_number',
+          },
         );
 
         // Invalid integer for required field defaults to 0 (from fromJson default)
@@ -364,19 +406,20 @@ void main() {
 
       test('should convert DateTime to UTC ISO 8601 format', () async {
         final localTime = DateTime(2024, 1, 15, 14, 30, 45);
-        final created = await endpoints.admin
-            .create(authenticatedSessionBuilder, 'data_type_test_models', {
-              'string_field': 'Test',
-              'int_field': '1',
-              'date_time_field': localTime.toIso8601String(),
-            });
+        final created = await endpoints.admin.create(
+          authenticatedSessionBuilder,
+          'data_type_test_models',
+          {
+            'string_field': 'Test',
+            'int_field': '1',
+            'date_time_field': localTime.toIso8601String(),
+          },
+        );
 
         expect(created['dateTimeField'], isNotEmpty);
         // Should be in ISO 8601 format
         expect(
-          created['dateTimeField'],
-          matches(RegExp(r'^\d{4}-\d{2}-\d{2}T')),
-        );
+            created['dateTimeField'], matches(RegExp(r'^\d{4}-\d{2}-\d{2}T')));
       });
 
       test('should handle invalid DateTime as null', () async {
@@ -400,7 +443,10 @@ void main() {
         final created = await endpoints.admin.create(
           authenticatedSessionBuilder,
           'data_type_test_models',
-          {'string_field': 'Hello World', 'int_field': '1'},
+          {
+            'string_field': 'Hello World',
+            'int_field': '1',
+          },
         );
 
         expect(created['stringField'], 'Hello World');
@@ -410,20 +456,26 @@ void main() {
         final created = await endpoints.admin.create(
           authenticatedSessionBuilder,
           'data_type_test_models',
-          {'string_field': '', 'int_field': '1'},
+          {
+            'string_field': '',
+            'int_field': '1',
+          },
         );
 
         expect(created['stringField'], '');
       });
 
-      test('should preserve whitespace in string values', () async {
+      test('should trim whitespace from values', () async {
         final created = await endpoints.admin.create(
           authenticatedSessionBuilder,
           'data_type_test_models',
-          {'string_field': '  Trimmed  ', 'int_field': '1'},
+          {
+            'string_field': '  Trimmed  ',
+            'int_field': '1',
+          },
         );
 
-        expect(created['stringField'], '  Trimmed  ');
+        expect(created['stringField'], 'Trimmed');
       });
 
       test('should handle null values as empty strings', () async {
@@ -480,24 +532,31 @@ void main() {
         expect(created['doubleField'], isNull);
       });
 
-      test('should preserve whitespace-only string values', () async {
+      test('should handle whitespace-only values', () async {
         final created = await endpoints.admin.create(
           authenticatedSessionBuilder,
           'data_type_test_models',
-          {'string_field': '   ', 'int_field': '1'},
+          {
+            'string_field': '   ',
+            'int_field': '1',
+          },
         );
 
-        expect(created['stringField'], '   ');
+        // Trimmed whitespace becomes empty, which is parsed as null for non-string fields
+        expect(created['stringField'], '');
       });
 
       test('should stringify DateTime values correctly', () async {
         final now = DateTime.now().toUtc();
-        final created = await endpoints.admin
-            .create(authenticatedSessionBuilder, 'data_type_test_models', {
-              'string_field': 'Test',
-              'int_field': '1',
-              'date_time_field': now.toIso8601String(),
-            });
+        final created = await endpoints.admin.create(
+          authenticatedSessionBuilder,
+          'data_type_test_models',
+          {
+            'string_field': 'Test',
+            'int_field': '1',
+            'date_time_field': now.toIso8601String(),
+          },
+        );
 
         // DateTime should be stringified as ISO 8601 UTC string
         final stringified = created['dateTimeField'];
@@ -512,7 +571,11 @@ void main() {
         final created = await endpoints.admin.create(
           authenticatedSessionBuilder,
           'data_type_test_models',
-          {'string_field': 'Test', 'int_field': '42', 'double_field': '3.14'},
+          {
+            'string_field': 'Test',
+            'int_field': '42',
+            'double_field': '3.14',
+          },
         );
 
         expect(created['intField'], '42');
@@ -523,7 +586,11 @@ void main() {
         final created = await endpoints.admin.create(
           authenticatedSessionBuilder,
           'data_type_test_models',
-          {'string_field': 'Test', 'int_field': '1', 'bool_field': 'true'},
+          {
+            'string_field': 'Test',
+            'int_field': '1',
+            'bool_field': 'true',
+          },
         );
 
         expect(created['boolField'], 'true');
@@ -535,7 +602,11 @@ void main() {
         final created = await endpoints.admin.create(
           authenticatedSessionBuilder,
           'data_type_test_models',
-          {'string_field': 'Test', 'int_field': '1', 'bool_field': 'true'},
+          {
+            'string_field': 'Test',
+            'int_field': '1',
+            'bool_field': 'true',
+          },
         );
 
         final id = created['id']!;
@@ -557,7 +628,10 @@ void main() {
         final created = await endpoints.admin.create(
           authenticatedSessionBuilder,
           'data_type_test_models',
-          {'string_field': 'Test', 'int_field': '1'},
+          {
+            'string_field': 'Test',
+            'int_field': '1',
+          },
         );
 
         final id = created['id']!;
