@@ -1,49 +1,50 @@
-# Configuration for automatic labeling of PRs and Issues
+# Configuration for automatic labeling of pull requests.
 
 # Labels for pull requests based on changed files
-'server':
-  - 'serverpod_admin_server/**'
+server:
+  - changed-files:
+      - any-glob-to-any-file: 'serverpod_admin_server/**'
 
-'dashboard':
-  - 'serverpod_admin_dashboard/**'
+dashboard:
+  - changed-files:
+      - any-glob-to-any-file: 'serverpod_admin_dashboard/**'
 
-'client':
-  - 'serverpod_admin_client/**'
+client:
+  - changed-files:
+      - any-glob-to-any-file: 'serverpod_admin_client/**'
 
-'example':
-  - 'example/**'
+example:
+  - changed-files:
+      - any-glob-to-any-file: 'example/**'
 
-'ci/cd':
-  - '.github/**'
+ci/cd:
+  - changed-files:
+      - any-glob-to-any-file: '.github/**'
 
-'documentation':
-  - '*.md'
-  - '**/*.md'
-  - 'README.md'
-  - 'CHANGELOG.md'
-  - 'LICENSE'
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '*.md'
+          - '**/*.md'
+          - 'LICENSE'
 
-# Labels based on PR title patterns and file changes
-'bug':
-  - title: '(?i).*(bug|fix|error|issue|broken|crash|fail).*'
-  - body: '(?i).*(bug|error|issue|broken|crash|fail|exception).*'
+# actions/labeler supports file and branch matching, not title/body matching.
+bug:
+  - head-branch: ['^fix/', '^bugfix/', '^hotfix/']
 
-'enhancement':
-  - title: '(?i).*(feat|feature|add|new|improve|enhance).*'
-  - body: '(?i).*(feat|feature|add|new|improve|enhance|request).*'
+enhancement:
+  - head-branch: ['^feat/', '^feature/', '^enhancement/']
 
-'refactor':
-  - title: '(?i).*(refactor|cleanup|restructure|reorganize).*'
+refactor:
+  - head-branch: ['^refactor/', '^cleanup/']
 
-'test':
-  - title: '(?i).*(test|spec|coverage).*'
-  - '**/*test*.dart'
-  - '**/test/**'
+test:
+  - any:
+      - head-branch: ['^test/', '^tests/']
+      - changed-files:
+          - any-glob-to-any-file:
+              - '**/*test*.dart'
+              - '**/test/**'
 
-'chore':
-  - title: '(?i).*(chore|deps|dependencies|bump|update).*'
-
-'question':
-  - body: '(?i).*(question|how|why|what|help|support).*'
-  - title: '(?i).*(question|how|why|what|help).*'
-
+chore:
+  - head-branch: ['^chore/', '^deps/', '^dependencies/']
