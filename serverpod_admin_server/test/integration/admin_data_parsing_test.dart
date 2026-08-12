@@ -465,7 +465,7 @@ void main() {
         expect(created['stringField'], '');
       });
 
-      test('should trim whitespace from values', () async {
+      test('should preserve whitespace in string values', () async {
         final created = await endpoints.admin.create(
           authenticatedSessionBuilder,
           'data_type_test_models',
@@ -475,7 +475,7 @@ void main() {
           },
         );
 
-        expect(created['stringField'], 'Trimmed');
+        expect(created['stringField'], '  Trimmed  ');
       });
 
       test('should handle null values as empty strings', () async {
@@ -532,7 +532,7 @@ void main() {
         expect(created['doubleField'], isNull);
       });
 
-      test('should handle whitespace-only values', () async {
+      test('should preserve whitespace-only string values', () async {
         final created = await endpoints.admin.create(
           authenticatedSessionBuilder,
           'data_type_test_models',
@@ -542,8 +542,7 @@ void main() {
           },
         );
 
-        // Trimmed whitespace becomes empty, which is parsed as null for non-string fields
-        expect(created['stringField'], '');
+        expect(created['stringField'], '   ');
       });
 
       test('should stringify DateTime values correctly', () async {
