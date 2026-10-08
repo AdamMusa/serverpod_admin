@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.17
+
+- Rows that extend a Serverpod auth user (a unique `authUserId` column, or a
+  relation to `serverpod_auth_core_user`) show and edit that user's
+  `authUser.scopeNames` and `authUser.blocked`, saved to the auth user.
+  `register<T>(authUserColumn: ...)` names the column when it is not detected.
+- An admin cannot remove their own admin access or block themselves.
+
 ## 1.0.16
 
 - Permission scopes are picked from a list: `registerAuthUsers()` offers
