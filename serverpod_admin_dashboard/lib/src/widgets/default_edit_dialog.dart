@@ -74,7 +74,10 @@ class _DefaultEditDialogState extends State<DefaultEditDialog> {
       Navigator.of(context).pop(true);
     } else {
       _formController.setSubmitting(false);
-      _formController.setError('Failed to update record. Please try again.');
+      _formController.setError(
+        widget.controller.lastWriteError ??
+            'Failed to update record. Please try again.',
+      );
     }
   }
 

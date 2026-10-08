@@ -9,7 +9,8 @@ import 'package:serverpod_admin_server/src/admin/admin_value_parser.dart';
 
 import '../../admin/admin.dart';
 import '../admin_registry.dart';
-import '../../../serverpod_admin_server.dart' show AdminResource;
+import '../../../serverpod_admin_server.dart'
+    show AdminResource, AdminValidationException;
 
 class AdminEndpoint extends Endpoint {
   @override
@@ -167,6 +168,7 @@ class AdminEndpoint extends Endpoint {
   ) async {
     final entry = _resolve(resourceKey);
     final normalized = _normalizePayload(entry, data);
+    _requireStorable(entry, normalized);
     final created = await entry.create(session, normalized);
     return _stringifyRecord(created);
   }
@@ -178,6 +180,12 @@ class AdminEndpoint extends Endpoint {
   ) async {
     final entry = _resolve(resourceKey);
     final normalized = _normalizePayload(entry, data);
+    final id = normalized[entry.table.id.columnName];
+    _requireStorable(
+      entry,
+      normalized,
+      stored: id == null ? null : await entry.find(session, id),
+    );
     final updated = await entry.update(session, normalized);
     return _stringifyRecord(updated);
   }
@@ -209,6 +217,46 @@ class AdminEndpoint extends Endpoint {
       normalized[name] = parseAdminColumnValue(column, value);
     }
     return normalized;
+  }
+
+  /// Rejects values the model cannot hold (for example a malformed
+  /// geography point) with a message naming the field, instead of letting
+  /// the conversion fail as an internal server error. A field is identified
+  /// by swapping each submitted value for its [stored] one in turn.
+  void _requireStorable(
+    AdminEntryBase entry,
+    Map<String, dynamic> json, {
+    Map<String, dynamic>? stored,
+  }) {
+    bool converts(Map<String, dynamic> candidate) {
+      try {
+        entry.fromJson(candidate);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    if (converts(json)) return;
+    if (stored != null) {
+      for (final column in entry.columns) {
+        final name = column.columnName;
+        // Serialized rows omit null fields, so a missing stored value is null.
+        if (!json.containsKey(name)) continue;
+        if (converts({...json, name: stored[name]})) {
+          throw AdminValidationException(
+            field: name,
+            message: column is ColumnGeographyPoint
+                ? '$name must be a point such as '
+                      'SRID=4326;POINT(-15.97 18.08) (longitude latitude).'
+                : '$name has a value that cannot be saved.',
+          );
+        }
+      }
+    }
+    throw AdminValidationException(
+      message: 'Some values cannot be saved. Check the formats and try again.',
+    );
   }
 
   String? _blankToNull(String value) {

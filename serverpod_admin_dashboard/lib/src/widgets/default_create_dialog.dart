@@ -55,7 +55,10 @@ class _DefaultCreateDialogState extends State<DefaultCreateDialog> {
       Navigator.of(context).pop(true);
     } else {
       _formController.setSubmitting(false);
-      _formController.setError('Failed to create record. Please try again.');
+      _formController.setError(
+        widget.controller.lastWriteError ??
+            'Failed to create record. Please try again.',
+      );
     }
   }
 

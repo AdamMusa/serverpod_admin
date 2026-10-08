@@ -1,6 +1,6 @@
 name: serverpod_admin_client
 description: Generated client models and endpoint bindings for Serverpod Admin dashboards.
-version: 1.0.14
+version: 1.0.15
 # homepage: https://www.example.com
 homepage: https://github.com/AdamMusa/serverpod_admin
 

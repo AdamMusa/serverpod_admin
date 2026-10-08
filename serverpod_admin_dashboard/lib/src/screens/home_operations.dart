@@ -249,7 +249,8 @@ class HomeOperations {
       debugPrint('Failed to create ${resource.key}: $error');
       if (!context.mounted) return false;
       _showSnackBar(
-        'Failed to create ${resource.tableName}: $error',
+        'Failed to create ${resource.tableName}: '
+        '${controller.lastWriteError ?? error}',
         isError: true,
       );
       return false;
@@ -272,7 +273,8 @@ class HomeOperations {
       debugPrint('Failed to update ${resource.key}: $error');
       if (!context.mounted) return false;
       _showSnackBar(
-        'Failed to update ${resource.tableName}: $error',
+        'Failed to update ${resource.tableName}: '
+        '${controller.lastWriteError ?? error}',
         isError: true,
       );
       return false;

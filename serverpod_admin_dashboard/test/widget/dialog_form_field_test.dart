@@ -136,4 +136,57 @@ void main() {
     );
     expect(find.byTooltip('Hide password'), findsOneWidget);
   });
+
+  testWidgets('optional fields may stay empty; required ones may not',
+      (tester) async {
+    AdminColumn text(String name, {required bool nullable}) => AdminColumn(
+          name: name,
+          dataType: 'String',
+          hasDefault: false,
+          isPrimary: false,
+          isNullable: nullable,
+        );
+    final optional = text('rejectionReason', nullable: true);
+    final required = text('licenseNumber', nullable: false);
+    final formController = DialogFormController(
+      resource: AdminResource(
+        key: 'drivers',
+        tableName: 'drivers',
+        columns: [optional, required],
+      ),
+      adminController: adminController,
+    );
+    addTearDown(formController.dispose);
+    final form = GlobalKey<FormState>();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Form(
+            key: form,
+            child: Column(
+              children: [
+                for (final column in [optional, required])
+                  DialogFormField(
+                    column: column,
+                    formController: formController,
+                    adminController: adminController,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(form.currentState!.validate(), isFalse);
+    await tester.pump();
+    expect(find.text('This field is required'), findsOneWidget);
+
+    // Fixing the required field clears its error without resubmitting.
+    await tester.enterText(find.byType(TextFormField).last, 'LIC-1');
+    await tester.pump();
+    expect(find.text('This field is required'), findsNothing);
+    expect(form.currentState!.validate(), isTrue);
+  });
 }

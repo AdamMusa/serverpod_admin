@@ -14,15 +14,17 @@
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'admin/admin_column.dart' as _i2;
 import 'admin/admin_resource.dart' as _i3;
-import 'module_class.dart' as _i4;
+import 'admin/admin_validation_exception.dart' as _i4;
+import 'module_class.dart' as _i5;
 import 'package:serverpod_admin_client/src/protocol/admin/admin_resource.dart'
-    as _i5;
-import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _i6;
-import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
+import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _i7;
+import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
+    as _i8;
 export 'admin/admin_column.dart';
 export 'admin/admin_resource.dart';
+export 'admin/admin_validation_exception.dart';
 export 'module_class.dart';
 export 'client.dart';
 
@@ -77,8 +79,11 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i3.AdminResource) {
       return _i3.AdminResource.fromJson(data) as T;
     }
-    if (t == _i4.ModuleClass) {
-      return _i4.ModuleClass.fromJson(data) as T;
+    if (t == _i4.AdminValidationException) {
+      return _i4.AdminValidationException.fromJson(data) as T;
+    }
+    if (t == _i5.ModuleClass) {
+      return _i5.ModuleClass.fromJson(data) as T;
     }
     if (t == _i1.getType<_i2.AdminColumn?>()) {
       return (data != null ? _i2.AdminColumn.fromJson(data) : null) as T;
@@ -86,8 +91,12 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i1.getType<_i3.AdminResource?>()) {
       return (data != null ? _i3.AdminResource.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i4.ModuleClass?>()) {
-      return (data != null ? _i4.ModuleClass.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i4.AdminValidationException?>()) {
+      return (data != null ? _i4.AdminValidationException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _i1.getType<_i5.ModuleClass?>()) {
+      return (data != null ? _i5.ModuleClass.fromJson(data) : null) as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
@@ -102,9 +111,9 @@ class Protocol extends _i1.SerializationManager {
       return (data as List).map((e) => deserialize<_i2.AdminColumn>(e)).toList()
           as T;
     }
-    if (t == List<_i5.AdminResource>) {
+    if (t == List<_i6.AdminResource>) {
       return (data as List)
-              .map((e) => deserialize<_i5.AdminResource>(e))
+              .map((e) => deserialize<_i6.AdminResource>(e))
               .toList()
           as T;
     }
@@ -139,10 +148,10 @@ class Protocol extends _i1.SerializationManager {
           as T;
     }
     try {
-      return _i6.Protocol().deserialize<T>(data, t);
+      return _i7.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     try {
-      return _i7.Protocol().deserialize<T>(data, t);
+      return _i8.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     return super.deserialize<T>(data, t);
   }
@@ -151,7 +160,8 @@ class Protocol extends _i1.SerializationManager {
     return switch (type) {
       _i2.AdminColumn => 'AdminColumn',
       _i3.AdminResource => 'AdminResource',
-      _i4.ModuleClass => 'ModuleClass',
+      _i4.AdminValidationException => 'AdminValidationException',
+      _i5.ModuleClass => 'ModuleClass',
       _ => null,
     };
   }
@@ -173,7 +183,9 @@ class Protocol extends _i1.SerializationManager {
         return 'AdminColumn';
       case _i3.AdminResource():
         return 'AdminResource';
-      case _i4.ModuleClass():
+      case _i4.AdminValidationException():
+        return 'AdminValidationException';
+      case _i5.ModuleClass():
         return 'ModuleClass';
     }
     return null;
@@ -191,8 +203,11 @@ class Protocol extends _i1.SerializationManager {
     if (dataClassName == 'AdminResource') {
       return deserialize<_i3.AdminResource>(data['data']);
     }
+    if (dataClassName == 'AdminValidationException') {
+      return deserialize<_i4.AdminValidationException>(data['data']);
+    }
     if (dataClassName == 'ModuleClass') {
-      return deserialize<_i4.ModuleClass>(data['data']);
+      return deserialize<_i5.ModuleClass>(data['data']);
     }
     return super.deserializeByClassName(data);
   }
@@ -269,10 +284,10 @@ class Protocol extends _i1.SerializationManager {
       return null;
     }
     try {
-      return _i6.Protocol().mapRecordToJson(record);
+      return _i7.Protocol().mapRecordToJson(record);
     } catch (_) {}
     try {
-      return _i7.Protocol().mapRecordToJson(record);
+      return _i8.Protocol().mapRecordToJson(record);
     } catch (_) {}
     throw Exception('Unsupported record type ${record.runtimeType}');
   }

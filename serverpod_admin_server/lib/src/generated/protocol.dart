@@ -19,11 +19,13 @@ import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _i4;
 import 'admin/admin_column.dart' as _i5;
 import 'admin/admin_resource.dart' as _i6;
-import 'module_class.dart' as _i7;
+import 'admin/admin_validation_exception.dart' as _i7;
+import 'module_class.dart' as _i8;
 import 'package:serverpod_admin_server/src/generated/admin/admin_resource.dart'
-    as _i8;
+    as _i9;
 export 'admin/admin_column.dart';
 export 'admin/admin_resource.dart';
+export 'admin/admin_validation_exception.dart';
 export 'module_class.dart';
 
 class Protocol extends _i1.DatabaseSerializationManager {
@@ -56,7 +58,10 @@ class Protocol extends _i1.DatabaseSerializationManager {
   }
 
   @override
-  T deserialize<T>(dynamic data, [Type? t]) {
+  T deserialize<T>(
+    dynamic data, [
+    Type? t,
+  ]) {
     t ??= T;
 
     final dataClassName = getClassNameFromObjectJson(data);
@@ -79,8 +84,11 @@ class Protocol extends _i1.DatabaseSerializationManager {
     if (t == _i6.AdminResource) {
       return _i6.AdminResource.fromJson(data) as T;
     }
-    if (t == _i7.ModuleClass) {
-      return _i7.ModuleClass.fromJson(data) as T;
+    if (t == _i7.AdminValidationException) {
+      return _i7.AdminValidationException.fromJson(data) as T;
+    }
+    if (t == _i8.ModuleClass) {
+      return _i8.ModuleClass.fromJson(data) as T;
     }
     if (t == _i1.getType<_i5.AdminColumn?>()) {
       return (data != null ? _i5.AdminColumn.fromJson(data) : null) as T;
@@ -88,8 +96,12 @@ class Protocol extends _i1.DatabaseSerializationManager {
     if (t == _i1.getType<_i6.AdminResource?>()) {
       return (data != null ? _i6.AdminResource.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i7.ModuleClass?>()) {
-      return (data != null ? _i7.ModuleClass.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i7.AdminValidationException?>()) {
+      return (data != null ? _i7.AdminValidationException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _i1.getType<_i8.ModuleClass?>()) {
+      return (data != null ? _i8.ModuleClass.fromJson(data) : null) as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
@@ -104,9 +116,9 @@ class Protocol extends _i1.DatabaseSerializationManager {
       return (data as List).map((e) => deserialize<_i5.AdminColumn>(e)).toList()
           as T;
     }
-    if (t == List<_i8.AdminResource>) {
+    if (t == List<_i9.AdminResource>) {
       return (data as List)
-              .map((e) => deserialize<_i8.AdminResource>(e))
+              .map((e) => deserialize<_i9.AdminResource>(e))
               .toList()
           as T;
     }
@@ -156,7 +168,8 @@ class Protocol extends _i1.DatabaseSerializationManager {
     return switch (type) {
       _i5.AdminColumn => 'AdminColumn',
       _i6.AdminResource => 'AdminResource',
-      _i7.ModuleClass => 'ModuleClass',
+      _i7.AdminValidationException => 'AdminValidationException',
+      _i8.ModuleClass => 'ModuleClass',
       _ => null,
     };
   }
@@ -178,7 +191,9 @@ class Protocol extends _i1.DatabaseSerializationManager {
         return 'AdminColumn';
       case _i6.AdminResource():
         return 'AdminResource';
-      case _i7.ModuleClass():
+      case _i7.AdminValidationException():
+        return 'AdminValidationException';
+      case _i8.ModuleClass():
         return 'ModuleClass';
     }
     className = _i2.Protocol().getClassNameForObject(data);
@@ -200,8 +215,11 @@ class Protocol extends _i1.DatabaseSerializationManager {
     if (dataClassName == 'AdminResource') {
       return deserialize<_i6.AdminResource>(data['data']);
     }
+    if (dataClassName == 'AdminValidationException') {
+      return deserialize<_i7.AdminValidationException>(data['data']);
+    }
     if (dataClassName == 'ModuleClass') {
-      return deserialize<_i7.ModuleClass>(data['data']);
+      return deserialize<_i8.ModuleClass>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
@@ -211,7 +229,10 @@ class Protocol extends _i1.DatabaseSerializationManager {
   }
 
   @override
-  Object? dynamicFieldToJson(Object? object, {bool forProtocol = false}) {
+  Object? dynamicFieldToJson(
+    Object? object, {
+    bool forProtocol = false,
+  }) {
     if ((object is List || object is Set || object is Map) ||
         getClassNameForObject(object) != null) {
       return super.dynamicFieldToJson(object, forProtocol: forProtocol);

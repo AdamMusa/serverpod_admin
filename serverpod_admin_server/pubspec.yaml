@@ -1,6 +1,6 @@
 name: serverpod_admin_server
 description: Serverpod admin endpoints, resource registry, dashboard serving, and jobs support.
-version: 1.0.14
+version: 1.0.15
 homepage: https://github.com/AdamMusa/serverpod_admin
 
 environment:

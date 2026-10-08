@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.15
+
+- Added `AdminValidationException`, raised when a submitted value cannot be
+  saved, with the field to correct.
+
 ## 1.0.14
 
 - Updated Serverpod client dependencies to 4.0.0-beta.1.

@@ -1,0 +1,7 @@
+### Raised when a submitted value cannot be stored, so the dashboard can tell
+### the administrator which field to correct instead of a server error.
+exception: AdminValidationException
+fields:
+  ### The column whose value is invalid, when it could be identified.
+  field: String?
+  message: String

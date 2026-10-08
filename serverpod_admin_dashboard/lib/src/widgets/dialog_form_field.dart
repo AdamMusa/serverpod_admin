@@ -166,6 +166,8 @@ class DialogFormField extends StatelessWidget {
                     )
                   : null,
             ),
+            // Re-check as the user edits so a fixed field clears its error.
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             validator: (value) =>
                 _validateField(value, isDate, isBoolean, isForeignKey),
           );
@@ -197,7 +199,8 @@ class DialogFormField extends StatelessWidget {
       return null;
     }
     if (value == null || value.trim().isEmpty) {
-      return 'This field is required';
+      // Optional (nullable) columns may be left empty; they are saved as null.
+      return column.isNullable == true ? null : 'This field is required';
     }
     if (isDate && value.isNotEmpty) {
       final isoValue = formController.isoValues[column.name];

@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.15
+
+- Enum columns are offered as dropdowns: values are discovered automatically
+  on the Dart VM, and `registry.registerEnum(MyEnum.values)` declares them for
+  compiled servers (`dart compile exe` / `dart build cli`).
+- `registry.registerAuthUsers()` lists Serverpod's auth users so administrators
+  can grant or revoke dashboard access (`scopeNames`) and block sign-in.
+- List, set and map (JSON) columns are shown and saved as JSON.
+- Values a model cannot hold (for example a malformed geography point) are
+  rejected with an `AdminValidationException` naming the field instead of an
+  internal server error.
+- Foreign key dropdowns are fixed and form values reach model validation
+  unchanged.
+
 ## 1.0.14
 
 - Updated Serverpod server and test dependencies to 4.0.0-beta.1.

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.15
+
+- Optional (nullable) fields may be left empty, and field errors clear as soon
+  as the value is corrected.
+- Save errors show the server's explanation, such as which field is invalid.
+- Enum columns are edited with dropdowns; foreign key dropdowns are fixed.
+
 ## 1.0.14
 
 - Updated Serverpod dashboard dependencies to 4.0.0-beta.1.

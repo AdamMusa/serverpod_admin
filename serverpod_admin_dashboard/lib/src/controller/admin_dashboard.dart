@@ -227,11 +227,28 @@ class AdminDashboardController extends ChangeNotifier {
     return null;
   }
 
+  /// Why the last create or update failed, worded for administrators (for
+  /// example which field has an invalid value); null after a success.
+  String? lastWriteError;
+
+  Future<T> _write<T>(Future<T> Function() request) async {
+    lastWriteError = null;
+    try {
+      return await request();
+    } on admin_client.AdminValidationException catch (error) {
+      lastWriteError = error.message;
+      rethrow;
+    } catch (error) {
+      lastWriteError = '$error';
+      rethrow;
+    }
+  }
+
   Future<void> createRecord(
     AdminResource resource,
     Map<String, String> payload,
   ) async {
-    await adminEndpoint.create(resource.key, payload);
+    await _write(() => adminEndpoint.create(resource.key, payload));
     await loadRecords(resource);
   }
 
@@ -239,7 +256,7 @@ class AdminDashboardController extends ChangeNotifier {
     AdminResource resource,
     Map<String, String> payload,
   ) async {
-    await adminEndpoint.update(resource.key, payload);
+    await _write(() => adminEndpoint.update(resource.key, payload));
     await loadRecords(resource);
 
     // Update details record if it's the same record being edited
