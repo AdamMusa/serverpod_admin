@@ -2,6 +2,7 @@ import 'package:serverpod/serverpod.dart';
 import 'package:serverpod/protocol.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     show AuthUser;
+import 'package:serverpod_admin_server/src/admin/admin_auth_user_link.dart';
 import 'package:serverpod_admin_server/src/admin/admin_entry.dart';
 import 'package:serverpod_admin_server/src/admin/admin_entry_base.dart';
 
@@ -21,6 +22,7 @@ class AdminRegistry {
   final Map<Type, AdminEntryBase> _entries = {};
   final Map<String, AdminEntryBase> _entriesByKey = {};
   final Map<Type, List<String>> _enumValues = {};
+  List<String> _authScopeNames = [Scope.admin.name!];
 
   /// Registers a new table row type. Table metadata and JSON serialization can
   /// be provided explicitly, but if omitted, they will be resolved from the
@@ -28,6 +30,10 @@ class AdminRegistry {
   /// resources with a simple `register<T>()` call.
   /// [choices] lists, per column name, the values a list or set column may
   /// hold; the dashboard edits such columns with a multi-select.
+  /// Rows that extend a Serverpod auth user (a unique `authUserId` column, or
+  /// a relation to `serverpod_auth_core_user`) show that user's
+  /// `authUser.scopeNames` and `authUser.blocked`, saved to the auth user.
+  /// Name the column with [authUserColumn] when it is detected otherwise.
   /// Enum values are discovered automatically for both name- and
   /// index-serialized enums when the server runs on the Dart VM. A compiled
   /// server (`dart compile exe` / `dart build cli`) cannot discover the values
@@ -42,6 +48,7 @@ class AdminRegistry {
     Future<void> Function(Session session, Object id)? deleteById,
     String? resourceKey,
     Map<String, List<String>>? choices,
+    String? authUserColumn,
   }) {
     final type = T;
     if (_entries.containsKey(type)) return;
@@ -69,6 +76,7 @@ class AdminRegistry {
           },
       resourceKey: resourceKey,
       choices: choices,
+      authUserColumn: authUserColumn,
     );
     _entries[type] = entry;
     _entriesByKey[entry.resourceKey] = entry;
@@ -94,6 +102,10 @@ class AdminRegistry {
       ordered.map((value) => value.name),
     );
   }
+
+  /// The permission scopes admins may grant: [Scope.admin] plus those passed
+  /// to [registerAuthUsers].
+  List<String> get authScopeNames => List.unmodifiable(_authScopeNames);
 
   /// The values declared for [enumType] with [registerEnum], if any.
   List<String>? enumValuesFor(Type enumType) => _enumValues[enumType];
@@ -139,9 +151,16 @@ class AdminRegistry {
   ///   next refreshes.
   /// - `blocked`: stops the user from signing in.
   ///
+  /// The same scopes are offered on rows that extend an auth user. An admin
+  /// cannot remove their own admin access or block themselves.
+  ///
   /// Identities come from sign-up or [AdminUser.create]; they cannot be created
   /// or deleted here, so logins and app records are never orphaned.
   void registerAuthUsers({Iterable<Scope> scopes = const []}) {
+    _authScopeNames = {
+      for (final scope in [Scope.admin, ...scopes])
+        if (scope.name case final name?) name,
+    }.toList();
     UuidValue uuid(Object id) =>
         id is UuidValue ? id : UuidValue.fromString(id.toString());
     register<AuthUser>(
@@ -153,17 +172,15 @@ class AdminRegistry {
       createRow: (session, row) => throw StateError(
         'Users are created by signing up, or with AdminUser.create.',
       ),
-      updateRow: (session, row) => AuthUser.db.updateRow(session, row),
+      updateRow: (session, row) {
+        AdminAuthUserLink.requireOwnAccess(session, row);
+        return AuthUser.db.updateRow(session, row);
+      },
       deleteById: (session, id) => throw StateError(
         'Block the user instead; deleting would orphan their sign-in.',
       ),
       resourceKey: 'serverpod_auth_core_user',
-      choices: {
-        'scopeNames': {
-          for (final scope in [Scope.admin, ...scopes])
-            if (scope.name case final name?) name,
-        }.toList(),
-      },
+      choices: {'scopeNames': authScopeNames},
     );
   }
 
@@ -203,5 +220,6 @@ class AdminRegistry {
     _entries.clear();
     _entriesByKey.clear();
     _enumValues.clear();
+    _authScopeNames = [Scope.admin.name!];
   }
 }

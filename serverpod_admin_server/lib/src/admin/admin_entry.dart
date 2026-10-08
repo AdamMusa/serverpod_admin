@@ -1,6 +1,7 @@
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod/protocol.dart' show TableDefinition;
 import 'package:serverpod_admin_server/serverpod_admin_server.dart';
+import 'package:serverpod_admin_server/src/admin/admin_auth_user_link.dart';
 import 'package:serverpod_admin_server/src/admin/admin_enum_values.dart';
 import 'package:serverpod_admin_server/src/admin/admin_entry_base.dart';
 
@@ -15,7 +16,9 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
     required Future<void> Function(Session session, Object id) deleteById,
     String? resourceKey,
     Map<String, List<String>>? choices,
+    String? authUserColumn,
   }) : _choices = choices,
+       _authUserColumn = authUserColumn,
        _table = table,
        _fromJson = fromJson,
        _listRows = listRows,
@@ -34,6 +37,7 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
   final Future<void> Function(Session session, Object id) _deleteById;
   final String? _resourceKeyOverride;
   final Map<String, List<String>>? _choices;
+  final String? _authUserColumn;
   List<AdminColumn>? _adminColumns;
   AdminResource? _metadataCache;
 
@@ -56,8 +60,11 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
   AdminResource get metadata => _metadataCache ??= AdminResource(
     key: resourceKey,
     tableName: tableName,
-    columns: _resolvedAdminColumns,
+    columns: [..._resolvedAdminColumns, ...?authUserLink?.columns],
   );
+
+  @override
+  late final AdminAuthUserLink? authUserLink = _resolveAuthUserLink();
 
   @override
   TableRow fromJson(JsonMap json) => _resolvedFromJson(json);
@@ -133,6 +140,14 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
           );
         })
         .toList(growable: false);
+  }
+
+  AdminAuthUserLink? _resolveAuthUserLink() {
+    final definition = _findTableDefinition();
+    final column =
+        _authUserColumn ??
+        (definition == null ? null : AdminAuthUserLink.detect(definition));
+    return column == null ? null : AdminAuthUserLink(column);
   }
 
   TableDefinition? _findTableDefinition() {

@@ -120,8 +120,7 @@ class AdminEndpoint extends Endpoint {
   ) async {
     final entry = _resolve(resourceKey);
     final result = await entry.list(session);
-    final serialized = _stringifyRecords(result);
-    return serialized;
+    return _stringifyRecords(await _withAuthUsers(session, entry, result));
   }
 
   Future<List<Map<String, String>>> listPage(
@@ -138,7 +137,7 @@ class AdminEndpoint extends Endpoint {
     final entry = _resolve(resourceKey);
     final all = await entry.list(session);
     final window = all.skip(offset).take(limit).toList(growable: false);
-    return _stringifyRecords(window);
+    return _stringifyRecords(await _withAuthUsers(session, entry, window));
   }
 
   Future<Map<String, dynamic>?> find(
@@ -158,7 +157,9 @@ class AdminEndpoint extends Endpoint {
     final normalizedId = parseAdminColumnValue(tableColumn, id) ?? id;
     final result = await entry.find(session, normalizedId);
     if (result == null) return null;
-    return _removeClassName(result);
+    return _removeClassName(
+      (await _withAuthUsers(session, entry, [result])).single,
+    );
   }
 
   Future<Map<String, String>> create(
@@ -169,8 +170,16 @@ class AdminEndpoint extends Endpoint {
     final entry = _resolve(resourceKey);
     final normalized = _normalizePayload(entry, data);
     _requireStorable(entry, normalized);
+    final authUser = await entry.authUserLink?.change(
+      session,
+      normalized,
+      data,
+    );
     final created = await entry.create(session, normalized);
-    return _stringifyRecord(created);
+    if (authUser != null) await AuthUser.db.updateRow(session, authUser);
+    return _stringifyRecord(
+      (await _withAuthUsers(session, entry, [created])).single,
+    );
   }
 
   Future<Map<String, String>> update(
@@ -186,8 +195,16 @@ class AdminEndpoint extends Endpoint {
       normalized,
       stored: id == null ? null : await entry.find(session, id),
     );
+    final authUser = await entry.authUserLink?.change(
+      session,
+      normalized,
+      data,
+    );
     final updated = await entry.update(session, normalized);
-    return _stringifyRecord(updated);
+    if (authUser != null) await AuthUser.db.updateRow(session, authUser);
+    return _stringifyRecord(
+      (await _withAuthUsers(session, entry, [updated])).single,
+    );
   }
 
   Future<bool> delete(Session session, String resourceKey, String id) async {
@@ -204,6 +221,13 @@ class AdminEndpoint extends Endpoint {
     await entry.delete(session, normalizedId);
     return true;
   }
+
+  /// Adds the auth user values of rows that extend an auth user.
+  Future<List<Map<String, dynamic>>> _withAuthUsers(
+    Session session,
+    AdminEntryBase entry,
+    List<Map<String, dynamic>> rows,
+  ) async => await entry.authUserLink?.attach(session, rows) ?? rows;
 
   Map<String, dynamic> _normalizePayload(
     AdminEntryBase entry,

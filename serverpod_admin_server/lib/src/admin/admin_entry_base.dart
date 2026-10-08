@@ -1,5 +1,6 @@
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_admin_server/serverpod_admin_server.dart';
+import 'package:serverpod_admin_server/src/admin/admin_auth_user_link.dart';
 
 /// Base contract describing a resource that exposes generic CRUD helpers
 /// for a Serverpod `TableRow`.
@@ -14,6 +15,9 @@ abstract class AdminEntryBase {
 
   /// Rich metadata describing this resource.
   AdminResource get metadata;
+
+  /// The auth user each row extends, if any; its access is edited in the row.
+  AdminAuthUserLink? get authUserLink => null;
 
   /// Creates a strongly typed row from a JSON payload.
   TableRow fromJson(JsonMap json);

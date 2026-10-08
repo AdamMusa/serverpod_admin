@@ -179,6 +179,31 @@ remove access; it applies when their access token next refreshes), and tick
 `blocked` to stop someone signing in. Accounts are not created or deleted
 there: they come from sign-up or `AdminUser.create`.
 
+Models that extend the auth user show its access in their own rows, so you
+manage a user where you manage their profile. A model extends the auth user when
+it holds the user's id in a unique column: a relation to
+`module:serverpod_auth_core:AuthUser`, or a `UuidValue` field named
+`authUserId`:
+
+```yaml
+class: UserProfile
+table: user_profile
+fields:
+  authUserId: UuidValue
+  fullName: String
+indexes:
+  user_profile_auth_user_idx:
+    fields: authUserId
+    unique: true
+```
+
+`registry.register<UserProfile>()` then adds `authUser.scopeNames` and
+`authUser.blocked` to each row. They are read from and saved to
+`serverpod_auth_core_user`, never copied into your table. Rows whose auth user
+was deleted still save, with no access to grant. Name the column with
+`register<T>(authUserColumn: 'ownerId')` if it is not detected. An admin cannot
+remove their own admin access or block themselves.
+
 Offer your own permission scopes in the same picker:
 
 ```dart
