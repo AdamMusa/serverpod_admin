@@ -18,13 +18,16 @@ class AdminRegistry {
 
   final Map<Type, AdminEntryBase> _entries = {};
   final Map<String, AdminEntryBase> _entriesByKey = {};
+  final Map<Type, List<String>> _enumValues = {};
 
   /// Registers a new table row type. Table metadata and JSON serialization can
   /// be provided explicitly, but if omitted, they will be resolved from the
   /// host server's [SerializationManager]. This lets host projects register
   /// resources with a simple `register<T>()` call.
   /// Enum values are discovered automatically for both name- and
-  /// index-serialized enums.
+  /// index-serialized enums when the server runs on the Dart VM. A compiled
+  /// server (`dart compile exe` / `dart build cli`) cannot discover the values
+  /// of name-serialized enums; declare those with [registerEnum].
   void register<T extends TableRow>({
     Table? table,
     T Function(JsonMap json)? fromJson,
@@ -64,6 +67,30 @@ class AdminRegistry {
     _entries[type] = entry;
     _entriesByKey[entry.resourceKey] = entry;
   }
+
+  /// Declares the values of an enum used by registered tables, so its columns
+  /// are edited with a dropdown:
+  ///
+  /// ```dart
+  /// registry.registerEnum(OrderStatus.values);
+  /// ```
+  ///
+  /// Required for name-serialized enums on a compiled server, where
+  /// `dart:mirrors` is unavailable and model files are not deployed. Harmless
+  /// elsewhere; registered values take precedence over discovery.
+  ///
+  /// Pass every value (`MyEnum.values`): they are kept in declaration order,
+  /// which index-serialized enums rely on to store the selected value.
+  void registerEnum<E extends Enum>(List<E> values) {
+    if (values.isEmpty) return;
+    final ordered = [...values]..sort((a, b) => a.index.compareTo(b.index));
+    _enumValues[values.first.runtimeType] = List.unmodifiable(
+      ordered.map((value) => value.name),
+    );
+  }
+
+  /// The values declared for [enumType] with [registerEnum], if any.
+  List<String>? enumValuesFor(Type enumType) => _enumValues[enumType];
 
   /// Registers Serverpod's persisted future-call jobs table.
   ///
@@ -133,5 +160,6 @@ class AdminRegistry {
   void reset() {
     _entries.clear();
     _entriesByKey.clear();
+    _enumValues.clear();
   }
 }

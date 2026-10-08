@@ -63,12 +63,10 @@ class AdminUser {
     required Set<Scope> scopes,
   }) async {
     final emailAdmin = AuthServices.instance.emailIdp.admin;
-    final existingAccount = await emailAdmin.findAccount(
-      session,
-      email: email,
-    );
+    final existingAccount = await emailAdmin.findAccount(session, email: email);
 
-    final authUserId = existingAccount?.authUserId ??
+    final authUserId =
+        existingAccount?.authUserId ??
         (await AuthServices.instance.authUsers.create(session)).id;
 
     if (existingAccount == null) {
@@ -79,11 +77,7 @@ class AdminUser {
         password: password,
       );
     } else {
-      await emailAdmin.setPassword(
-        session,
-        email: email,
-        password: password,
-      );
+      await emailAdmin.setPassword(session, email: email, password: password);
     }
 
     await AuthServices.instance.authUsers.update(

@@ -123,10 +123,7 @@ Optional job monitoring:
     }
   }
 
-  Future<void> _copySourceToArchive(
-    String source,
-    File archiveFile,
-  ) async {
+  Future<void> _copySourceToArchive(String source, File archiveFile) async {
     final uri = Uri.tryParse(source);
     final isUrl =
         uri != null && (uri.scheme == 'http' || uri.scheme == 'https');
@@ -192,11 +189,7 @@ Options:
 }
 
 class _CliOptions {
-  const _CliOptions({
-    required this.force,
-    this.target,
-    this.source,
-  });
+  const _CliOptions({required this.force, this.target, this.source});
 
   final bool force;
   final String? target;

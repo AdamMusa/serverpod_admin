@@ -56,10 +56,7 @@ class Protocol extends _i1.DatabaseSerializationManager {
   }
 
   @override
-  T deserialize<T>(
-    dynamic data, [
-    Type? t,
-  ]) {
+  T deserialize<T>(dynamic data, [Type? t]) {
     t ??= T;
 
     final dataClassName = getClassNameFromObjectJson(data);
@@ -214,10 +211,7 @@ class Protocol extends _i1.DatabaseSerializationManager {
   }
 
   @override
-  Object? dynamicFieldToJson(
-    Object? object, {
-    bool forProtocol = false,
-  }) {
+  Object? dynamicFieldToJson(Object? object, {bool forProtocol = false}) {
     if ((object is List || object is Set || object is Map) ||
         getClassNameForObject(object) != null) {
       return super.dynamicFieldToJson(object, forProtocol: forProtocol);

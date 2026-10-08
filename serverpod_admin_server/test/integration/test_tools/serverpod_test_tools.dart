@@ -155,18 +155,12 @@ class _InternalTestEndpoints extends TestEndpoints
     _i2.SerializationManager serializationManager,
     _i2.EndpointDispatch endpoints,
   ) {
-    admin = _AdminEndpoint(
-      endpoints,
-      serializationManager,
-    );
+    admin = _AdminEndpoint(endpoints, serializationManager);
   }
 }
 
 class _AdminEndpoint {
-  _AdminEndpoint(
-    this._endpointDispatch,
-    this._serializationManager,
-  );
+  _AdminEndpoint(this._endpointDispatch, this._serializationManager);
 
   final _i2.EndpointDispatch _endpointDispatch;
 

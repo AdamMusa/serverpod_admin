@@ -150,6 +150,21 @@ void run(List<String> args) async {
 dashboard, including scheduled, ready, paused, failed, finished, and historical
 jobs.
 
+Enum columns are edited with a dropdown. On the Dart VM (`dart run`) their
+values are discovered automatically. A compiled server (`dart compile exe`,
+`dart build cli`, most Docker images) cannot discover the values of
+name-serialized enums, so declare the enums your models use:
+
+```dart
+admin.configureAdminModule((registry) {
+  registry.register<Order>();
+  registry.registerEnum(OrderStatus.values);
+});
+```
+
+Pass the complete `values` list; it is harmless on the VM and takes precedence
+over automatic discovery.
+
 ### 3. Install the Prebuilt Dashboard
 
 From the same Serverpod server package directory:

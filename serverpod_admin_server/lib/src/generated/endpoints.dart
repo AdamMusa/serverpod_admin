@@ -22,11 +22,7 @@ class Endpoints extends _i1.EndpointDispatch {
   void initializeEndpoints(_i1.Server server) {
     var endpoints = <String, _i1.Endpoint>{
       'admin': _i2.AdminEndpoint()
-        ..initialize(
-          server,
-          'admin',
-          'serverpod_admin',
-        ),
+        ..initialize(server, 'admin', 'serverpod_admin'),
     };
     connectors['admin'] = _i1.EndpointConnector(
       name: 'admin',
@@ -35,32 +31,24 @@ class Endpoints extends _i1.EndpointDispatch {
         'resources': _i1.MethodConnector(
           name: 'resources',
           params: {},
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async =>
-                  (endpoints['admin'] as _i2.AdminEndpoint).resources(session),
+          call: (_i1.Session session, Map<String, dynamic> params) async =>
+              (endpoints['admin'] as _i2.AdminEndpoint).resources(session),
         ),
         'currentUserProfile': _i1.MethodConnector(
           name: 'currentUserProfile',
           params: {},
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['admin'] as _i2.AdminEndpoint)
-                  .currentUserProfile(session),
+          call: (_i1.Session session, Map<String, dynamic> params) async =>
+              (endpoints['admin'] as _i2.AdminEndpoint).currentUserProfile(
+                session,
+              ),
         ),
         'futureCallHistory': _i1.MethodConnector(
           name: 'futureCallHistory',
           params: {},
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['admin'] as _i2.AdminEndpoint)
-                  .futureCallHistory(session),
+          call: (_i1.Session session, Map<String, dynamic> params) async =>
+              (endpoints['admin'] as _i2.AdminEndpoint).futureCallHistory(
+                session,
+              ),
         ),
         'updateCurrentUserProfile': _i1.MethodConnector(
           name: 'updateCurrentUserProfile',
@@ -76,11 +64,8 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['admin'] as _i2.AdminEndpoint)
+          call: (_i1.Session session, Map<String, dynamic> params) async =>
+              (endpoints['admin'] as _i2.AdminEndpoint)
                   .updateCurrentUserProfile(
                     session,
                     params['userName'],
@@ -101,11 +86,8 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['admin'] as _i2.AdminEndpoint)
+          call: (_i1.Session session, Map<String, dynamic> params) async =>
+              (endpoints['admin'] as _i2.AdminEndpoint)
                   .changeCurrentUserPassword(
                     session,
                     params['currentPassword'],
@@ -121,11 +103,8 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['admin'] as _i2.AdminEndpoint).list(
+          call: (_i1.Session session, Map<String, dynamic> params) async =>
+              (endpoints['admin'] as _i2.AdminEndpoint).list(
                 session,
                 params['resourceKey'],
               ),
@@ -149,11 +128,8 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['admin'] as _i2.AdminEndpoint).listPage(
+          call: (_i1.Session session, Map<String, dynamic> params) async =>
+              (endpoints['admin'] as _i2.AdminEndpoint).listPage(
                 session,
                 params['resourceKey'],
                 params['offset'],
@@ -174,11 +150,8 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['admin'] as _i2.AdminEndpoint).find(
+          call: (_i1.Session session, Map<String, dynamic> params) async =>
+              (endpoints['admin'] as _i2.AdminEndpoint).find(
                 session,
                 params['resourceKey'],
                 params['id'],
@@ -198,11 +171,8 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['admin'] as _i2.AdminEndpoint).create(
+          call: (_i1.Session session, Map<String, dynamic> params) async =>
+              (endpoints['admin'] as _i2.AdminEndpoint).create(
                 session,
                 params['resourceKey'],
                 params['data'],
@@ -222,11 +192,8 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['admin'] as _i2.AdminEndpoint).update(
+          call: (_i1.Session session, Map<String, dynamic> params) async =>
+              (endpoints['admin'] as _i2.AdminEndpoint).update(
                 session,
                 params['resourceKey'],
                 params['data'],
@@ -246,11 +213,8 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['admin'] as _i2.AdminEndpoint).delete(
+          call: (_i1.Session session, Map<String, dynamic> params) async =>
+              (endpoints['admin'] as _i2.AdminEndpoint).delete(
                 session,
                 params['resourceKey'],
                 params['id'],

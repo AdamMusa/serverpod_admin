@@ -149,6 +149,13 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
     final serializedByName =
         column is ColumnEnumExtended &&
         column.serialized == EnumSerialization.byName;
+    final registeredValues = AdminRegistry().enumValuesFor(column.type);
+    if (registeredValues != null) {
+      return _AdminEnumMetadata(
+        values: registeredValues,
+        serializedByName: serializedByName,
+      );
+    }
     final reflectedValues = discoverAdminEnumValues(
       column.type,
       enumName: dartType,
