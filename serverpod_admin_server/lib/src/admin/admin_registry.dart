@@ -26,6 +26,8 @@ class AdminRegistry {
   /// be provided explicitly, but if omitted, they will be resolved from the
   /// host server's [SerializationManager]. This lets host projects register
   /// resources with a simple `register<T>()` call.
+  /// [choices] lists, per column name, the values a list or set column may
+  /// hold; the dashboard edits such columns with a multi-select.
   /// Enum values are discovered automatically for both name- and
   /// index-serialized enums when the server runs on the Dart VM. A compiled
   /// server (`dart compile exe` / `dart build cli`) cannot discover the values
@@ -39,6 +41,7 @@ class AdminRegistry {
     Future<T> Function(Session session, T row)? updateRow,
     Future<void> Function(Session session, Object id)? deleteById,
     String? resourceKey,
+    Map<String, List<String>>? choices,
   }) {
     final type = T;
     if (_entries.containsKey(type)) return;
@@ -65,6 +68,7 @@ class AdminRegistry {
             }
           },
       resourceKey: resourceKey,
+      choices: choices,
     );
     _entries[type] = entry;
     _entriesByKey[entry.resourceKey] = entry;
@@ -130,13 +134,14 @@ class AdminRegistry {
   /// Registers Serverpod's auth users (`serverpod_auth_core_user`) so admins
   /// manage access from the dashboard:
   ///
-  /// - `scopeNames`: `["serverpod.admin"]` grants dashboard access, `[]`
-  ///   revokes it. Takes effect when the user's access token next refreshes.
+  /// - `scopeNames`: a multi-select of [Scope.admin] (dashboard access) and
+  ///   any app-specific [scopes]. Takes effect when the user's access token
+  ///   next refreshes.
   /// - `blocked`: stops the user from signing in.
   ///
   /// Identities come from sign-up or [AdminUser.create]; they cannot be created
   /// or deleted here, so logins and app records are never orphaned.
-  void registerAuthUsers() {
+  void registerAuthUsers({Iterable<Scope> scopes = const []}) {
     UuidValue uuid(Object id) =>
         id is UuidValue ? id : UuidValue.fromString(id.toString());
     register<AuthUser>(
@@ -153,6 +158,12 @@ class AdminRegistry {
         'Block the user instead; deleting would orphan their sign-in.',
       ),
       resourceKey: 'serverpod_auth_core_user',
+      choices: {
+        'scopeNames': {
+          for (final scope in [Scope.admin, ...scopes])
+            if (scope.name case final name?) name,
+        }.toList(),
+      },
     );
   }
 

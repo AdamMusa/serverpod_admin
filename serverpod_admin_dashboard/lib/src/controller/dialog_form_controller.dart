@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:serverpod_admin_dashboard/src/controller/admin_dashboard.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
@@ -25,6 +27,7 @@ class DialogFormController extends ChangeNotifier {
   final Map<String, List<Map<String, String>>> _foreignKeyOptions = {};
   final Map<String, bool> _booleanValues = {};
   final Map<String, String?> _enumValues = {};
+  final Map<String, Set<String>> _choiceValues = {};
   final Map<String, bool> _obscurePasswordValues = {};
 
   bool _isSubmitting = false;
@@ -38,6 +41,7 @@ class DialogFormController extends ChangeNotifier {
       _foreignKeyOptions;
   Map<String, bool> get booleanValues => _booleanValues;
   Map<String, String?> get enumValues => _enumValues;
+  Map<String, Set<String>> get choiceValues => _choiceValues;
   Map<String, bool> get obscurePasswordValues => _obscurePasswordValues;
   bool get isSubmitting => _isSubmitting;
   String? get errorMessage => _errorMessage;
@@ -56,6 +60,10 @@ class DialogFormController extends ChangeNotifier {
             : false;
       } else if (DialogFormHelper.isEnumType(column)) {
         _enumValues[column.name] = initialValue.isEmpty ? null : initialValue;
+      } else if (DialogFormHelper.isChoiceType(column)) {
+        _choiceValues[column.name] = DialogFormHelper.parseChoices(
+          initialValue,
+        );
       } else if (column.foreignKeyTable != null) {
         _foreignKeyValues[column.name] = initialValue.isEmpty
             ? null
@@ -118,6 +126,12 @@ class DialogFormController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setChoice(String columnName, String value, bool selected) {
+    final values = _choiceValues.putIfAbsent(columnName, () => {});
+    selected ? values.add(value) : values.remove(value);
+    notifyListeners();
+  }
+
   void togglePasswordVisibility(String columnName) {
     _obscurePasswordValues[columnName] =
         !(_obscurePasswordValues[columnName] ?? true);
@@ -160,6 +174,9 @@ class DialogFormController extends ChangeNotifier {
             if (index >= 0) payload[column.name] = index.toString();
           }
         }
+      } else if (DialogFormHelper.isChoiceType(column)) {
+        final selected = _choiceValues[column.name] ?? const <String>{};
+        payload[column.name] = jsonEncode(selected.toList()..sort());
       } else if (column.foreignKeyTable != null) {
         final selectedValue = _foreignKeyValues[column.name];
         if (selectedValue != null && selectedValue.isNotEmpty) {

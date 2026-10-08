@@ -173,11 +173,23 @@ admin.configureAdminModule((registry) {
 });
 ```
 
-The `serverpod_auth_core_user` table then lists every account. Set
-`scopeNames` to `["serverpod.admin"]` to make someone an administrator (or `[]`
-to remove access; it applies when their access token next refreshes), and tick
+The `serverpod_auth_core_user` table then lists every account. Pick
+`serverpod.admin` in `scopeNames` to make someone an administrator (unpick it to
+remove access; it applies when their access token next refreshes), and tick
 `blocked` to stop someone signing in. Accounts are not created or deleted
 there: they come from sign-up or `AdminUser.create`.
+
+Offer your own permission scopes in the same picker:
+
+```dart
+registry.registerAuthUsers(scopes: [const Scope('dispatcher')]);
+```
+
+Any list or set column can be edited as a multi-select the same way:
+
+```dart
+registry.register<Team>(choices: {'tags': ['beta', 'internal']});
+```
 
 ### 3. Install the Prebuilt Dashboard
 

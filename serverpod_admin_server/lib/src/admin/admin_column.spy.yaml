@@ -9,5 +9,6 @@ fields:
   enumValues: List<String>?
   enumSerializedByName: bool?
   isNullable: bool?
-
-
+  ### The values a list or set column may hold (for example permission
+  ### scopes); the dashboard edits them with a multi-select.
+  choices: List<String>?

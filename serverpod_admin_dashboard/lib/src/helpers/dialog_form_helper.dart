@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart'
     show BuildContext, showDatePicker, showTimePicker, TimeOfDay;
 import 'package:serverpod_admin_client/serverpod_admin_client.dart';
@@ -16,6 +18,24 @@ class DialogFormHelper {
 
   static bool isEnumType(AdminColumn column) {
     return column.enumValues?.isNotEmpty ?? false;
+  }
+
+  /// A list or set column with declared [AdminColumn.choices], edited as a
+  /// multi-select.
+  static bool isChoiceType(AdminColumn column) {
+    return column.choices?.isNotEmpty ?? false;
+  }
+
+  /// The selected values in a JSON list such as `["serverpod.admin"]`.
+  static Set<String> parseChoices(String value) {
+    if (value.trim().isEmpty) return {};
+    try {
+      final decoded = jsonDecode(value);
+      if (decoded is List) return {for (final item in decoded) '$item'};
+    } on FormatException {
+      // Not JSON: nothing selected.
+    }
+    return {};
   }
 
   static bool isPasswordField(AdminColumn column) {

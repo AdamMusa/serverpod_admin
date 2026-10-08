@@ -25,6 +25,7 @@ abstract class AdminColumn
     this.enumValues,
     this.enumSerializedByName,
     this.isNullable,
+    this.choices,
   });
 
   factory AdminColumn({
@@ -37,6 +38,7 @@ abstract class AdminColumn
     List<String>? enumValues,
     bool? enumSerializedByName,
     bool? isNullable,
+    List<String>? choices,
   }) = _AdminColumnImpl;
 
   factory AdminColumn.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -62,6 +64,11 @@ abstract class AdminColumn
       isNullable: jsonSerialization['isNullable'] == null
           ? null
           : _i1.BoolJsonExtension.fromJson(jsonSerialization['isNullable']),
+      choices: jsonSerialization['choices'] == null
+          ? null
+          : _i2.Protocol().deserialize<List<String>>(
+              jsonSerialization['choices'],
+            ),
     );
   }
 
@@ -83,6 +90,10 @@ abstract class AdminColumn
 
   bool? isNullable;
 
+  /// The values a list or set column may hold (for example permission
+  /// scopes); the dashboard edits them with a multi-select.
+  List<String>? choices;
+
   /// Returns a shallow copy of this [AdminColumn]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -96,6 +107,7 @@ abstract class AdminColumn
     List<String>? enumValues,
     bool? enumSerializedByName,
     bool? isNullable,
+    List<String>? choices,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -111,6 +123,7 @@ abstract class AdminColumn
       if (enumSerializedByName != null)
         'enumSerializedByName': enumSerializedByName,
       if (isNullable != null) 'isNullable': isNullable,
+      if (choices != null) 'choices': choices?.toJson(),
     };
   }
 
@@ -128,6 +141,7 @@ abstract class AdminColumn
       if (enumSerializedByName != null)
         'enumSerializedByName': enumSerializedByName,
       if (isNullable != null) 'isNullable': isNullable,
+      if (choices != null) 'choices': choices?.toJson(),
     };
   }
 
@@ -150,6 +164,7 @@ class _AdminColumnImpl extends AdminColumn {
     List<String>? enumValues,
     bool? enumSerializedByName,
     bool? isNullable,
+    List<String>? choices,
   }) : super._(
          name: name,
          dataType: dataType,
@@ -160,6 +175,7 @@ class _AdminColumnImpl extends AdminColumn {
          enumValues: enumValues,
          enumSerializedByName: enumSerializedByName,
          isNullable: isNullable,
+         choices: choices,
        );
 
   /// Returns a shallow copy of this [AdminColumn]
@@ -176,6 +192,7 @@ class _AdminColumnImpl extends AdminColumn {
     Object? enumValues = _Undefined,
     Object? enumSerializedByName = _Undefined,
     Object? isNullable = _Undefined,
+    Object? choices = _Undefined,
   }) {
     return AdminColumn(
       name: name ?? this.name,
@@ -193,6 +210,9 @@ class _AdminColumnImpl extends AdminColumn {
           ? enumSerializedByName
           : this.enumSerializedByName,
       isNullable: isNullable is bool? ? isNullable : this.isNullable,
+      choices: choices is List<String>?
+          ? choices
+          : this.choices?.map((e0) => e0).toList(),
     );
   }
 }

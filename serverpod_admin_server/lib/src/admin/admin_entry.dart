@@ -14,7 +14,9 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
     required Future<T> Function(Session session, T row) updateRow,
     required Future<void> Function(Session session, Object id) deleteById,
     String? resourceKey,
-  }) : _table = table,
+    Map<String, List<String>>? choices,
+  }) : _choices = choices,
+       _table = table,
        _fromJson = fromJson,
        _listRows = listRows,
        _findRowById = findRowById,
@@ -31,6 +33,7 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
   final Future<T> Function(Session session, T row) _updateRow;
   final Future<void> Function(Session session, Object id) _deleteById;
   final String? _resourceKeyOverride;
+  final Map<String, List<String>>? _choices;
   List<AdminColumn>? _adminColumns;
   AdminResource? _metadataCache;
 
@@ -126,6 +129,7 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
             enumValues: enumMetadata?.values,
             enumSerializedByName: enumMetadata?.serializedByName,
             isNullable: columnDefinition?.isNullable,
+            choices: _choices?[column.columnName],
           );
         })
         .toList(growable: false);

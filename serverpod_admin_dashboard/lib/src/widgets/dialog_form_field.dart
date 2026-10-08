@@ -6,7 +6,8 @@ import 'package:serverpod_admin_dashboard/src/helpers/dialog_form_helper.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/foreign_key_dropdown.dart';
 
 /// Reusable form field widget for dialog forms.
-/// Handles booleans, enums, foreign keys, dates, passwords, and text fields.
+/// Handles booleans, enums, multi-select choices, foreign keys, dates,
+/// passwords, and text fields.
 class DialogFormField extends StatelessWidget {
   const DialogFormField({
     required this.column,
@@ -26,6 +27,7 @@ class DialogFormField extends StatelessWidget {
     final isForeignKey = column.foreignKeyTable != null;
     final isBoolean = DialogFormHelper.isBooleanType(column);
     final isEnum = DialogFormHelper.isEnumType(column);
+    final isChoice = DialogFormHelper.isChoiceType(column);
     final isPassword = DialogFormHelper.isPasswordField(column);
     final isNullable = column.isNullable == true;
     final fieldLabel = isNullable ? '${column.name} (optional)' : column.name;
@@ -86,6 +88,50 @@ class DialogFormField extends StatelessWidget {
                   !isNullable && (value == null || value.isEmpty)
                   ? 'Please select ${column.name}'
                   : null,
+            );
+          },
+        ),
+      );
+    }
+
+    // Multi-select of declared choices (for example permission scopes)
+    if (isChoice) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: AnimatedBuilder(
+          animation: formController,
+          builder: (context, _) {
+            final selected =
+                formController.choiceValues[column.name] ?? const <String>{};
+            // Keep values outside the declared choices visible so saving
+            // never drops them silently.
+            final options = {...column.choices!, ...selected}.toList();
+            return InputDecorator(
+              decoration: InputDecoration(
+                labelText: fieldLabel,
+                helperText: 'Select any number',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                filled: true,
+                fillColor: theme.colorScheme.surfaceContainerHighest,
+              ),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final option in options)
+                    FilterChip(
+                      label: Text(option),
+                      selected: selected.contains(option),
+                      onSelected: (value) => formController.setChoice(
+                        column.name,
+                        option,
+                        value,
+                      ),
+                    ),
+                ],
+              ),
             );
           },
         ),

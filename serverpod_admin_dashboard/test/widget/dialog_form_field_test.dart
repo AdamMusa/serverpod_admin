@@ -189,4 +189,47 @@ void main() {
     expect(find.text('This field is required'), findsNothing);
     expect(form.currentState!.validate(), isTrue);
   });
+
+  testWidgets('declared choices are a multi-select saved as JSON',
+      (tester) async {
+    final column = AdminColumn(
+      name: 'scopeNames',
+      dataType: 'Set<String>',
+      hasDefault: false,
+      isPrimary: false,
+      choices: ['serverpod.admin', 'app.support'],
+    );
+    final formController = DialogFormController(
+      resource: AdminResource(
+        key: 'serverpod_auth_core_user',
+        tableName: 'serverpod_auth_core_user',
+        columns: [column],
+      ),
+      adminController: adminController,
+      initialValues: {'scopeNames': '["legacy.scope"]'},
+    );
+    addTearDown(formController.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: DialogFormField(
+            column: column,
+            formController: formController,
+            adminController: adminController,
+          ),
+        ),
+      ),
+    );
+
+    // A stored value outside the choices stays visible and selected.
+    expect(find.byType(FilterChip), findsNWidgets(3));
+    expect(formController.buildPayload()['scopeNames'], '["legacy.scope"]');
+
+    await tester.tap(find.text('serverpod.admin'));
+    await tester.pump();
+    await tester.tap(find.text('legacy.scope'));
+    await tester.pump();
+    expect(formController.buildPayload()['scopeNames'], '["serverpod.admin"]');
+  });
 }
