@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.16
+
+- Columns with declared choices, such as permission scopes, are edited with a
+  multi-select instead of raw JSON. Stored values outside the choices stay
+  visible so saving never drops them.
+
 ## 1.0.15
 
 - Optional (nullable) fields may be left empty, and field errors clear as soon

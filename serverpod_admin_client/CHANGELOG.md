@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.16
+
+- `AdminColumn.choices` lists the values a list or set column may hold.
+
 ## 1.0.15
 
 - Added `AdminValidationException`, raised when a submitted value cannot be

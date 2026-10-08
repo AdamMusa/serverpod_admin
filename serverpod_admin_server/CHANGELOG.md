@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.16
+
+- Permission scopes are picked from a list: `registerAuthUsers()` offers
+  `serverpod.admin` for `scopeNames`, plus any `scopes` you pass.
+- `register<T>(choices: {...})` turns a list or set column into a
+  multi-select of the given values.
+
 ## 1.0.15
 
 - Enum columns are offered as dropdowns: values are discovered automatically
