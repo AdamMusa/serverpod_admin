@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod/protocol.dart' show SessionLogEntry;
 import 'package:serverpod_auth_idp_server/core.dart';
@@ -285,6 +287,9 @@ class AdminEndpoint extends Endpoint {
       return value.toUtc().toIso8601String();
     }
     if (value is Enum) return value.name;
+    // JSON round-trips through the edit form; toString() would not parse.
+    if (value is List || value is Map) return jsonEncode(value);
+    if (value is Set) return jsonEncode(value.toList());
     return value.toString();
   }
 }

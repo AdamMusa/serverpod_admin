@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:serverpod/serverpod.dart';
 
 /// Converts string form values into the JSON representation expected by a
@@ -24,6 +26,15 @@ dynamic parseAdminColumnValue(Column column, String? raw) {
   if (column is ColumnEnumExtended &&
       column.serialized == EnumSerialization.byIndex) {
     return int.tryParse(value);
+  }
+  // Lists, sets and maps are edited as JSON, e.g. ["serverpod.admin"].
+  if (column is ColumnSerializable) {
+    if (value.isEmpty) return null;
+    try {
+      return jsonDecode(value);
+    } on FormatException {
+      return raw;
+    }
   }
   return raw;
 }

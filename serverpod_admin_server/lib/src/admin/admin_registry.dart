@@ -1,5 +1,7 @@
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod/protocol.dart';
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    show AuthUser;
 import 'package:serverpod_admin_server/src/admin/admin_entry.dart';
 import 'package:serverpod_admin_server/src/admin/admin_entry_base.dart';
 
@@ -122,6 +124,35 @@ class AdminRegistry {
         );
       },
       resourceKey: 'serverpod_future_call',
+    );
+  }
+
+  /// Registers Serverpod's auth users (`serverpod_auth_core_user`) so admins
+  /// manage access from the dashboard:
+  ///
+  /// - `scopeNames`: `["serverpod.admin"]` grants dashboard access, `[]`
+  ///   revokes it. Takes effect when the user's access token next refreshes.
+  /// - `blocked`: stops the user from signing in.
+  ///
+  /// Identities come from sign-up or [AdminUser.create]; they cannot be created
+  /// or deleted here, so logins and app records are never orphaned.
+  void registerAuthUsers() {
+    UuidValue uuid(Object id) =>
+        id is UuidValue ? id : UuidValue.fromString(id.toString());
+    register<AuthUser>(
+      table: AuthUser.t,
+      fromJson: AuthUser.fromJson,
+      listRows: (session) =>
+          AuthUser.db.find(session, orderBy: (table) => table.createdAt),
+      findRowById: (session, id) => AuthUser.db.findById(session, uuid(id)),
+      createRow: (session, row) => throw StateError(
+        'Users are created by signing up, or with AdminUser.create.',
+      ),
+      updateRow: (session, row) => AuthUser.db.updateRow(session, row),
+      deleteById: (session, id) => throw StateError(
+        'Block the user instead; deleting would orphan their sign-in.',
+      ),
+      resourceKey: 'serverpod_auth_core_user',
     );
   }
 

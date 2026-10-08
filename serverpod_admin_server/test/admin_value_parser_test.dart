@@ -11,6 +11,19 @@ void main() {
     expect(parseAdminColumnValue(table.label, ' N/A '), ' N/A ');
   });
 
+  test('JSON columns are parsed from their edited text', () {
+    expect(parseAdminColumnValue(table.scopes, '["serverpod.admin"]'), [
+      'serverpod.admin',
+    ]);
+    expect(parseAdminColumnValue(table.scopes, ' [] '), isEmpty);
+    expect(parseAdminColumnValue(table.scopes, ''), isNull);
+    // Text that is not JSON reaches the model unchanged, so it can reject it.
+    expect(
+      parseAdminColumnValue(table.scopes, '[serverpod.admin]'),
+      '[serverpod.admin]',
+    );
+  });
+
   test('valid EWKT geography values are preserved', () {
     const value = 'SRID=4326;POINT(-73.9857 40.7484)';
     expect(parseAdminColumnValue(table.location, value), value);
@@ -21,11 +34,13 @@ class _ParserTable extends Table<int?> {
   _ParserTable() : super(tableName: 'parser_test') {
     label = ColumnString('label', this);
     location = ColumnGeographyPoint('location', this);
+    scopes = ColumnSerializable<List<String>>('scopes', this);
   }
 
   late final ColumnString label;
   late final ColumnGeographyPoint location;
+  late final ColumnSerializable<List<String>> scopes;
 
   @override
-  List<Column> get columns => [id, label, location];
+  List<Column> get columns => [id, label, location, scopes];
 }

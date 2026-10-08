@@ -165,6 +165,20 @@ admin.configureAdminModule((registry) {
 Pass the complete `values` list; it is harmless on the VM and takes precedence
 over automatic discovery.
 
+To manage who can open the dashboard, register Serverpod's auth users:
+
+```dart
+admin.configureAdminModule((registry) {
+  registry.registerAuthUsers();
+});
+```
+
+The `serverpod_auth_core_user` table then lists every account. Set
+`scopeNames` to `["serverpod.admin"]` to make someone an administrator (or `[]`
+to remove access; it applies when their access token next refreshes), and tick
+`blocked` to stop someone signing in. Accounts are not created or deleted
+there: they come from sign-up or `AdminUser.create`.
+
 ### 3. Install the Prebuilt Dashboard
 
 From the same Serverpod server package directory:
