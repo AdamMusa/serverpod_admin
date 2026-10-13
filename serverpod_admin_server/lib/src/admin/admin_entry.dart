@@ -2,6 +2,7 @@ import 'package:serverpod/serverpod.dart';
 import 'package:serverpod/protocol.dart' show TableDefinition;
 import 'package:serverpod_admin_server/serverpod_admin_server.dart';
 import 'package:serverpod_admin_server/src/admin/admin_auth_user_link.dart';
+import 'package:serverpod_admin_server/src/admin/admin_query_engine.dart';
 import 'package:serverpod_admin_server/src/admin/admin_enum_values.dart';
 import 'package:serverpod_admin_server/src/admin/admin_entry_base.dart';
 
@@ -17,7 +18,11 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
     String? resourceKey,
     Map<String, List<String>>? choices,
     String? authUserColumn,
-  }) : _choices = choices,
+    bool queryable = false,
+    T Function(Session session, T row)? present,
+  }) : _queryable = queryable,
+       _present = present,
+       _choices = choices,
        _authUserColumn = authUserColumn,
        _table = table,
        _fromJson = fromJson,
@@ -38,6 +43,8 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
   final String? _resourceKeyOverride;
   final Map<String, List<String>>? _choices;
   final String? _authUserColumn;
+  final bool _queryable;
+  final T Function(Session session, T row)? _present;
   List<AdminColumn>? _adminColumns;
   AdminResource? _metadataCache;
 
@@ -65,6 +72,31 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
 
   @override
   late final AdminAuthUserLink? authUserLink = _resolveAuthUserLink();
+
+  @override
+  Future<({List<JsonMap> rows, int total})?> queryPage(
+    Session session,
+    AdminQuery query,
+  ) async {
+    if (!_queryable) return null;
+    final sql = AdminSqlQuery.build(_resolvedTable, metadata.columns, query);
+    if (sql == null) return null;
+    // ignore: invalid_use_of_internal_member
+    final rows = await session.db.find<T>(
+      where: sql.where,
+      orderByList: sql.orderBy,
+      limit: query.limit,
+      offset: query.offset,
+    );
+    // ignore: invalid_use_of_internal_member
+    final total = await session.db.count<T>(where: sql.where);
+    return (
+      rows: [
+        for (final row in rows) toJson(_present?.call(session, row) ?? row),
+      ],
+      total: total,
+    );
+  }
 
   @override
   TableRow fromJson(JsonMap json) => _resolvedFromJson(json);

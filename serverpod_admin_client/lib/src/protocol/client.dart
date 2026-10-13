@@ -14,6 +14,10 @@ import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'dart:async' as _i2;
 import 'package:serverpod_admin_client/src/protocol/admin/admin_resource.dart'
     as _i3;
+import 'package:serverpod_admin_client/src/protocol/admin/admin_page.dart'
+    as _i4;
+import 'package:serverpod_admin_client/src/protocol/admin/admin_query.dart'
+    as _i5;
 
 /// {@category Endpoint}
 class EndpointAdmin extends _i1.EndpointRef {
@@ -73,6 +77,20 @@ class EndpointAdmin extends _i1.EndpointRef {
         'list',
         {'resourceKey': resourceKey},
       );
+
+  /// One page of [resourceKey]'s rows: filtered, searched and sorted in the
+  /// database when possible, with the total number of matching rows.
+  _i2.Future<_i4.AdminPage> query(
+    String resourceKey,
+    _i5.AdminQuery query,
+  ) => caller.callServerEndpoint<_i4.AdminPage>(
+    'serverpod_admin.admin',
+    'query',
+    {
+      'resourceKey': resourceKey,
+      'query': query,
+    },
+  );
 
   _i2.Future<List<Map<String, String>>> listPage(
     String resourceKey,

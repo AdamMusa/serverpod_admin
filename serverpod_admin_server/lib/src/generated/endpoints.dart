@@ -12,17 +12,23 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
 import '../admin/endpoint/admin.dart' as _i2;
-import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+import 'package:serverpod_admin_server/src/generated/admin/admin_query.dart'
     as _i3;
-import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _i4;
+import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+    as _i5;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
   void initializeEndpoints(_i1.Server server) {
     var endpoints = <String, _i1.Endpoint>{
       'admin': _i2.AdminEndpoint()
-        ..initialize(server, 'admin', 'serverpod_admin'),
+        ..initialize(
+          server,
+          'admin',
+          'serverpod_admin',
+        ),
     };
     connectors['admin'] = _i1.EndpointConnector(
       name: 'admin',
@@ -31,24 +37,32 @@ class Endpoints extends _i1.EndpointDispatch {
         'resources': _i1.MethodConnector(
           name: 'resources',
           params: {},
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['admin'] as _i2.AdminEndpoint).resources(session),
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['admin'] as _i2.AdminEndpoint).resources(session),
         ),
         'currentUserProfile': _i1.MethodConnector(
           name: 'currentUserProfile',
           params: {},
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['admin'] as _i2.AdminEndpoint).currentUserProfile(
-                session,
-              ),
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint)
+                  .currentUserProfile(session),
         ),
         'futureCallHistory': _i1.MethodConnector(
           name: 'futureCallHistory',
           params: {},
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['admin'] as _i2.AdminEndpoint).futureCallHistory(
-                session,
-              ),
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint)
+                  .futureCallHistory(session),
         ),
         'updateCurrentUserProfile': _i1.MethodConnector(
           name: 'updateCurrentUserProfile',
@@ -64,8 +78,11 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['admin'] as _i2.AdminEndpoint)
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint)
                   .updateCurrentUserProfile(
                     session,
                     params['userName'],
@@ -86,8 +103,11 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['admin'] as _i2.AdminEndpoint)
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint)
                   .changeCurrentUserPassword(
                     session,
                     params['currentPassword'],
@@ -103,10 +123,37 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['admin'] as _i2.AdminEndpoint).list(
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint).list(
                 session,
                 params['resourceKey'],
+              ),
+        ),
+        'query': _i1.MethodConnector(
+          name: 'query',
+          params: {
+            'resourceKey': _i1.ParameterDescription(
+              name: 'resourceKey',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'query': _i1.ParameterDescription(
+              name: 'query',
+              type: _i1.getType<_i3.AdminQuery>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint).query(
+                session,
+                params['resourceKey'],
+                params['query'],
               ),
         ),
         'listPage': _i1.MethodConnector(
@@ -128,8 +175,11 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['admin'] as _i2.AdminEndpoint).listPage(
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint).listPage(
                 session,
                 params['resourceKey'],
                 params['offset'],
@@ -150,8 +200,11 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['admin'] as _i2.AdminEndpoint).find(
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint).find(
                 session,
                 params['resourceKey'],
                 params['id'],
@@ -171,8 +224,11 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['admin'] as _i2.AdminEndpoint).create(
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint).create(
                 session,
                 params['resourceKey'],
                 params['data'],
@@ -192,8 +248,11 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['admin'] as _i2.AdminEndpoint).update(
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint).update(
                 session,
                 params['resourceKey'],
                 params['data'],
@@ -213,8 +272,11 @@ class Endpoints extends _i1.EndpointDispatch {
               nullable: false,
             ),
           },
-          call: (_i1.Session session, Map<String, dynamic> params) async =>
-              (endpoints['admin'] as _i2.AdminEndpoint).delete(
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint).delete(
                 session,
                 params['resourceKey'],
                 params['id'],
@@ -222,9 +284,9 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
-    modules['serverpod_auth_core'] = _i3.Endpoints()
+    modules['serverpod_auth_core'] = _i4.Endpoints()
       ..initializeEndpoints(server);
-    modules['serverpod_auth_idp'] = _i4.Endpoints()
+    modules['serverpod_auth_idp'] = _i5.Endpoints()
       ..initializeEndpoints(server);
   }
 }

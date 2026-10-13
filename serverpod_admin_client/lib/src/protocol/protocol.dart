@@ -13,16 +13,24 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'admin/admin_column.dart' as _i2;
-import 'admin/admin_resource.dart' as _i3;
-import 'admin/admin_validation_exception.dart' as _i4;
-import 'module_class.dart' as _i5;
+import 'admin/admin_filter.dart' as _i3;
+import 'admin/admin_filter_operator.dart' as _i4;
+import 'admin/admin_page.dart' as _i5;
+import 'admin/admin_query.dart' as _i6;
+import 'admin/admin_resource.dart' as _i7;
+import 'admin/admin_validation_exception.dart' as _i8;
+import 'module_class.dart' as _i9;
 import 'package:serverpod_admin_client/src/protocol/admin/admin_resource.dart'
-    as _i6;
+    as _i10;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
-    as _i7;
+    as _i11;
 import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
-    as _i8;
+    as _i12;
 export 'admin/admin_column.dart';
+export 'admin/admin_filter.dart';
+export 'admin/admin_filter_operator.dart';
+export 'admin/admin_page.dart';
+export 'admin/admin_query.dart';
 export 'admin/admin_resource.dart';
 export 'admin/admin_validation_exception.dart';
 export 'module_class.dart';
@@ -76,27 +84,52 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i2.AdminColumn) {
       return _i2.AdminColumn.fromJson(data) as T;
     }
-    if (t == _i3.AdminResource) {
-      return _i3.AdminResource.fromJson(data) as T;
+    if (t == _i3.AdminFilter) {
+      return _i3.AdminFilter.fromJson(data) as T;
     }
-    if (t == _i4.AdminValidationException) {
-      return _i4.AdminValidationException.fromJson(data) as T;
+    if (t == _i4.AdminFilterOperator) {
+      return _i4.AdminFilterOperator.fromJson(data) as T;
     }
-    if (t == _i5.ModuleClass) {
-      return _i5.ModuleClass.fromJson(data) as T;
+    if (t == _i5.AdminPage) {
+      return _i5.AdminPage.fromJson(data) as T;
+    }
+    if (t == _i6.AdminQuery) {
+      return _i6.AdminQuery.fromJson(data) as T;
+    }
+    if (t == _i7.AdminResource) {
+      return _i7.AdminResource.fromJson(data) as T;
+    }
+    if (t == _i8.AdminValidationException) {
+      return _i8.AdminValidationException.fromJson(data) as T;
+    }
+    if (t == _i9.ModuleClass) {
+      return _i9.ModuleClass.fromJson(data) as T;
     }
     if (t == _i1.getType<_i2.AdminColumn?>()) {
       return (data != null ? _i2.AdminColumn.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i3.AdminResource?>()) {
-      return (data != null ? _i3.AdminResource.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i3.AdminFilter?>()) {
+      return (data != null ? _i3.AdminFilter.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i4.AdminValidationException?>()) {
-      return (data != null ? _i4.AdminValidationException.fromJson(data) : null)
+    if (t == _i1.getType<_i4.AdminFilterOperator?>()) {
+      return (data != null ? _i4.AdminFilterOperator.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i5.ModuleClass?>()) {
-      return (data != null ? _i5.ModuleClass.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i5.AdminPage?>()) {
+      return (data != null ? _i5.AdminPage.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i6.AdminQuery?>()) {
+      return (data != null ? _i6.AdminQuery.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i7.AdminResource?>()) {
+      return (data != null ? _i7.AdminResource.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i8.AdminValidationException?>()) {
+      return (data != null ? _i8.AdminValidationException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _i1.getType<_i9.ModuleClass?>()) {
+      return (data != null ? _i9.ModuleClass.fromJson(data) : null) as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
@@ -107,13 +140,29 @@ class Protocol extends _i1.SerializationManager {
               : null)
           as T;
     }
+    if (t == List<Map<String, String>>) {
+      return (data as List)
+              .map((e) => deserialize<Map<String, String>>(e))
+              .toList()
+          as T;
+    }
+    if (t == Map<String, String>) {
+      return (data as Map).map(
+            (k, v) => MapEntry(deserialize<String>(k), deserialize<String>(v)),
+          )
+          as T;
+    }
+    if (t == List<_i3.AdminFilter>) {
+      return (data as List).map((e) => deserialize<_i3.AdminFilter>(e)).toList()
+          as T;
+    }
     if (t == List<_i2.AdminColumn>) {
       return (data as List).map((e) => deserialize<_i2.AdminColumn>(e)).toList()
           as T;
     }
-    if (t == List<_i6.AdminResource>) {
+    if (t == List<_i10.AdminResource>) {
       return (data as List)
-              .map((e) => deserialize<_i6.AdminResource>(e))
+              .map((e) => deserialize<_i10.AdminResource>(e))
               .toList()
           as T;
     }
@@ -148,10 +197,10 @@ class Protocol extends _i1.SerializationManager {
           as T;
     }
     try {
-      return _i7.Protocol().deserialize<T>(data, t);
+      return _i11.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     try {
-      return _i8.Protocol().deserialize<T>(data, t);
+      return _i12.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     return super.deserialize<T>(data, t);
   }
@@ -159,9 +208,13 @@ class Protocol extends _i1.SerializationManager {
   static String? getClassNameForType(Type type) {
     return switch (type) {
       _i2.AdminColumn => 'AdminColumn',
-      _i3.AdminResource => 'AdminResource',
-      _i4.AdminValidationException => 'AdminValidationException',
-      _i5.ModuleClass => 'ModuleClass',
+      _i3.AdminFilter => 'AdminFilter',
+      _i4.AdminFilterOperator => 'AdminFilterOperator',
+      _i5.AdminPage => 'AdminPage',
+      _i6.AdminQuery => 'AdminQuery',
+      _i7.AdminResource => 'AdminResource',
+      _i8.AdminValidationException => 'AdminValidationException',
+      _i9.ModuleClass => 'ModuleClass',
       _ => null,
     };
   }
@@ -181,11 +234,19 @@ class Protocol extends _i1.SerializationManager {
     switch (data) {
       case _i2.AdminColumn():
         return 'AdminColumn';
-      case _i3.AdminResource():
+      case _i3.AdminFilter():
+        return 'AdminFilter';
+      case _i4.AdminFilterOperator():
+        return 'AdminFilterOperator';
+      case _i5.AdminPage():
+        return 'AdminPage';
+      case _i6.AdminQuery():
+        return 'AdminQuery';
+      case _i7.AdminResource():
         return 'AdminResource';
-      case _i4.AdminValidationException():
+      case _i8.AdminValidationException():
         return 'AdminValidationException';
-      case _i5.ModuleClass():
+      case _i9.ModuleClass():
         return 'ModuleClass';
     }
     return null;
@@ -200,14 +261,26 @@ class Protocol extends _i1.SerializationManager {
     if (dataClassName == 'AdminColumn') {
       return deserialize<_i2.AdminColumn>(data['data']);
     }
+    if (dataClassName == 'AdminFilter') {
+      return deserialize<_i3.AdminFilter>(data['data']);
+    }
+    if (dataClassName == 'AdminFilterOperator') {
+      return deserialize<_i4.AdminFilterOperator>(data['data']);
+    }
+    if (dataClassName == 'AdminPage') {
+      return deserialize<_i5.AdminPage>(data['data']);
+    }
+    if (dataClassName == 'AdminQuery') {
+      return deserialize<_i6.AdminQuery>(data['data']);
+    }
     if (dataClassName == 'AdminResource') {
-      return deserialize<_i3.AdminResource>(data['data']);
+      return deserialize<_i7.AdminResource>(data['data']);
     }
     if (dataClassName == 'AdminValidationException') {
-      return deserialize<_i4.AdminValidationException>(data['data']);
+      return deserialize<_i8.AdminValidationException>(data['data']);
     }
     if (dataClassName == 'ModuleClass') {
-      return deserialize<_i5.ModuleClass>(data['data']);
+      return deserialize<_i9.ModuleClass>(data['data']);
     }
     return super.deserializeByClassName(data);
   }
@@ -284,10 +357,10 @@ class Protocol extends _i1.SerializationManager {
       return null;
     }
     try {
-      return _i7.Protocol().mapRecordToJson(record);
+      return _i11.Protocol().mapRecordToJson(record);
     } catch (_) {}
     try {
-      return _i8.Protocol().mapRecordToJson(record);
+      return _i12.Protocol().mapRecordToJson(record);
     } catch (_) {}
     throw Exception('Unsupported record type ${record.runtimeType}');
   }

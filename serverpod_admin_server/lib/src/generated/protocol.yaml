@@ -5,6 +5,7 @@ admin:
   - updateCurrentUserProfile:
   - changeCurrentUserPassword:
   - list:
+  - query:
   - listPage:
   - find:
   - create:

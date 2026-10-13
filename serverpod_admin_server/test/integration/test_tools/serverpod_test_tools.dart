@@ -17,6 +17,10 @@ import 'dart:io' as _i3;
 import 'dart:async' as _i4;
 import 'package:serverpod_admin_server/src/generated/admin/admin_resource.dart'
     as _i5;
+import 'package:serverpod_admin_server/src/generated/admin/admin_page.dart'
+    as _i6;
+import 'package:serverpod_admin_server/src/generated/admin/admin_query.dart'
+    as _i7;
 import 'package:serverpod_admin_server/src/generated/protocol.dart';
 import 'package:serverpod_admin_server/src/generated/endpoints.dart';
 export 'package:serverpod_test/serverpod_test_public_exports.dart';
@@ -155,12 +159,18 @@ class _InternalTestEndpoints extends TestEndpoints
     _i2.SerializationManager serializationManager,
     _i2.EndpointDispatch endpoints,
   ) {
-    admin = _AdminEndpoint(endpoints, serializationManager);
+    admin = _AdminEndpoint(
+      endpoints,
+      serializationManager,
+    );
   }
 }
 
 class _AdminEndpoint {
-  _AdminEndpoint(this._endpointDispatch, this._serializationManager);
+  _AdminEndpoint(
+    this._endpointDispatch,
+    this._serializationManager,
+  );
 
   final _i2.EndpointDispatch _endpointDispatch;
 
@@ -350,6 +360,41 @@ class _AdminEndpoint {
                   _localCallContext.arguments,
                 )
                 as _i4.Future<List<Map<String, String>>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i4.Future<_i6.AdminPage> query(
+    _i1.TestSessionBuilder sessionBuilder,
+    String resourceKey,
+    _i7.AdminQuery query,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'admin',
+            method: 'query',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'admin',
+          methodName: 'query',
+          parameters: _i1.testObjectToJson({
+            'resourceKey': resourceKey,
+            'query': query,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i4.Future<_i6.AdminPage>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

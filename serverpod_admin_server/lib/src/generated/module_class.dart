@@ -14,10 +14,15 @@ import 'package:serverpod/serverpod.dart' as _i1;
 
 abstract class ModuleClass
     implements _i1.SerializableModel, _i1.ProtocolSerialization {
-  ModuleClass._({required this.name, required this.data});
+  ModuleClass._({
+    required this.name,
+    required this.data,
+  });
 
-  factory ModuleClass({required String name, required int data}) =
-      _ModuleClassImpl;
+  factory ModuleClass({
+    required String name,
+    required int data,
+  }) = _ModuleClassImpl;
 
   factory ModuleClass.fromJson(Map<String, dynamic> jsonSerialization) {
     return ModuleClass(
@@ -33,7 +38,10 @@ abstract class ModuleClass
   /// Returns a shallow copy of this [ModuleClass]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
-  ModuleClass copyWith({String? name, int? data});
+  ModuleClass copyWith({
+    String? name,
+    int? data,
+  });
   @override
   Map<String, dynamic> toJson() {
     return {
@@ -59,14 +67,25 @@ abstract class ModuleClass
 }
 
 class _ModuleClassImpl extends ModuleClass {
-  _ModuleClassImpl({required String name, required int data})
-    : super._(name: name, data: data);
+  _ModuleClassImpl({
+    required String name,
+    required int data,
+  }) : super._(
+         name: name,
+         data: data,
+       );
 
   /// Returns a shallow copy of this [ModuleClass]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
   @override
-  ModuleClass copyWith({String? name, int? data}) {
-    return ModuleClass(name: name ?? this.name, data: data ?? this.data);
+  ModuleClass copyWith({
+    String? name,
+    int? data,
+  }) {
+    return ModuleClass(
+      name: name ?? this.name,
+      data: data ?? this.data,
+    );
   }
 }

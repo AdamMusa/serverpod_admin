@@ -19,6 +19,14 @@ abstract class AdminEntryBase {
   /// The auth user each row extends, if any; its access is edited in the row.
   AdminAuthUserLink? get authUserLink => null;
 
+  /// One page of rows matching [query], read in the database, or null when
+  /// it cannot run there (a custom `listRows`, or columns the table does not
+  /// store); the endpoint then applies it in memory.
+  Future<({List<JsonMap> rows, int total})?> queryPage(
+    Session session,
+    AdminQuery query,
+  ) async => null;
+
   /// Creates a strongly typed row from a JSON payload.
   TableRow fromJson(JsonMap json);
 

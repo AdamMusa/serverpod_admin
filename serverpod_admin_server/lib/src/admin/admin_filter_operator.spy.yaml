@@ -1,0 +1,11 @@
+### How an [AdminFilter] compares a column with its value.
+enum: AdminFilterOperator
+serialized: byName
+values:
+  - equals
+  - notEquals
+  - contains
+  - greaterOrEqual
+  - lessOrEqual
+  - isEmpty
+  - isNotEmpty

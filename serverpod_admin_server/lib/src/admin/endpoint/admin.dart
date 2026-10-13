@@ -5,12 +5,13 @@ import 'package:serverpod/protocol.dart' show SessionLogEntry;
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
 import 'package:serverpod_admin_server/src/admin/admin_entry_base.dart';
+import 'package:serverpod_admin_server/src/admin/admin_query_engine.dart';
 import 'package:serverpod_admin_server/src/admin/admin_value_parser.dart';
 
 import '../../admin/admin.dart';
 import '../admin_registry.dart';
 import '../../../serverpod_admin_server.dart'
-    show AdminResource, AdminValidationException;
+    show AdminPage, AdminQuery, AdminResource, AdminValidationException;
 
 class AdminEndpoint extends Endpoint {
   @override
@@ -121,6 +122,35 @@ class AdminEndpoint extends Endpoint {
     final entry = _resolve(resourceKey);
     final result = await entry.list(session);
     return _stringifyRecords(await _withAuthUsers(session, entry, result));
+  }
+
+  /// One page of [resourceKey]'s rows: filtered, searched and sorted in the
+  /// database when possible, with the total number of matching rows.
+  Future<AdminPage> query(
+    Session session,
+    String resourceKey,
+    AdminQuery query,
+  ) async {
+    final entry = _resolve(resourceKey);
+    final bounded = query.copyWith(
+      offset: query.offset < 0 ? 0 : query.offset,
+      limit: query.limit.clamp(1, adminMaxPageSize),
+    );
+    final page = await entry.queryPage(session, bounded);
+    if (page != null) {
+      return AdminPage(
+        rows: _stringifyRecords(
+          await _withAuthUsers(session, entry, page.rows),
+        ),
+        total: page.total,
+      );
+    }
+    final all = await _withAuthUsers(session, entry, await entry.list(session));
+    return AdminRowQuery.apply(
+      _stringifyRecords(all),
+      entry.metadata.columns,
+      bounded,
+    );
   }
 
   Future<List<Map<String, String>>> listPage(

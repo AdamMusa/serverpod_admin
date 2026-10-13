@@ -1,0 +1,5 @@
+### One page of rows, as text, and how many rows match in total.
+class: AdminPage
+fields:
+  rows: List<Map<String, String>>
+  total: int

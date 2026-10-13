@@ -1,0 +1,11 @@
+### Which page of a resource's rows to return, and how to narrow and order
+### them. Paging, sorting, search and filters run in the database.
+class: AdminQuery
+fields:
+  offset: int
+  limit: int
+  ### Text matched against every text-like column.
+  search: String?
+  sortColumn: String?
+  sortDescending: bool
+  filters: List<AdminFilter>

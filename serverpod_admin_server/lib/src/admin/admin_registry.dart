@@ -34,6 +34,9 @@ class AdminRegistry {
   /// a relation to `serverpod_auth_core_user`) show that user's
   /// `authUser.scopeNames` and `authUser.blocked`, saved to the auth user.
   /// Name the column with [authUserColumn] when it is detected otherwise.
+  /// [present] adjusts each row read for the dashboard (for example to add a
+  /// signed preview link) while paging, sorting and filtering still run in
+  /// the database; a custom [listRows] makes them run in memory instead.
   /// Enum values are discovered automatically for both name- and
   /// index-serialized enums when the server runs on the Dart VM. A compiled
   /// server (`dart compile exe` / `dart build cli`) cannot discover the values
@@ -49,6 +52,7 @@ class AdminRegistry {
     String? resourceKey,
     Map<String, List<String>>? choices,
     String? authUserColumn,
+    T Function(Session session, T row)? present,
   }) {
     final type = T;
     if (_entries.containsKey(type)) return;
@@ -56,10 +60,22 @@ class AdminRegistry {
     final entry = AdminEntry<T>(
       table: table,
       fromJson: fromJson,
-      // ignore: invalid_use_of_internal_member
-      listRows: listRows ?? (session) => session.db.find<T>(),
-      // ignore: invalid_use_of_internal_member
-      findRowById: findRowById ?? (session, id) => session.db.findById<T>(id),
+      listRows:
+          listRows ??
+          (session) async => [
+            // ignore: invalid_use_of_internal_member
+            for (final row in await session.db.find<T>())
+              present?.call(session, row) ?? row,
+          ],
+      findRowById:
+          findRowById ??
+          (session, id) async {
+            // ignore: invalid_use_of_internal_member
+            final row = await session.db.findById<T>(id);
+            return row == null ? null : present?.call(session, row) ?? row;
+          },
+      queryable: listRows == null,
+      present: present,
       // ignore: invalid_use_of_internal_member
       createRow: createRow ?? (session, row) => session.db.insertRow<T>(row),
       // ignore: invalid_use_of_internal_member

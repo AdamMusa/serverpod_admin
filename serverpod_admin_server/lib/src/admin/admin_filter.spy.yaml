@@ -1,0 +1,7 @@
+### One condition on a column, for example `status equals approved`.
+class: AdminFilter
+fields:
+  column: String
+  comparison: AdminFilterOperator
+  ### The value as the dashboard shows it; unused by isEmpty and isNotEmpty.
+  value: String?
