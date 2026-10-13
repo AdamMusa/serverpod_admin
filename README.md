@@ -53,11 +53,13 @@ jobs from the same admin dashboard.
 
 No more writing boilerplate CRUD endpoints. Register your models once, and instantly get a complete admin interface with:
 
-- **Browse & Search** – Navigate through all your data with powerful filtering
+- **Search, Filter & Sort** – Search every text column, add filters that fit each column (contains, is / is not, at least / at most, on or before / after, empty), and sort by any column; all of it runs in the database
+- **Pagination** – Pages are read from the database, so large tables stay fast
+- **Documents & Links** – URLs open inside the dashboard: images with zoom, PDFs in the browser's viewer, other pages one click away
 - **Create & Edit** – Intuitive forms for managing records
 - **Delete** – Safe deletion with proper validation
-- **Pagination** – Handle large datasets effortlessly
-- **CSV/XLSX Import & Export** – Move admin data in and out of your app without custom scripts
+- **Column Visibility** – Hide the columns you do not need on wide tables
+- **CSV/XLSX Import & Export** – Export every row matching the current search and filters, or import changes, without custom scripts
 - **Profile Management** – Admin users can update their profile from the dashboard
 - **Password Updates** – Admin users can securely change their password
 - **Job Monitoring UI** – A full Serverpod jobs dashboard for scheduled, ready, paused, failed, finished, and historical jobs
@@ -215,6 +217,19 @@ Any list or set column can be edited as a multi-select the same way:
 ```dart
 registry.register<Team>(choices: {'tags': ['beta', 'internal']});
 ```
+
+To adjust rows before the dashboard shows them, for example to replace a
+private file reference with a short-lived signed link, pass `present`. Paging,
+sorting, search and filters still run in the database:
+
+```dart
+registry.register<Document>(
+  present: (session, row) => row.copyWith(fileUrl: signedLink(row.fileUrl)),
+);
+```
+
+A custom `listRows` still works, but then those operations run in memory over
+every row it returns.
 
 ### 3. Install the Prebuilt Dashboard
 

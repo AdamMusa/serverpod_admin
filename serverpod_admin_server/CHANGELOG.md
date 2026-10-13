@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.18
+
+- Listings are paged, sorted, searched and filtered in the database through
+  the new `query` endpoint method (`AdminQuery` in, `AdminPage` out), newest
+  rows first by default. Values are quoted by the package itself, never
+  passed to SQL raw. Resources with a custom `listRows`, or filters on
+  columns a table does not store, are handled in memory.
+- `register<T>(present: ...)` adjusts rows for the dashboard (for example
+  signed document links) while queries still run in the database.
+
 ## 1.0.17
 
 - Rows that extend a Serverpod auth user (a unique `authUserId` column, or a

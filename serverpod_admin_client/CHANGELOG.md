@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.18
+
+- Added `AdminQuery`, `AdminFilter`, `AdminFilterOperator` and `AdminPage`,
+  and `admin.query` for paged, sorted, searched and filtered listings.
+
 ## 1.0.16
 
 - `AdminColumn.choices` lists the values a list or set column may hold.
