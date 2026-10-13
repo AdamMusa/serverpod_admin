@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:serverpod_admin_client/serverpod_admin_client.dart'
+    show AdminFilter;
 import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/tabular_data.dart';
+import 'package:serverpod_admin_dashboard/src/helpers/filters.dart';
+import 'package:serverpod_admin_dashboard/src/widgets/filters/filter_dialog.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/records_body/records_body.dart';
 
 /// Widget that displays a resource's records with search, add, edit, and delete functionality.
@@ -20,6 +24,12 @@ class RecordsView extends StatefulWidget {
     this.onClearSearch,
     this.onImport,
     this.onExport,
+    this.filters = const [],
+    this.onFiltersChanged,
+    this.hiddenColumns = const {},
+    this.onToggleColumn,
+    this.onRefresh,
+    this.paging,
     super.key,
   });
 
@@ -37,6 +47,19 @@ class RecordsView extends StatefulWidget {
   final VoidCallback? onClearSearch;
   final VoidCallback? onImport;
   final void Function(TabularFileFormat format)? onExport;
+
+  /// Active filters, shown as chips; [onFiltersChanged] edits them.
+  final List<AdminFilter> filters;
+  final ValueChanged<List<AdminFilter>>? onFiltersChanged;
+
+  /// Columns hidden from the table; [onToggleColumn] shows or hides one.
+  final Set<String> hiddenColumns;
+  final ValueChanged<String>? onToggleColumn;
+
+  final VoidCallback? onRefresh;
+
+  /// Server-side paging and sorting; without it the rows are paged here.
+  final RecordsPaging? paging;
 
   @override
   State<RecordsView> createState() => _RecordsViewState();
@@ -87,6 +110,7 @@ class _RecordsViewState extends State<RecordsView> {
         children: [
           _buildHeader(context),
           const Divider(height: 1, thickness: 1),
+          if (widget.filters.isNotEmpty) _buildFilterChips(context),
           _buildRecordsContent(context),
         ],
       ),
@@ -98,9 +122,7 @@ class _RecordsViewState extends State<RecordsView> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 22),
       decoration: BoxDecoration(
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(12),
-        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
         border: Border(
           bottom: BorderSide(
             color: theme.dividerColor.withValues(alpha: 0.1),
@@ -159,16 +181,16 @@ class _RecordsViewState extends State<RecordsView> {
 
   Widget _buildRecordsCountChip(BuildContext context) {
     final theme = Theme.of(context);
-    final countText = widget.totalRecords != null &&
-            widget.totalRecords != widget.records.length
+    final matching = widget.paging?.totalRecords;
+    final countText = matching != null
+        ? '$matching ${matching == 1 ? 'record' : 'records'}'
+        : widget.totalRecords != null &&
+              widget.totalRecords != widget.records.length
         ? '${widget.records.length} of ${widget.totalRecords} records'
         : '${widget.records.length} records';
 
     return Chip(
-      label: Text(
-        countText,
-        style: theme.textTheme.labelLarge,
-      ),
+      label: Text(countText, style: theme.textTheme.labelLarge),
       avatar: const Icon(Icons.table_rows, size: 18),
     );
   }
@@ -181,6 +203,40 @@ class _RecordsViewState extends State<RecordsView> {
       runSpacing: 8,
       children: [
         if (widget.onSearchChanged != null) _buildSearchInput(context, compact),
+        if (widget.onFiltersChanged != null)
+          Badge(
+            isLabelVisible: widget.filters.isNotEmpty,
+            label: Text('${widget.filters.length}'),
+            child: IconButton.filledTonal(
+              tooltip: 'Filter records',
+              onPressed: () => _editFilters(context),
+              icon: const Icon(Icons.filter_list),
+            ),
+          ),
+        if (widget.onToggleColumn != null)
+          MenuAnchor(
+            builder: (context, controller, child) => IconButton.filledTonal(
+              tooltip: 'Show or hide columns',
+              onPressed: () =>
+                  controller.isOpen ? controller.close() : controller.open(),
+              icon: const Icon(Icons.view_column_outlined),
+            ),
+            menuChildren: [
+              for (final column in widget.resource!.columns)
+                CheckboxMenuButton(
+                  value: !widget.hiddenColumns.contains(column.name),
+                  closeOnActivate: false,
+                  onChanged: (_) => widget.onToggleColumn!(column.name),
+                  child: Text(column.name),
+                ),
+            ],
+          ),
+        if (widget.onRefresh != null)
+          IconButton.filledTonal(
+            tooltip: 'Refresh',
+            onPressed: widget.onRefresh,
+            icon: const Icon(Icons.refresh),
+          ),
         IconButton.filledTonal(
           tooltip: 'Import CSV or XLSX',
           onPressed: widget.onImport,
@@ -259,10 +315,7 @@ class _RecordsViewState extends State<RecordsView> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(
-              color: theme.colorScheme.primary,
-              width: 2,
-            ),
+            borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
           ),
           filled: true,
           fillColor: theme.scaffoldBackgroundColor,
@@ -300,7 +353,44 @@ class _RecordsViewState extends State<RecordsView> {
           onView: widget.onView,
           searchQuery: widget.searchQuery,
           totalRecords: widget.totalRecords,
+          paging: widget.paging,
+          hiddenColumns: widget.hiddenColumns,
         ),
+      ),
+    );
+  }
+
+  Future<void> _editFilters(BuildContext context) async {
+    final filters = await showFilterDialog(
+      context,
+      resource: widget.resource!,
+      current: widget.filters,
+    );
+    if (filters != null) widget.onFiltersChanged?.call(filters);
+  }
+
+  Widget _buildFilterChips(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          for (final filter in widget.filters)
+            InputChip(
+              avatar: const Icon(Icons.filter_alt_outlined, size: 18),
+              label: Text(describeFilter(filter, widget.resource!)),
+              onPressed: () => _editFilters(context),
+              onDeleted: () => widget.onFiltersChanged?.call(
+                [...widget.filters]..remove(filter),
+              ),
+            ),
+          TextButton(
+            onPressed: () => widget.onFiltersChanged?.call(const []),
+            child: const Text('Clear filters'),
+          ),
+        ],
       ),
     );
   }
@@ -321,8 +411,9 @@ class _RecordsViewState extends State<RecordsView> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color:
-                    theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                color: theme.colorScheme.primaryContainer.withValues(
+                  alpha: 0.3,
+                ),
                 shape: BoxShape.circle,
               ),
               child: Icon(

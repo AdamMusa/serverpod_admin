@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:serverpod_admin_client/serverpod_admin_client.dart'
     as admin_client;
@@ -33,29 +35,152 @@ class AdminDashboardController extends ChangeNotifier {
   bool isRecordsLoading = false;
   bool _isRecordsRefreshInFlight = false;
 
-  // Search state
+  // Query state: the current page of the selected resource, read from the
+  // server with its sort, search and filters.
   String _searchQuery = '';
   String get searchQuery => _searchQuery;
+  Timer? _searchDebounce;
 
-  List<Map<String, String>> get filteredRecords {
-    if (_searchQuery.isEmpty) return records;
+  /// Rows on the current page; the server has already searched, filtered,
+  /// sorted and paged them.
+  List<Map<String, String>> get filteredRecords => records;
 
-    final query = _searchQuery.toLowerCase();
-    return records.where((record) {
-      return record.values.any((value) {
-        return value.toLowerCase().contains(query);
-      });
-    }).toList();
+  /// How many rows match the search and filters.
+  int totalRecords = 0;
+
+  int _pageIndex = 0;
+  int get pageIndex => _pageIndex;
+  int _rowsPerPage = 25;
+  int get rowsPerPage => _rowsPerPage;
+  static const rowsPerPageOptions = [10, 25, 50, 100];
+  int get pageCount =>
+      totalRecords == 0 ? 1 : (totalRecords / _rowsPerPage).ceil();
+
+  String? _sortColumn;
+  String? get sortColumn => _sortColumn;
+  bool _sortDescending = false;
+  bool get sortDescending => _sortDescending;
+
+  List<admin_client.AdminFilter> _filters = const [];
+  List<admin_client.AdminFilter> get filters => _filters;
+
+  final Map<String, Set<String>> _hiddenColumns = {};
+
+  /// Columns of [resource] hidden from the table (all stay in details).
+  Set<String> hiddenColumns(AdminResource resource) =>
+      _hiddenColumns[resource.key] ?? const {};
+
+  void toggleColumn(AdminResource resource, String column) {
+    final hidden = _hiddenColumns.putIfAbsent(resource.key, () => {});
+    if (!hidden.remove(column)) hidden.add(column);
+    notifyListeners();
   }
 
   void setSearchQuery(String query) {
+    if (query == _searchQuery) return;
     _searchQuery = query;
     notifyListeners();
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+      _pageIndex = 0;
+      _reloadSelected();
+    });
   }
 
   void clearSearch() {
+    _searchDebounce?.cancel();
+    if (_searchQuery.isEmpty) return;
     _searchQuery = '';
+    _pageIndex = 0;
     notifyListeners();
+    _reloadSelected();
+  }
+
+  /// Sorts by [column]: ascending first, then descending on a second click.
+  void sortBy(String column) {
+    if (_sortColumn == column) {
+      _sortDescending = !_sortDescending;
+    } else {
+      _sortColumn = column;
+      _sortDescending = false;
+    }
+    _pageIndex = 0;
+    _reloadSelected();
+  }
+
+  void setFilters(List<admin_client.AdminFilter> filters) {
+    _filters = List.unmodifiable(filters);
+    _pageIndex = 0;
+    _reloadSelected();
+  }
+
+  void removeFilter(admin_client.AdminFilter filter) =>
+      setFilters([..._filters]..remove(filter));
+
+  void goToPage(int page) {
+    final target = page.clamp(0, pageCount - 1);
+    if (target == _pageIndex) return;
+    _pageIndex = target;
+    _reloadSelected();
+  }
+
+  void setRowsPerPage(int value) {
+    if (value == _rowsPerPage || !rowsPerPageOptions.contains(value)) return;
+    _rowsPerPage = value;
+    _pageIndex = 0;
+    _reloadSelected();
+  }
+
+  void _resetQuery() {
+    _searchDebounce?.cancel();
+    _searchQuery = '';
+    _pageIndex = 0;
+    _sortColumn = null;
+    _sortDescending = false;
+    _filters = const [];
+    totalRecords = 0;
+  }
+
+  void _reloadSelected() {
+    final resource = selectedResource;
+    if (resource != null) unawaited(loadRecords(resource));
+  }
+
+  admin_client.AdminQuery _query({int? offset, int? limit}) =>
+      admin_client.AdminQuery(
+        offset: offset ?? _pageIndex * _rowsPerPage,
+        limit: limit ?? _rowsPerPage,
+        search: _searchQuery.trim().isEmpty ? null : _searchQuery.trim(),
+        sortColumn: _sortColumn,
+        sortDescending: _sortDescending,
+        filters: _filters,
+      );
+
+  /// Every row matching the current search and filters, in the current
+  /// order, for export.
+  Future<List<Map<String, String>>> fetchAllMatching(
+    AdminResource resource, {
+    int maxRows = 50000,
+  }) async {
+    if (resource.key == serverpodJobsKey) return records;
+    final rows = <Map<String, String>>[];
+    while (rows.length < maxRows) {
+      final page = await adminEndpoint.query(
+        resource.key,
+        _query(offset: rows.length, limit: 500),
+      );
+      rows.addAll(page.rows);
+      if (page.rows.isEmpty || rows.length >= page.total) break;
+    }
+    return rows;
+  }
+
+  static const serverpodJobsKey = 'serverpod_future_call';
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    super.dispose();
   }
 
   // Details state
@@ -135,7 +260,8 @@ class AdminDashboardController extends ChangeNotifier {
   Future<void> selectResource(AdminResource resource) async {
     selectedResource = resource;
     closeDetails(); // Close details when changing resource
-    clearSearch(); // Clear search when changing resource
+    _resetQuery(); // A new table starts unfiltered on its first page
+    records = const [];
     notifyListeners();
     await loadRecords(resource);
   }
@@ -144,8 +270,12 @@ class AdminDashboardController extends ChangeNotifier {
     AdminResource resource, {
     bool showLoading = true,
   }) async {
-    if (_isRecordsRefreshInFlight) return;
+    final isJobs = resource.key == serverpodJobsKey;
+    // Jobs refresh in the background every few seconds; skip overlapping
+    // refreshes. Other tables load the latest query and ignore stale replies.
+    if (isJobs && _isRecordsRefreshInFlight) return;
     _isRecordsRefreshInFlight = true;
+    final request = ++_recordsRequest;
 
     if (showLoading) {
       isRecordsLoading = true;
@@ -154,12 +284,22 @@ class AdminDashboardController extends ChangeNotifier {
     }
 
     try {
-      final loaded = await adminEndpoint.list(resource.key);
-      records = loaded;
-      if (resource.key == 'serverpod_future_call') {
+      if (isJobs) {
+        records = await adminEndpoint.list(resource.key);
+        totalRecords = records.length;
         jobHistory = await adminEndpoint.futureCallHistory();
       } else {
+        final page = await adminEndpoint.query(resource.key, _query());
+        if (request != _recordsRequest) return;
+        records = page.rows;
+        totalRecords = page.total;
         jobHistory = const [];
+        // A filter or deletion can leave the page past the last one.
+        if (records.isEmpty && totalRecords > 0 && _pageIndex > 0) {
+          _pageIndex = pageCount - 1;
+          _isRecordsRefreshInFlight = false;
+          return loadRecords(resource, showLoading: showLoading);
+        }
       }
 
       recordsError = null;
@@ -167,7 +307,8 @@ class AdminDashboardController extends ChangeNotifier {
       if (isShowingDetails &&
           detailsResource?.key == resource.key &&
           detailsRecord != null) {
-        final updatedRecord = _findUpdatedDetailsRecord(resource);
+        final updatedRecord = _findUpdatedDetailsRecord(resource) ??
+            (isJobs ? null : await _fetchDetailsRecord(resource));
         if (updatedRecord != null) {
           detailsRecord = updatedRecord;
         } else if (resource.key != 'serverpod_future_call') {
@@ -178,21 +319,54 @@ class AdminDashboardController extends ChangeNotifier {
         }
       }
     } catch (error) {
+      if (request != _recordsRequest) return;
       if (showLoading || records.isEmpty) {
-        recordsError =
-            'Unable to load ${resource.tableName} records. Please try again.';
+        recordsError = error is admin_client.AdminValidationException
+            ? error.message
+            : 'Unable to load ${resource.tableName} records. Please try again.';
         records = const [];
         if (resource.key == 'serverpod_future_call') {
           jobHistory = const [];
         }
       }
     } finally {
-      _isRecordsRefreshInFlight = false;
-      if (showLoading) {
-        isRecordsLoading = false;
+      if (request == _recordsRequest) {
+        _isRecordsRefreshInFlight = false;
+        if (showLoading) {
+          isRecordsLoading = false;
+        }
+        notifyListeners();
       }
-      notifyListeners();
     }
+  }
+
+  int _recordsRequest = 0;
+
+  /// The open details row read by its primary key, when it is not on the
+  /// current page (for example after an edit moved it).
+  Future<Map<String, String>?> _fetchDetailsRecord(
+    AdminResource resource,
+  ) async {
+    final record = detailsRecord;
+    final primary = resource.columns.where((c) => c.isPrimary).firstOrNull;
+    final id = record == null ? null : resolvePrimaryKeyValue(resource, record);
+    if (primary == null || id == null) return null;
+    final page = await adminEndpoint.query(
+      resource.key,
+      admin_client.AdminQuery(
+        offset: 0,
+        limit: 1,
+        sortDescending: false,
+        filters: [
+          admin_client.AdminFilter(
+            column: primary.name,
+            comparison: admin_client.AdminFilterOperator.equals,
+            value: id,
+          ),
+        ],
+      ),
+    );
+    return page.rows.firstOrNull;
   }
 
   Map<String, String>? _findUpdatedDetailsRecord(AdminResource resource) {

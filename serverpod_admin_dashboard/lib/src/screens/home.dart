@@ -10,6 +10,7 @@ import 'package:serverpod_admin_dashboard/src/widgets/jobs_view.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/records_view.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/side_bar.dart';
 import 'package:serverpod_admin_client/serverpod_admin_client.dart';
+import 'package:serverpod_admin_dashboard/src/widgets/records_body/records_body.dart';
 
 class Home extends StatefulWidget {
   const Home({
@@ -86,10 +87,7 @@ class _HomeState extends State<Home> {
     if (selectedResource?.key != serverpodJobsResourceKey) return;
     if (widget.controller.isResourcesLoading) return;
 
-    await widget.controller.loadRecords(
-      selectedResource!,
-      showLoading: false,
-    );
+    await widget.controller.loadRecords(selectedResource!, showLoading: false);
   }
 
   @override
@@ -157,10 +155,7 @@ class _HomeState extends State<Home> {
     );
   }
 
-  bool _canMutateDetails(
-    AdminResource resource,
-    Map<String, String> record,
-  ) {
+  bool _canMutateDetails(AdminResource resource, Map<String, String> record) {
     if (resource.key != serverpodJobsResourceKey) return true;
     if (record['source'] == 'history') return false;
     if (record['status'] == 'finished') return false;
@@ -176,11 +171,7 @@ class _HomeState extends State<Home> {
 
     // Use custom builder if provided
     if (widget.customBodyBuilder != null) {
-      return widget.customBodyBuilder!(
-        context,
-        widget.controller,
-        operations,
-      );
+      return widget.customBodyBuilder!(context, widget.controller, operations);
     }
 
     if (selectedResource.key == serverpodJobsResourceKey) {
@@ -228,23 +219,39 @@ class _HomeState extends State<Home> {
     }
 
     // Default implementation
+    final controller = widget.controller;
     return RecordsView(
       resource: selectedResource,
-      records: widget.controller.filteredRecords,
-      totalRecords: widget.controller.records.length,
-      isLoading: widget.controller.isRecordsLoading,
-      errorMessage: widget.controller.recordsError,
-      searchQuery: widget.controller.searchQuery,
-      onSearchChanged: widget.controller.setSearchQuery,
-      onClearSearch: widget.controller.clearSearch,
+      records: controller.records,
+      totalRecords: controller.totalRecords,
+      isLoading: controller.isRecordsLoading,
+      errorMessage: controller.recordsError,
+      searchQuery: controller.searchQuery,
+      onSearchChanged: controller.setSearchQuery,
+      onClearSearch: controller.clearSearch,
+      filters: controller.filters,
+      onFiltersChanged: controller.setFilters,
+      hiddenColumns: controller.hiddenColumns(selectedResource),
+      onToggleColumn: (column) =>
+          controller.toggleColumn(selectedResource, column),
+      onRefresh: () => controller.loadRecords(selectedResource),
+      paging: RecordsPaging(
+        pageIndex: controller.pageIndex,
+        rowsPerPage: controller.rowsPerPage,
+        rowsPerPageOptions: AdminDashboardController.rowsPerPageOptions,
+        totalRecords: controller.totalRecords,
+        onPage: controller.goToPage,
+        onRowsPerPage: controller.setRowsPerPage,
+        sortColumn: controller.sortColumn,
+        sortDescending: controller.sortDescending,
+        onSort: controller.sortBy,
+      ),
       onAdd: () => operations.showCreateDialog(selectedResource),
       onImport: () => operations.importRecords(selectedResource),
-      onExport: (format) {
-        operations.exportRecords(
-          selectedResource,
-          widget.controller.filteredRecords,
-          format,
-        );
+      // Exports every row matching the search and filters, not one page.
+      onExport: (format) async {
+        final rows = await controller.fetchAllMatching(selectedResource);
+        await operations.exportRecords(selectedResource, rows, format);
       },
       onEdit: (record) => operations.showEditDialog(selectedResource, record),
       onDelete: (record) =>
@@ -377,8 +384,10 @@ class _HomeState extends State<Home> {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 1440),
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 20,
+                  ),
                   child: Column(
                     children: [
                       Expanded(

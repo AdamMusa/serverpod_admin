@@ -5,8 +5,9 @@ import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
 class RecordsDataColumn {
   const RecordsDataColumn._();
 
-  /// Creates a DataColumn for a resource column.
-  static DataColumn build(AdminColumn column) {
+  /// Creates a DataColumn for a resource column; [onSort] makes its header
+  /// sort the table.
+  static DataColumn build(AdminColumn column, {VoidCallback? onSort}) {
     return DataColumn(
       label: Row(
         children: [
@@ -15,6 +16,7 @@ class RecordsDataColumn {
           Text(column.name),
         ],
       ),
+      onSort: onSort == null ? null : (_, _) => onSort(),
     );
   }
 }

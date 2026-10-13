@@ -12,6 +12,10 @@ class RecordsDataTable extends StatelessWidget {
     this.onView,
     this.onEdit,
     this.onDelete,
+    this.sortColumn,
+    this.sortDescending = false,
+    this.onSort,
+    this.hiddenColumns = const {},
     super.key,
   });
 
@@ -21,10 +25,23 @@ class RecordsDataTable extends StatelessWidget {
   final void Function(Map<String, String> record)? onEdit;
   final void Function(Map<String, String> record)? onDelete;
 
+  /// The column the rows are sorted by, if any.
+  final String? sortColumn;
+  final bool sortDescending;
+
+  /// Sorts by the tapped column header; null leaves headers inert.
+  final void Function(String column)? onSort;
+
+  /// Columns left out of the table.
+  final Set<String> hiddenColumns;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final columns = resource.columns;
+    final columns = resource.columns
+        .where((column) => !hiddenColumns.contains(column.name))
+        .toList();
+    final sortIndex = columns.indexWhere((c) => c.name == sortColumn);
 
     return DataTableTheme(
       data: DataTableThemeData(
@@ -40,6 +57,8 @@ class RecordsDataTable extends StatelessWidget {
       child: DataTable(
         columnSpacing: 36,
         horizontalMargin: 20,
+        sortColumnIndex: sortIndex < 0 ? null : sortIndex,
+        sortAscending: !sortDescending,
         columns: _buildDataColumns(columns),
         rows: _buildDataRows(records, columns),
       ),
@@ -48,7 +67,12 @@ class RecordsDataTable extends StatelessWidget {
 
   List<DataColumn> _buildDataColumns(List<AdminColumn> columns) {
     return [
-      ...columns.map((column) => RecordsDataColumn.build(column)),
+      ...columns.map(
+        (column) => RecordsDataColumn.build(
+          column,
+          onSort: onSort == null ? null : () => onSort!(column.name),
+        ),
+      ),
       const DataColumn(label: Text('Actions')),
     ];
   }
@@ -58,25 +82,26 @@ class RecordsDataTable extends StatelessWidget {
     List<AdminColumn> columns,
   ) {
     return records.map((record) {
-      final cells = columns
-          .map(
-            (column) => RecordsDataCell.build(
-              column: column,
-              value: record[column.name],
-              onTap: onView != null ? () => onView!(record) : null,
-            ),
-          )
-          .toList()
-        ..add(
-          DataCell(
-            RecordsActionButtons(
-              record: record,
-              onView: onView,
-              onEdit: onEdit,
-              onDelete: onDelete,
-            ),
-          ),
-        );
+      final cells =
+          columns
+              .map(
+                (column) => RecordsDataCell.build(
+                  column: column,
+                  value: record[column.name],
+                  onTap: onView != null ? () => onView!(record) : null,
+                ),
+              )
+              .toList()
+            ..add(
+              DataCell(
+                RecordsActionButtons(
+                  record: record,
+                  onView: onView,
+                  onEdit: onEdit,
+                  onDelete: onDelete,
+                ),
+              ),
+            );
 
       return DataRow(cells: cells);
     }).toList();
