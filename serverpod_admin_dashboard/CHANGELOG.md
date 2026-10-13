@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.18
+
+- Tables page, sort (click a column header), search and filter on the server,
+  so large tables stay fast. Filters fit each column type and show as chips.
+- URLs open inside the dashboard: images with zoom, PDFs in the browser's
+  viewer, other links in a new tab; tables and details show image thumbnails.
+- Show or hide columns, refresh, and export every row matching the current
+  search and filters (CSV or XLSX).
+
 ## 1.0.16
 
 - Columns with declared choices, such as permission scopes, are edited with a

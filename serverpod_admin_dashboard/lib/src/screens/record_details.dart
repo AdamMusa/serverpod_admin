@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/format_value.dart';
+import 'package:serverpod_admin_dashboard/src/helpers/links.dart';
+import 'package:serverpod_admin_dashboard/src/widgets/document/link_value.dart';
 
 class RecordDetails extends StatelessWidget {
   const RecordDetails({
@@ -212,7 +214,9 @@ class RecordDetails extends StatelessWidget {
                       size: 18,
                       color: isPrimary
                           ? theme.colorScheme.primary
-                          : theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+                          : theme.textTheme.bodyMedium?.color?.withValues(
+                              alpha: 0.6,
+                            ),
                     ),
                     const SizedBox(width: 8),
                     Flexible(
@@ -230,8 +234,9 @@ class RecordDetails extends StatelessWidget {
                         label: const Text('PK', style: TextStyle(fontSize: 10)),
                         padding: EdgeInsets.zero,
                         visualDensity: VisualDensity.compact,
-                        backgroundColor:
-                            theme.colorScheme.primary.withValues(alpha: 0.1),
+                        backgroundColor: theme.colorScheme.primary.withValues(
+                          alpha: 0.1,
+                        ),
                         labelStyle: TextStyle(
                           color: theme.colorScheme.primary,
                           fontSize: 10,
@@ -241,12 +246,15 @@ class RecordDetails extends StatelessWidget {
                     if (column.hasDefault) ...[
                       const SizedBox(width: 8),
                       Chip(
-                        label: const Text('Default',
-                            style: TextStyle(fontSize: 10)),
+                        label: const Text(
+                          'Default',
+                          style: TextStyle(fontSize: 10),
+                        ),
                         padding: EdgeInsets.zero,
                         visualDensity: VisualDensity.compact,
-                        backgroundColor:
-                            theme.colorScheme.secondary.withValues(alpha: 0.1),
+                        backgroundColor: theme.colorScheme.secondary.withValues(
+                          alpha: 0.1,
+                        ),
                         labelStyle: TextStyle(
                           color: theme.colorScheme.secondary,
                           fontSize: 10,
@@ -259,14 +267,27 @@ class RecordDetails extends StatelessWidget {
               const SizedBox(width: 24),
               // Value column - wraps to multiple lines
               Expanded(
-                child: SelectableText(
-                  isEmpty ? '(empty)' : formattedValue,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: isEmpty
-                        ? theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.5)
-                        : null,
+                child: switch (linkKind(value)) {
+                  final kind? => Align(
+                    alignment: Alignment.centerLeft,
+                    child: LinkValue(
+                      url: value!.trim(),
+                      kind: kind,
+                      title: column.name,
+                      large: true,
+                    ),
                   ),
-                ),
+                  null => SelectableText(
+                    isEmpty ? '(empty)' : formattedValue,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: isEmpty
+                          ? theme.textTheme.bodyMedium?.color?.withValues(
+                              alpha: 0.5,
+                            )
+                          : null,
+                    ),
+                  ),
+                },
               ),
             ],
           ),

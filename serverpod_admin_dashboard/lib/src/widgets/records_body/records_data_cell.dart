@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/format_value.dart';
+import 'package:serverpod_admin_dashboard/src/helpers/links.dart';
+import 'package:serverpod_admin_dashboard/src/widgets/document/link_value.dart';
 
 /// Helper class for building data cells for records table.
 /// Handles boolean values with checkmarks/crosses and regular text values.
@@ -19,11 +21,21 @@ class RecordsDataCell {
         child: Builder(
           builder: (context) {
             final theme = Theme.of(context);
-            final isBoolean = isBooleanType(column);
-
-            return isBoolean
-                ? _buildBooleanCell(parseBooleanValue(value), theme)
-                : _buildTextCell(column, value, theme);
+            if (isBooleanType(column)) {
+              return _buildBooleanCell(parseBooleanValue(value), theme);
+            }
+            final kind = linkKind(value);
+            if (kind != null) {
+              return Align(
+                alignment: Alignment.centerLeft,
+                child: LinkValue(
+                  url: value!.trim(),
+                  kind: kind,
+                  title: column.name,
+                ),
+              );
+            }
+            return _buildTextCell(column, value, theme);
           },
         ),
       ),
@@ -34,21 +46,16 @@ class RecordsDataCell {
   static Widget _buildBooleanCell(bool value, ThemeData theme) {
     return Center(
       child: value
-          ? Icon(
-              Icons.check_circle,
-              color: theme.colorScheme.primary,
-              size: 20,
-            )
-          : Icon(
-              Icons.cancel,
-              color: theme.colorScheme.error,
-              size: 20,
-            ),
+          ? Icon(Icons.check_circle, color: theme.colorScheme.primary, size: 20)
+          : Icon(Icons.cancel, color: theme.colorScheme.error, size: 20),
     );
   }
 
   static Widget _buildTextCell(
-      AdminColumn column, String? value, ThemeData theme) {
+    AdminColumn column,
+    String? value,
+    ThemeData theme,
+  ) {
     final formattedValue = formatRecordValue(column, value);
     final tooltipText = _truncateTooltipText(formattedValue);
 
