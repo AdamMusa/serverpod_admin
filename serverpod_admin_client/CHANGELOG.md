@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.21
+
+- Added `AdminFieldsetInfo` and `AdminResource.fieldsets`.
+- Added `AdminSavedView`, with `savedViews`, `saveView` and `deleteView`.
+
 ## 1.0.20
 
 - Added `AdminAccessInfo`, `AdminMetricValue` and `AdminActivityPoint`, with

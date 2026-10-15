@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.21
+
+- Fieldsets: `AdminOptions(fieldsets: [AdminFieldset(...)])` groups a table's
+  fields in the dashboard's forms and details, like Django's fieldsets, with
+  a name, a description and whether the group starts folded. Columns no
+  fieldset names follow in a last group named "Other"; hidden and unknown
+  names are left out.
+- Saved views: `admin.savedViews`, `admin.saveView` and `admin.deleteView`
+  keep each user's named searches, sorts, filters and shown columns per
+  table, in the new `serverpod_admin_saved_view` table. Create and apply a
+  migration in your server after upgrading (`serverpod create-migration`).
+  Views name only columns the user may see, of tables they may see.
+
 ## 1.0.20
 
 - Table options, like Django's ModelAdmin:

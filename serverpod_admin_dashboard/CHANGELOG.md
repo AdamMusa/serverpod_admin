@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.21
+
+- Links: the address names the open table, page, sort, search, filters or
+  record (for example `/admin/#/ride?sort=-fare&status__exact=open` or
+  `/admin/#/ride/12`), so links can be shared and Back and Forward work.
+  Filters use Django-style names (`__exact`, `__gte`, `__in`…). Typing a
+  search changes one history entry, a link opened before signing in is shown
+  after, and an address naming something gone is corrected in place. This
+  applies when `AdminDashboard` is the app; inside another `MaterialApp`, or
+  with `deepLinks: false`, the address is left alone. The prebuilt `/admin`
+  app now runs the dashboard as the app.
+- Saved views: a bookmark menu next to the filters saves a table's search,
+  sort, filters and shown columns under a name, applies them again and
+  deletes them. The view shown is named under the table's title.
+- Fieldsets: forms and details group fields under the server's fieldsets,
+  folded at first when the fieldset says so; a form with an invalid field
+  unfolds every group.
+- Related rows: a record's Related tab lists each related table's rows in a
+  small table where they are edited and deleted, and Add opens a form already
+  linked to the record (like Django's inlines). Tables without rows are
+  listed too. Changes reload only the table shown.
+- `SidebarItemCustomization` takes an icon, a label or both; an icon alone
+  keeps the server's label. The collapsed sidebar shows every table as an
+  icon with its name in a tooltip.
+- Foreign key fields in forms show the column's and table's labels.
+
 ## 1.0.20
 
 - Follows the server's table options: labels, sidebar groups, the columns

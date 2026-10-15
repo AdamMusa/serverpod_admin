@@ -57,12 +57,14 @@ No more writing boilerplate CRUD endpoints. Register your models once, and insta
 - **Pagination** – Pages are read from the database, so large tables stay fast
 - **Documents & Links** – URLs open inside the dashboard: images with zoom, PDFs in the browser's viewer, other pages one click away
 - **Overview** – A home page with your own key numbers (metrics), every table's row count with a 30-day chart of rows added, and the latest changes
-- **Table Options** – Like Django's ModelAdmin: labels, sidebar groups, default columns and ordering, read-only and hidden fields, help text, searchable columns, and turning create, edit or delete off per table
+- **Table Options** – Like Django's ModelAdmin: labels, sidebar groups, default columns and ordering, read-only and hidden fields, help text, searchable columns, fieldsets that group form fields, and turning create, edit or delete off per table
+- **Shareable Links** – The open table, page, sort, search, filters or record are in the address, so links can be shared and the browser's Back button works
+- **Saved Views** – Name a table's filters, sort, search and columns, and come back to them in one click
 - **Staff Roles** – Give support or operations staff their own scopes with view, create, edit and delete permissions per table; administrators keep full access
 - **Quick Date Filters** – Today, last 7 days, last 30 days and this month in one click
 - **Change History** – Who created, changed, deleted or ran an action on each row, and which values changed (like Django's admin log), on every record and as recent actions
 - **Bulk Changes & Custom Actions** – Select rows (or every row matching the filters), then delete them, set a field on all of them, or run actions you register per model
-- **Relationships** – Foreign keys show the related row's name and open it; every record lists the rows pointing at it, with a link to all of them; pickers search instead of loading whole tables
+- **Relationships** – Foreign keys show the related row's name and open it; every record lists the rows pointing at it, which you add, edit and delete in place like Django's inlines; pickers search instead of loading whole tables
 - **Create & Edit** – Intuitive forms for managing records
 - **Delete** – Safe deletion with proper validation
 - **Column Visibility** – Hide the columns you do not need on wide tables
@@ -290,6 +292,15 @@ registry.register<Order>(
     labels: {'customerId': 'Customer'},
     help: {'status': 'Shipped orders can no longer be cancelled.'},
     canDelete: false,                // nobody deletes orders here
+    fieldsets: [                     // groups fields in forms and details
+      AdminFieldset(fields: ['customerId', 'status', 'total']),
+      AdminFieldset(
+        name: 'Delivery',
+        description: 'Filled in by the warehouse.',
+        fields: ['address', 'shippedAt'],
+        collapsed: true,             // folded at first
+      ),
+    ],
   ),
 );
 ```
@@ -305,6 +316,11 @@ registry.register<Order>(
 - `chartColumn` names the date column the overview charts. It defaults to
   the first of `createdAt`, `requestedAt`, `insertedAt`, `addedAt`, `created`
   or `time` that the table has.
+- `fieldsets` work like Django's: each group shows under its name and
+  description in create and edit forms and in a record's details, folded at
+  first when `collapsed`. Columns no fieldset names follow in a last group
+  named "Other", so a form never loses a field; hidden and unknown names are
+  left out. A form with an invalid field unfolds every group.
 
 ### Staff Roles and Permissions
 
@@ -363,6 +379,26 @@ A metric is shown to administrators, and to staff holding one of its
 `scopes`. One that fails or takes longer than 10 seconds shows "—" instead of
 breaking the page. Below the metrics, every table shows its row count and a
 bar chart of the rows added on each of the last 30 days.
+
+### Links, Saved Views and Related Rows
+
+These need no setup in your server:
+
+- **Links.** The address names what is open, so a link opens the same table,
+  page, sort, search, filters or record for whoever may see it, and Back and
+  Forward move through what you opened:
+  `/admin/#/order?q=dakar&sort=-total&page=2&status__exact=paid` or
+  `/admin/#/order/42`. Filters are written like Django's (`__exact`, `__not`,
+  `__contains`, `__gte`, `__lte`, `__in`, `__isempty`, `__notempty`).
+- **Saved views.** The bookmark button of a table saves its search, sort,
+  filters and shown columns under a name, and lists the views you saved.
+  Views are personal and stored in the module's `serverpod_admin_saved_view`
+  table: after upgrading to 1.0.21, create and apply a migration in your
+  server (`serverpod create-migration`).
+- **Related rows.** A record's Related tab lists, for each table pointing at
+  it, its rows in a small table you can edit and delete from, and Add opens
+  a form already linked to the record, like Django's inlines. Each table's
+  permissions apply.
 
 ### 3. Install the Prebuilt Dashboard
 
@@ -502,6 +538,11 @@ The authentication behavior is the same as the non-custom path: unauthenticated
 users see login, and only users with `serverpod.admin` or a staff scope can
 enter.
 
+`AdminDashboard` keeps what is open in the address when it is the app
+(`runApp(AdminDashboard(...))`), with Flutter web's default `#/` addresses.
+Inside your own `MaterialApp`, your app owns the address and the dashboard
+leaves it alone; `deepLinks: false` turns it off in any case.
+
 ---
 
 ## 🎨 Customization
@@ -510,12 +551,15 @@ Serverpod Admin offers flexible customization options, from simple sidebar tweak
 
 ### Sidebar Level Customization
 
-Customize individual sidebar items with custom labels and icons:
+Customize individual sidebar items with an icon, a label, or both. An icon
+alone keeps the label the server gives the table (`AdminOptions.label`), and
+shows when the sidebar is collapsed to icons:
 
 ```dart
 AdminDashboard(
   client: client,
   sidebarItemCustomizations: {
+    'orders': SidebarItemCustomization(icon: Icons.receipt_long),
     'posts': SidebarItemCustomization(
       label: 'Posts',
       icon: Icons.post_add,
@@ -539,7 +583,8 @@ AdminDashboard(
 This allows you to:
 
 - **Customize labels** – Change the display name for any resource
-- **Customize icons** – Use your own icons for better visual identification
+- **Customize icons** – Use your own icons for better visual identification,
+  also in the collapsed sidebar
 - **Keep it simple** – Only customize what you need, leave the rest default
 
 ### Full Customization
