@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.22
+
+- `AdminQuery.columns` (return only some columns) and `countTotal` (skip the
+  count); `AdminPage.total` is -1 when not counted.
+- Added `AdminTableSummary`, `AdminRelatedRows` and `AdminImportResult`, with
+  `overview`, `related`, `importRows`, `exportRows` and `matchingIds`.
+
 ## 1.0.21
 
 - Added `AdminFieldsetInfo` and `AdminResource.fieldsets`.

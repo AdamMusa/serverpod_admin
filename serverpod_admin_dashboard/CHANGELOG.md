@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.22
+
+- The overview loads in one request instead of two per table, and shows
+  large tables' estimates (≈ 1.2M).
+- A table's page asks for the columns it shows; names of related rows and
+  picker rows ask for the name column alone, uncounted; rows of one related
+  table are named in one request.
+- Details and edit forms load the row in full first, so a form always starts
+  from what is stored; a row deleted meanwhile says so.
+- The Related tab, imports (with the rows that failed), exports and "Select
+  all" each take one request; "Select all" reads only keys.
+- Saved views are read once per table, and forms no longer load 50 rows per
+  foreign key.
+
 ## 1.0.21
 
 - Links: the address names the open table, page, sort, search, filters or

@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.22
+
+Every endpoint call now makes a fixed number of queries, whatever the number
+of rows:
+
+- Pages are counted only when full, `AdminQuery.columns` returns (and, for
+  plain columns, reads) only the columns asked for, and auth users are read
+  only when their columns are shown. `countTotal: false` skips the count of
+  lookups.
+- Deleting, updating or running an action on selected rows reads them in
+  one query, deletes them with one `DELETE … RETURNING` and saves them with
+  one update (tables with their own `updateRow`/`deleteById` hooks still run
+  them per row), and records their history in one insert. A single deletion
+  takes two queries instead of four. The history reads the actor's name at
+  most every ten minutes.
+- Filters on `authUser.blocked` and `authUser.scopeNames` run as subqueries
+  instead of loading the table into memory.
+- Auth users and jobs are paged, filtered and looked up in the database
+  rather than loaded whole; `registerAuthUsers(options: ...)` sets their
+  options (newest first, without Add or Delete by default) and jobs are
+  listed next first. `listPage` reads its page in the database.
+- New endpoints: `overview` (every table's count and 30-day activity, in two
+  queries; tables over 100,000 rows are estimated), `related` (a record's
+  related rows from every table), `importRows`, `exportRows` (up to 50,000
+  rows in one query) and `matchingIds`.
+- The configurator runs once rather than on every request.
+- Deleting a row that is already gone succeeds; a delete hook's error is
+  reported with its message.
+
 ## 1.0.21
 
 - Fieldsets: `AdminOptions(fieldsets: [AdminFieldset(...)])` groups a table's

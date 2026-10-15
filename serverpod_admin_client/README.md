@@ -400,6 +400,31 @@ These need no setup in your server:
   a form already linked to the record, like Django's inlines. Each table's
   permissions apply.
 
+### Performance
+
+The dashboard asks only for what it shows, and every endpoint call makes a
+fixed number of database queries however many rows it touches:
+
+| Action | Queries |
+| --- | --- |
+| A page of a table | 1, plus a count when the page is full |
+| A page with only some columns shown | Reads those columns alone |
+| A row, the names of related rows, a picker | 1, never counted |
+| Filters on `authUser.*` values | A subquery, not the whole table |
+| Edit one row | 3 (read, save, history) |
+| Delete one row | 2 (delete returning the row, history) |
+| Delete, update or run an action on selected rows | 2–3 for any number of rows |
+| Import a spreadsheet | 1 request: one insert, one read, one save |
+| Export, "Select all" | 1 query (keys only for "Select all") |
+| Overview | 1 request: all counts in one query, all charts in another |
+| A record's Related tab | 1 request, one query per related table |
+
+Tables registered with their own `updateRow`, `deleteById` or `createRow`
+hooks still run them once per row, as they should. Tables with more than
+100,000 rows show an estimate on the overview instead of being counted. On
+large tables, index the `chartColumn` (such as `createdAt`) and, if staff
+search them often, the searched text columns (a `pg_trgm` GIN index).
+
 ### 3. Install the Prebuilt Dashboard
 
 From the same Serverpod server package directory:
