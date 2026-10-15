@@ -10,12 +10,17 @@ class DefaultCreateDialog extends StatefulWidget {
     required this.resource,
     required this.onSubmit,
     required this.controller,
+    this.presets = const {},
     super.key,
   });
 
   final AdminResource resource;
   final Future<bool> Function(Map<String, String> payload) onSubmit;
   final AdminDashboardController controller;
+
+  /// Values the new row starts with and keeps, such as its link to the
+  /// record it is added from.
+  final Map<String, String> presets;
 
   @override
   State<DefaultCreateDialog> createState() => _DefaultCreateDialogState();
@@ -31,6 +36,7 @@ class _DefaultCreateDialogState extends State<DefaultCreateDialog> {
     _formController = DialogFormController(
       resource: widget.resource,
       adminController: widget.controller,
+      presets: widget.presets,
     );
   }
 
@@ -49,7 +55,7 @@ class _DefaultCreateDialogState extends State<DefaultCreateDialog> {
     _formController.setSubmitting(true);
     _formController.setError(null);
 
-    final payload = _formController.buildPayload();
+    final payload = {..._formController.buildPayload(), ...widget.presets};
     final success = await widget.onSubmit(payload);
 
     if (!mounted) return;

@@ -14,12 +14,17 @@ class DialogFormController extends ChangeNotifier {
     required this.resource,
     required this.adminController,
     Map<String, String>? initialValues,
-  }) {
-    _initializeFields(initialValues);
+    Map<String, String> presets = const {},
+  }) : lockedFields = presets.keys.toSet() {
+    _initializeFields(initialValues, presets);
   }
 
   final AdminResource resource;
   final AdminDashboardController adminController;
+
+  /// Fields a new row starts with and keeps, such as its link to the record
+  /// it is added from; shown but not editable.
+  final Set<String> lockedFields;
 
   final Map<String, TextEditingController> _controllers = {};
   final Map<String, String> _isoValues = {};
@@ -59,19 +64,24 @@ class DialogFormController extends ChangeNotifier {
   bool get isSubmitting => _isSubmitting;
   String? get errorMessage => _errorMessage;
 
-  void _initializeFields(Map<String, String>? initialValues) {
+  void _initializeFields(
+    Map<String, String>? initialValues,
+    Map<String, String> presets,
+  ) {
     final isEditMode = initialValues != null;
     isEditing = isEditMode;
 
     for (final column in resource.columns) {
       if (column.isPrimary) continue;
 
-      final initialValue = isEditMode ? (initialValues[column.name] ?? '') : '';
+      final initialValue = isEditMode
+          ? (initialValues[column.name] ?? '')
+          : (presets[column.name] ?? '');
 
       if (DialogFormHelper.isBooleanType(column)) {
-        _booleanValues[column.name] = isEditMode
-            ? DialogFormHelper.parseBoolean(initialValue)
-            : false;
+        _booleanValues[column.name] = DialogFormHelper.parseBoolean(
+          initialValue,
+        );
       } else if (DialogFormHelper.isEnumType(column)) {
         _enumValues[column.name] = initialValue.isEmpty ? null : initialValue;
       } else if (DialogFormHelper.isChoiceType(column)) {
@@ -84,7 +94,7 @@ class DialogFormController extends ChangeNotifier {
             : initialValue;
         _loadForeignKeyOptions(column);
       } else if (DialogFormHelper.isDateType(column)) {
-        if (isEditMode && initialValue.isNotEmpty) {
+        if (initialValue.isNotEmpty) {
           _isoValues[column.name] = initialValue;
           _controllers[column.name] = TextEditingController(
             text: DialogFormHelper.formatDateValue(initialValue, column),

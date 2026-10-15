@@ -342,7 +342,24 @@ class AdminDashboardController extends ChangeNotifier {
       return await request(resource, _selected.toList());
     } finally {
       _selected.clear();
+      _revision++;
       await loadRecords(resource, showLoading: false);
+    }
+  }
+
+  /// Counts the changes made through the dashboard, so views of other
+  /// tables' rows (such as a record's related rows) read them again.
+  int get revision => _revision;
+  int _revision = 0;
+
+  /// Reloads [resource]'s rows after a change when it is the table shown;
+  /// otherwise views of its rows read them again through [revision].
+  Future<void> _changed(AdminResource resource) async {
+    _revision++;
+    if (resource.key == selectedResource?.key) {
+      await loadRecords(resource);
+    } else {
+      notifyListeners();
     }
   }
 
@@ -499,11 +516,12 @@ class AdminDashboardController extends ChangeNotifier {
   }
 
   /// Rows of other resources pointing at [record] through a foreign key:
-  /// up to [limit] of each, with how many there are.
+  /// up to [limit] of each, with how many there are; tables with rows
+  /// first.
   Future<List<RelatedRows>> relatedRecords(
     AdminResource resource,
     Map<String, String> record, {
-    int limit = 5,
+    int limit = 10,
   }) async {
     final id = resolvePrimaryKeyValue(resource, record);
     if (id == null) return const [];
@@ -544,6 +562,8 @@ class AdminDashboardController extends ChangeNotifier {
     return [
       for (final result in results)
         if (result != null && result.total > 0) result,
+      for (final result in results)
+        if (result != null && result.total == 0) result,
     ];
   }
 
@@ -797,7 +817,7 @@ class AdminDashboardController extends ChangeNotifier {
     Map<String, String> payload,
   ) async {
     await _write(() => adminEndpoint.create(resource.key, payload));
-    await loadRecords(resource);
+    await _changed(resource);
   }
 
   Future<void> updateRecord(
@@ -805,7 +825,7 @@ class AdminDashboardController extends ChangeNotifier {
     Map<String, String> payload,
   ) async {
     await _write(() => adminEndpoint.update(resource.key, payload));
-    await loadRecords(resource);
+    await _changed(resource);
 
     // Update details record if it's the same record being edited
     if (isShowingDetails &&
@@ -825,7 +845,7 @@ class AdminDashboardController extends ChangeNotifier {
 
   Future<void> deleteRecord(AdminResource resource, String id) async {
     await adminEndpoint.delete(resource.key, id);
-    await loadRecords(resource);
+    await _changed(resource);
   }
 
   Future<TabularImportResult> importRecords(
@@ -853,7 +873,7 @@ class AdminDashboardController extends ChangeNotifier {
       }
     }
 
-    await loadRecords(resource);
+    await _changed(resource);
     return TabularImportResult(
       created: created,
       updated: updated,

@@ -23,7 +23,9 @@ class DialogFormField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final field = _buildField(context);
-    final locked = column.readOnly == true && formController.isEditing;
+    final locked =
+        (column.readOnly == true && formController.isEditing) ||
+        formController.lockedFields.contains(column.name);
     final help = column.help;
     if (!locked && help == null) return field;
     final theme = Theme.of(context);

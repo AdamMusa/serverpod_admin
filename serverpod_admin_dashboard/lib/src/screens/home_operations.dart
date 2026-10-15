@@ -27,8 +27,12 @@ class HomeOperations {
   final DeleteDialogBuilder? customDeleteDialogBuilder;
   final CreateDialogBuilder? customCreateDialogBuilder;
 
-  /// Shows the create record dialog.
-  Future<void> showCreateDialog(AdminResource resource) async {
+  /// Shows the create record dialog. [presets] are values the new row
+  /// starts with and keeps, such as its link to the record it is added from.
+  Future<void> showCreateDialog(
+    AdminResource resource, {
+    Map<String, String> presets = const {},
+  }) async {
     if (customCreateDialogBuilder != null) {
       final created = await showDialog<bool>(
         context: context,
@@ -37,7 +41,7 @@ class HomeOperations {
           controller,
           this,
           resource,
-          (payload) => _createRecord(resource, payload),
+          (payload) => _createRecord(resource, {...payload, ...presets}),
         ),
       );
 
@@ -51,6 +55,7 @@ class HomeOperations {
         builder: (context) => DefaultCreateDialog(
           resource: resource,
           controller: controller,
+          presets: presets,
           onSubmit: (payload) => _createRecord(resource, payload),
         ),
       );

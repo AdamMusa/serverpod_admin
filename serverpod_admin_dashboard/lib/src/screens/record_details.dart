@@ -6,6 +6,7 @@ import 'package:serverpod_admin_dashboard/src/helpers/links.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/document/link_value.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/fieldset_section.dart';
 import 'package:serverpod_admin_dashboard/src/controller/admin_dashboard.dart';
+import 'package:serverpod_admin_dashboard/src/screens/home_operations.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/history/record_history.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/relations/foreign_key_value.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/relations/related_records.dart';
@@ -19,6 +20,7 @@ class RecordDetails extends StatelessWidget {
     this.onBack,
     this.showAppBar = true,
     this.controller,
+    this.operations,
   });
 
   final AdminResource resource;
@@ -31,6 +33,9 @@ class RecordDetails extends StatelessWidget {
   /// When given, foreign keys open their rows and tabs show related rows
   /// and the change history.
   final AdminDashboardController? controller;
+
+  /// When given, related rows are added, edited and deleted in place.
+  final HomeOperations? operations;
 
   @override
   Widget build(BuildContext context) {
@@ -195,6 +200,7 @@ class RecordDetails extends StatelessWidget {
   Widget _buildBody(BuildContext context, ThemeData theme) {
     final details = _buildDetailsTable(context, theme);
     final controller = this.controller;
+    final operations = this.operations;
     if (controller == null) return details;
     final id = controller.resolvePrimaryKeyValue(resource, record);
     return DefaultTabController(
@@ -221,6 +227,14 @@ class RecordDetails extends StatelessWidget {
                     controller: controller,
                     resource: resource,
                     record: record,
+                    onAdd: operations == null
+                        ? null
+                        : (related, presets) => operations.showCreateDialog(
+                            related,
+                            presets: presets,
+                          ),
+                    onEdit: operations?.showEditDialog,
+                    onDelete: operations?.showDeleteConfirmation,
                   ),
                 ),
                 SingleChildScrollView(

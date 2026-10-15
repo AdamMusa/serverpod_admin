@@ -143,7 +143,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Related'));
     await tester.pumpAndSettle();
-    expect(find.text('ride (1) · by passengerId'), findsOneWidget);
+    expect(find.text('ride (1)'), findsOneWidget);
+    expect(find.text('by passengerId'), findsOneWidget);
     expect(find.text('View all 1'), findsOneWidget);
   });
 

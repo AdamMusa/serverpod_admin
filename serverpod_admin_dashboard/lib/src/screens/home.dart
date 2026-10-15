@@ -147,6 +147,7 @@ class _HomeState extends State<Home> {
       record: detailsRecord,
       controller: widget.controller,
       showAppBar: false,
+      operations: operations,
       onBack: () => widget.controller.closeDetails(),
       onEdit: canEdit
           ? (record) {
