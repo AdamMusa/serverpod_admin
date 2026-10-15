@@ -13,7 +13,7 @@ class RecordsDataColumn {
         children: [
           const Icon(Icons.view_column_outlined, size: 16),
           const SizedBox(width: 8),
-          Text(column.name),
+          Tooltip(message: column.help ?? '', child: Text(column.displayName)),
         ],
       ),
       onSort: onSort == null ? null : (_, _) => onSort(),

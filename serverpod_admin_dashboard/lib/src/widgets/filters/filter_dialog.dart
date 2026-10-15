@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:serverpod_admin_client/serverpod_admin_client.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/filters.dart';
+import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart'
+    show AdminColumnDisplay, AdminResourceDisplay;
 
 /// Edits [current] filters of [resource]; returns the new filters, or null
 /// when cancelled.
@@ -57,6 +59,18 @@ class _FilterDialogState extends State<FilterDialog> {
 
   List<AdminColumn> get _columns => widget.resource.columns;
 
+  List<AdminColumn> get _dateColumns => [
+    for (final column in _columns)
+      if (filterKindOf(column) == FilterValueKind.date) column,
+  ];
+
+  /// The date column the quick ranges apply to: the charted one at first.
+  late AdminColumn? _dateColumn =
+      _dateColumns
+          .where((c) => c.name == widget.resource.chartColumn)
+          .firstOrNull ??
+      _dateColumns.firstOrNull;
+
   AdminColumn? _column(String name) =>
       _columns.where((c) => c.name == name).firstOrNull;
 
@@ -92,11 +106,63 @@ class _FilterDialogState extends State<FilterDialog> {
     });
   }
 
+  /// Replaces the filters on [column] with [shortcut]'s range.
+  void _applyShortcut(AdminColumn column, DateShortcut shortcut) {
+    setState(() {
+      // Also drops the blank row the dialog opens with.
+      final replaced = [
+        for (final draft in _drafts)
+          if (draft.column == column || !draft.complete) draft,
+      ];
+      for (final draft in replaced) {
+        _drafts.remove(draft);
+        draft.text.dispose();
+      }
+      final filter = shortcut.filter(column.name, DateTime.now());
+      _drafts.add(_Draft(column, filter.comparison, filter.value!));
+    });
+  }
+
+  Widget _shortcuts(BuildContext context, AdminColumn column) {
+    final theme = Theme.of(context);
+    final dates = _dateColumns;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          if (dates.length > 1)
+            DropdownButton<AdminColumn>(
+              value: column,
+              isDense: true,
+              items: [
+                for (final date in dates)
+                  DropdownMenuItem(value: date, child: Text(date.displayName)),
+              ],
+              onChanged: (date) {
+                if (date != null) setState(() => _dateColumn = date);
+              },
+            )
+          else
+            Text(column.displayName, style: theme.textTheme.labelLarge),
+          for (final shortcut in DateShortcut.values)
+            ActionChip(
+              label: Text(shortcut.label),
+              onPressed: () => _applyShortcut(column, shortcut),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final dateColumn = _dateColumn;
     final complete = _drafts.where((d) => d.complete).toList();
     return AlertDialog(
-      title: Text('Filter ${widget.resource.tableName}'),
+      title: Text('Filter ${widget.resource.displayName}'),
       content: SizedBox(
         width: 720,
         child: SingleChildScrollView(
@@ -104,6 +170,7 @@ class _FilterDialogState extends State<FilterDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (dateColumn != null) _shortcuts(context, dateColumn),
               for (final draft in _drafts) _row(context, draft),
               const SizedBox(height: 8),
               TextButton.icon(
@@ -152,7 +219,10 @@ class _FilterDialogState extends State<FilterDialog> {
               ),
               items: [
                 for (final column in _columns)
-                  DropdownMenuItem(value: column, child: Text(column.name)),
+                  DropdownMenuItem(
+                    value: column,
+                    child: Text(column.displayName),
+                  ),
               ],
               onChanged: (column) {
                 if (column != null) _setColumn(draft, column);

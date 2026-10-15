@@ -44,6 +44,7 @@ Future<void> _pump(
   Set<String> hidden = const {},
   Set<String> selected = const {},
   void Function(String)? onBulk,
+  bool addable = true,
 }) async {
   tester.view.physicalSize = const Size(1400, 900);
   tester.view.devicePixelRatio = 1;
@@ -65,7 +66,7 @@ Future<void> _pump(
                 ],
                 isLoading: false,
                 errorMessage: null,
-                onAdd: () {},
+                onAdd: addable ? () {} : null,
                 onEdit: (_) {},
                 onDelete: (_) {},
                 filters: filters,
@@ -105,6 +106,14 @@ void main() {
     await _pump(tester);
     expect(find.text('View PDF'), findsOneWidget);
     expect(find.text('1 record'), findsOneWidget);
+    expect(find.text('Add driver_profile'), findsOneWidget);
+  });
+
+  testWidgets('a table that cannot be created has no Add button', (
+    tester,
+  ) async {
+    await _pump(tester, addable: false);
+    expect(find.text('Add driver_profile'), findsNothing);
   });
 
   testWidgets('column headers sort and hidden columns stay out', (

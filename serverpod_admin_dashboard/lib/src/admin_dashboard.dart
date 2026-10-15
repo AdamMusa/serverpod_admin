@@ -145,6 +145,7 @@ class AdminDashboard extends StatefulWidget {
     this.customFooterBuilder,
     this.loginTitle,
     this.loginSubtitle,
+    this.staffScopes = const {},
   });
 
   final ServerpodClientShared client;
@@ -194,6 +195,12 @@ class AdminDashboard extends StatefulWidget {
   /// Login screen subtitle.
   final String? loginSubtitle;
 
+  /// Scope names, besides serverpod.admin, let in without asking the server.
+  /// Optional: other users are let in when the server's
+  /// AdminRegistry.staffScopes include one of theirs. The server decides
+  /// what each may do.
+  final Set<String> staffScopes;
+
   @override
   State<AdminDashboard> createState() => _AdminDashboardState();
 }
@@ -203,7 +210,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
       _resolveAdminEndpoint(widget.client);
 
   late final AuthController _authController =
-      AuthController(client: widget.client);
+      AuthController(
+        client: widget.client,
+        staffScopes: widget.staffScopes,
+        serverAccess: () async => (await _adminEndpoint.access()).allowed,
+      );
 
   late final AdminDashboardController _controller = AdminDashboardController(
     adminEndpoint: _adminEndpoint,

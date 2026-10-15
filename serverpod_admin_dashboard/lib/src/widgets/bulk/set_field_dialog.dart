@@ -69,7 +69,10 @@ class _SetFieldDialogState extends State<_SetFieldDialog> {
               ),
               items: [
                 for (final column in _columns)
-                  DropdownMenuItem(value: column, child: Text(column.name)),
+                  DropdownMenuItem(
+                    value: column,
+                    child: Text(column.displayName),
+                  ),
               ],
               onChanged: (column) => setState(() {
                 if (column == null) return;

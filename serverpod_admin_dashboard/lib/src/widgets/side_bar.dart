@@ -119,65 +119,91 @@ class Sidebar extends StatelessWidget {
       return _buildNoResourcesState(context);
     }
 
-    final theme = Theme.of(context);
     final overview = onOverview;
-    return ListView.builder(
-      itemCount: resources.length + (overview == null ? 0 : 1),
-      padding: EdgeInsets.zero,
-      itemBuilder: (context, position) {
-        if (overview != null && position == 0) {
-          return _overviewItem(context, overview);
-        }
-        final index = overview == null ? position : position - 1;
-        final resource = resources[index];
-        final isSelected = selectedResource?.key == resource.key;
-        final customization = itemCustomizations?[resource.key];
+    final items = <Widget>[
+      if (overview != null) _overviewItem(context, overview),
+      for (final resource in resources)
+        if (resource.group == null) _resourceItem(context, resource),
+      for (final MapEntry(key: group, value: members) in _groups().entries) ...[
+        _groupHeader(context, group),
+        for (final resource in members) _resourceItem(context, resource),
+      ],
+    ];
+    return ListView(padding: EdgeInsets.zero, children: items);
+  }
 
-        return InkWell(
-          onTap: () => onSelect(resource),
-          child: Container(
-            decoration: BoxDecoration(
+  /// Grouped resources by group, in the order groups first appear.
+  Map<String, List<AdminResource>> _groups() {
+    final groups = <String, List<AdminResource>>{};
+    for (final resource in resources) {
+      final group = resource.group;
+      if (group != null) (groups[group] ??= []).add(resource);
+    }
+    return groups;
+  }
+
+  Widget _groupHeader(BuildContext context, String group) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(19, 16, 16, 4),
+      child: Text(
+        group.toUpperCase(),
+        style: theme.textTheme.labelSmall?.copyWith(
+          letterSpacing: 0.8,
+          fontWeight: FontWeight.w600,
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
+
+  Widget _resourceItem(BuildContext context, AdminResource resource) {
+    final theme = Theme.of(context);
+    final isSelected = selectedResource?.key == resource.key;
+    final customization = itemCustomizations?[resource.key];
+
+    return InkWell(
+      onTap: () => onSelect(resource),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isSelected
+              ? theme.colorScheme.primary.withValues(alpha: 0.08)
+              : Colors.transparent,
+          border: Border(
+            left: BorderSide(
               color: isSelected
-                  ? theme.colorScheme.primary.withValues(alpha: 0.08)
+                  ? theme.colorScheme.primary
                   : Colors.transparent,
-              border: Border(
-                left: BorderSide(
-                  color: isSelected
-                      ? theme.colorScheme.primary
-                      : Colors.transparent,
-                  width: 3,
-                ),
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  _SidebarItemIcon(
-                    icon: customization?.icon,
-                    isSelected: isSelected,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      customization?.label ??
-                          _formatDefaultResourceLabel(resource.tableName),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.w400,
-                        color: isSelected
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.onSurface,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              width: 3,
             ),
           ),
-        );
-      },
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              _SidebarItemIcon(
+                icon: customization?.icon,
+                isSelected: isSelected,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  customization?.label ??
+                      resource.label ??
+                      _formatDefaultResourceLabel(resource.tableName),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    color: isSelected
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.onSurface,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

@@ -30,6 +30,9 @@ class DialogFormController extends ChangeNotifier {
   final Map<String, Set<String>> _choiceValues = {};
   final Map<String, bool> _obscurePasswordValues = {};
 
+  /// Editing an existing row (read-only columns are locked), not creating.
+  bool isEditing = false;
+
   bool _isSubmitting = false;
   String? _errorMessage;
 
@@ -48,6 +51,7 @@ class DialogFormController extends ChangeNotifier {
 
   void _initializeFields(Map<String, String>? initialValues) {
     final isEditMode = initialValues != null;
+    isEditing = isEditMode;
 
     for (final column in resource.columns) {
       if (column.isPrimary) continue;

@@ -22,6 +22,32 @@ class DialogFormField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final field = _buildField(context);
+    final locked = column.readOnly == true && formController.isEditing;
+    final help = column.help;
+    if (!locked && help == null) return field;
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        IgnorePointer(
+          ignoring: locked,
+          child: Opacity(opacity: locked ? 0.6 : 1, child: field),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          child: Text(
+            [if (locked) 'Read-only.', ?help].join(' '),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildField(BuildContext context) {
     final theme = Theme.of(context);
     final isDate = DialogFormHelper.isDateType(column);
     final isForeignKey = column.foreignKeyTable != null;
@@ -30,7 +56,9 @@ class DialogFormField extends StatelessWidget {
     final isChoice = DialogFormHelper.isChoiceType(column);
     final isPassword = DialogFormHelper.isPasswordField(column);
     final isNullable = column.isNullable == true;
-    final fieldLabel = isNullable ? '${column.name} (optional)' : column.name;
+    final fieldLabel = isNullable
+        ? '${column.displayName} (optional)'
+        : column.displayName;
 
     // Boolean checkbox
     if (isBoolean) {
@@ -66,7 +94,7 @@ class DialogFormField extends StatelessWidget {
                 labelText: fieldLabel,
                 hintText: isNullable
                     ? 'Optional — select a value'
-                    : 'Select ${column.name}',
+                    : 'Select ${column.displayName}',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -86,7 +114,7 @@ class DialogFormField extends StatelessWidget {
               },
               validator: (value) =>
                   !isNullable && (value == null || value.isEmpty)
-                  ? 'Please select ${column.name}'
+                  ? 'Please select ${column.displayName}'
                   : null,
             );
           },
@@ -124,11 +152,8 @@ class DialogFormField extends StatelessWidget {
                     FilterChip(
                       label: Text(option),
                       selected: selected.contains(option),
-                      onSelected: (value) => formController.setChoice(
-                        column.name,
-                        option,
-                        value,
-                      ),
+                      onSelected: (value) =>
+                          formController.setChoice(column.name, option, value),
                     ),
                 ],
               ),
@@ -183,7 +208,7 @@ class DialogFormField extends StatelessWidget {
                   ? 'Optional — leave empty'
                   : isDate
                   ? 'Tap to select date'
-                  : 'Enter ${column.name}',
+                  : 'Enter ${column.displayName}',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),

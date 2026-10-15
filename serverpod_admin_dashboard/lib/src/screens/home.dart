@@ -12,6 +12,8 @@ import 'package:serverpod_admin_dashboard/src/widgets/side_bar.dart';
 import 'package:serverpod_admin_client/serverpod_admin_client.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/records_body/records_body.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/overview/overview_view.dart';
+import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart'
+    show AdminResourceDisplay;
 
 class Home extends StatefulWidget {
   const Home({
@@ -136,6 +138,8 @@ class _HomeState extends State<Home> {
     }
 
     final canMutateDetails = _canMutateDetails(detailsResource, detailsRecord);
+    final canEdit = canMutateDetails && detailsResource.editable;
+    final canDelete = canMutateDetails && detailsResource.deletable;
 
     // Default implementation
     return RecordDetails(
@@ -144,12 +148,12 @@ class _HomeState extends State<Home> {
       controller: widget.controller,
       showAppBar: false,
       onBack: () => widget.controller.closeDetails(),
-      onEdit: canMutateDetails
+      onEdit: canEdit
           ? (record) {
               operations.showEditDialog(detailsResource, record);
             }
           : null,
-      onDelete: canMutateDetails
+      onDelete: canDelete
           ? (record) {
               operations.showDeleteConfirmation(detailsResource, record);
             }
@@ -222,6 +226,8 @@ class _HomeState extends State<Home> {
 
     // Default implementation
     final controller = widget.controller;
+    // Rows can be selected when something can be done with a selection.
+    final bulk = selectedResource.editable || selectedResource.deletable;
     return RecordsView(
       resource: selectedResource,
       records: controller.records,
@@ -244,19 +250,26 @@ class _HomeState extends State<Home> {
         totalRecords: controller.totalRecords,
         onPage: controller.goToPage,
         onRowsPerPage: controller.setRowsPerPage,
-        sortColumn: controller.sortColumn,
-        sortDescending: controller.sortDescending,
+        sortColumn: controller.sortColumn ?? selectedResource.sortColumn,
+        sortDescending: controller.sortColumn != null
+            ? controller.sortDescending
+            : selectedResource.sortDescending ?? false,
         onSort: controller.sortBy,
       ),
       selectedIds: controller.selectedIds,
-      onSelect: controller.toggleSelected,
-      onSelectPage: controller.selectPage,
+      onSelect: bulk ? controller.toggleSelected : null,
+      onSelectPage: bulk ? controller.selectPage : null,
       onSelectAllMatching: controller.selectAllMatching,
       onClearSelection: controller.clearSelection,
-      onDeleteSelected: () => operations.deleteSelected(selectedResource),
-      onSetField: () => operations.setFieldOnSelected(selectedResource),
-      onRunAction: (action) =>
-          operations.runActionOnSelected(selectedResource, action),
+      onDeleteSelected: selectedResource.deletable
+          ? () => operations.deleteSelected(selectedResource)
+          : null,
+      onSetField: selectedResource.editable
+          ? () => operations.setFieldOnSelected(selectedResource)
+          : null,
+      onRunAction: selectedResource.editable
+          ? (action) => operations.runActionOnSelected(selectedResource, action)
+          : null,
       loadForeignLabels: (column, ids) async {
         final related = controller.relatedResource(column);
         if (related == null) return const {};
@@ -266,16 +279,24 @@ class _HomeState extends State<Home> {
         final related = controller.relatedResource(column);
         if (related != null) controller.openRecord(related, id);
       },
-      onAdd: () => operations.showCreateDialog(selectedResource),
-      onImport: () => operations.importRecords(selectedResource),
+      onAdd: selectedResource.creatable
+          ? () => operations.showCreateDialog(selectedResource)
+          : null,
+      onImport: selectedResource.creatable && selectedResource.editable
+          ? () => operations.importRecords(selectedResource)
+          : null,
       // Exports every row matching the search and filters, not one page.
       onExport: (format) async {
         final rows = await controller.fetchAllMatching(selectedResource);
         await operations.exportRecords(selectedResource, rows, format);
       },
-      onEdit: (record) => operations.showEditDialog(selectedResource, record),
-      onDelete: (record) =>
-          operations.showDeleteConfirmation(selectedResource, record),
+      onEdit: selectedResource.editable
+          ? (record) => operations.showEditDialog(selectedResource, record)
+          : null,
+      onDelete: selectedResource.deletable
+          ? (record) =>
+                operations.showDeleteConfirmation(selectedResource, record)
+          : null,
       onView: (record) => operations.showDetailsPage(selectedResource, record),
     );
   }

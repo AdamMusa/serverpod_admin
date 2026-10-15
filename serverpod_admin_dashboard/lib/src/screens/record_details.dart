@@ -83,7 +83,7 @@ class RecordDetails extends StatelessWidget {
                         if (!showAppBar && onBack != null)
                           const SizedBox(width: 8),
                         Text(
-                          resource.tableName,
+                          resource.displayName,
                           style: theme.textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -150,7 +150,7 @@ class RecordDetails extends StatelessWidget {
     if (showAppBar) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('${resource.tableName} Details'),
+          title: Text('${resource.displayName} Details'),
           actions: [
             if (onEdit != null)
               IconButton(
@@ -304,7 +304,7 @@ class RecordDetails extends StatelessWidget {
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        column.name,
+                        column.displayName,
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w600,
                           color: isPrimary ? theme.colorScheme.primary : null,
@@ -361,7 +361,7 @@ class RecordDetails extends StatelessWidget {
                     child: LinkValue(
                       url: value!.trim(),
                       kind: kind,
-                      title: column.name,
+                      title: column.displayName,
                       large: true,
                     ),
                   ),

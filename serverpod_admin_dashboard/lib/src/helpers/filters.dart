@@ -78,7 +78,39 @@ String describeFilter(AdminFilter filter, AdminResource resource) {
       .firstOrNull;
   final kind = column == null ? FilterValueKind.text : filterKindOf(column);
   final label = operatorLabel(filter.comparison, kind);
+  final name = column?.label ?? filter.column;
   return needsValue(filter.comparison)
-      ? '${filter.column} $label ${filter.value ?? ''}'
-      : '${filter.column} $label';
+      ? '$name $label ${filter.value ?? ''}'
+      : '$name $label';
+}
+
+/// A quick date range offered by the filter dialog.
+enum DateShortcut {
+  today('Today'),
+  last7Days('Last 7 days'),
+  last30Days('Last 30 days'),
+  thisMonth('This month');
+
+  const DateShortcut(this.label);
+
+  final String label;
+
+  /// The first day of the range ending [now], as a date filter value.
+  String start(DateTime now) {
+    final today = DateTime(now.year, now.month, now.day);
+    final first = switch (this) {
+      DateShortcut.today => today,
+      DateShortcut.last7Days => DateTime(now.year, now.month, now.day - 6),
+      DateShortcut.last30Days => DateTime(now.year, now.month, now.day - 29),
+      DateShortcut.thisMonth => DateTime(now.year, now.month),
+    };
+    return first.toIso8601String().substring(0, 10);
+  }
+
+  /// The filter keeping [column]'s rows in the range ending [now].
+  AdminFilter filter(String column, DateTime now) => AdminFilter(
+    column: column,
+    comparison: AdminFilterOperator.greaterOrEqual,
+    value: start(now),
+  );
 }

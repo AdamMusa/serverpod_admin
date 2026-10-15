@@ -196,7 +196,7 @@ class _RecordsViewState extends State<RecordsView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          widget.resource!.tableName,
+          widget.resource!.displayName,
           style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
           ),
@@ -299,7 +299,8 @@ class _RecordsViewState extends State<RecordsView> {
             ),
           ],
         ),
-        _buildAddRecordButton(context, compact: compact),
+        if (widget.onAdd != null)
+          _buildAddRecordButton(context, compact: compact),
       ],
     );
   }
@@ -359,7 +360,7 @@ class _RecordsViewState extends State<RecordsView> {
   }
 
   Widget _buildAddRecordButton(BuildContext context, {bool compact = false}) {
-    final tableName = widget.resource!.tableName;
+    final tableName = widget.resource!.displayName;
     return FilledButton.icon(
       onPressed: widget.onAdd,
       icon: const Icon(Icons.add),

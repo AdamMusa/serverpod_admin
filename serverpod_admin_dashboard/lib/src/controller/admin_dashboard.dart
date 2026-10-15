@@ -68,10 +68,23 @@ class AdminDashboardController extends ChangeNotifier {
 
   /// Columns of [resource] hidden from the table (all stay in details).
   Set<String> hiddenColumns(AdminResource resource) =>
-      _hiddenColumns[resource.key] ?? const {};
+      _hiddenColumns[resource.key] ?? _defaultHidden(resource);
+
+  /// Columns left out at first: those not in the resource's listColumns.
+  static Set<String> _defaultHidden(AdminResource resource) {
+    final shown = resource.listColumns;
+    if (shown == null) return {};
+    return {
+      for (final column in resource.columns)
+        if (!shown.contains(column.name)) column.name,
+    };
+  }
 
   void toggleColumn(AdminResource resource, String column) {
-    final hidden = _hiddenColumns.putIfAbsent(resource.key, () => {});
+    final hidden = _hiddenColumns.putIfAbsent(
+      resource.key,
+      () => {..._defaultHidden(resource)},
+    );
     if (!hidden.remove(column)) hidden.add(column);
     notifyListeners();
   }
@@ -98,8 +111,13 @@ class AdminDashboardController extends ChangeNotifier {
 
   /// Sorts by [column]: ascending first, then descending on a second click.
   void sortBy(String column) {
+    final resource = selectedResource;
     if (_sortColumn == column) {
       _sortDescending = !_sortDescending;
+    } else if (_sortColumn == null && column == resource?.sortColumn) {
+      // The first click flips the resource's default order.
+      _sortColumn = column;
+      _sortDescending = !(resource?.sortDescending ?? false);
     } else {
       _sortColumn = column;
       _sortDescending = false;
@@ -207,6 +225,42 @@ class AdminDashboardController extends ChangeNotifier {
             .then((page) => counts[resource.key] = page.total)
             .catchError((Object _) => -1),
     ]);
+    return counts;
+  }
+
+  /// The key numbers the server registered, for the overview.
+  Future<List<admin_client.AdminMetricValue>> metrics() async {
+    try {
+      return await adminEndpoint.metrics();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// Rows added on each of the last [days] days (oldest first, today last),
+  /// or empty when [resource] has no date column to chart.
+  Future<List<int>> activity(
+    admin_client.AdminResource resource, {
+    int days = 30,
+  }) async {
+    if (resource.chartColumn == null) return const [];
+    final List<admin_client.AdminActivityPoint> points;
+    try {
+      points = await adminEndpoint.activity(resource.key, days);
+    } catch (_) {
+      return const [];
+    }
+    final now = DateTime.now().toUtc();
+    final today = DateTime.utc(now.year, now.month, now.day);
+    final counts = List.filled(days, 0);
+    for (final point in points) {
+      final day = point.day.toUtc();
+      final index =
+          days -
+          1 -
+          today.difference(DateTime.utc(day.year, day.month, day.day)).inDays;
+      if (index >= 0 && index < days) counts[index] += point.count;
+    }
     return counts;
   }
 

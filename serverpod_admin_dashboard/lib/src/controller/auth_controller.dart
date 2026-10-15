@@ -4,8 +4,21 @@ import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 /// Controller for managing authentication state and login form.
 /// Uses ChangeNotifier to avoid setState calls.
 class AuthController extends ChangeNotifier {
-  AuthController({required this.client})
-      : _isAuthenticated = _hasAdminScope(client.auth.authInfo);
+  AuthController({
+    required this.client,
+    this.staffScopes = const {},
+    this.serverAccess,
+  }) : _isAuthenticated = _hasAdminScope(client.auth.authInfo, staffScopes);
+
+  /// Scope names, besides serverpod.admin, that may sign in.
+  final Set<String> staffScopes;
+
+  /// Asks the server whether the signed-in user may open the dashboard, for
+  /// users holding neither serverpod.admin nor one of [staffScopes] (staff
+  /// roles the server grants with AdminRegistry.staffScopes).
+  final Future<bool> Function()? serverAccess;
+
+  Future<void>? _authenticating;
 
   final ServerpodClientShared client;
 
@@ -40,10 +53,10 @@ class AuthController extends ChangeNotifier {
         _errorMessage = null;
         notifyListeners();
       } else {
-        authenticate();
+        await authenticate();
       }
     } catch (_) {
-      _isAuthenticated = _hasAdminScope(client.auth.authInfo);
+      _isAuthenticated = _hasAdminScope(client.auth.authInfo, staffScopes);
       _isLoading = false;
       notifyListeners();
     }
@@ -70,7 +83,7 @@ class AuthController extends ChangeNotifier {
         client: client,
         startScreen: EmailFlowScreen.login,
         onAuthenticated: () {
-          authenticate();
+          _authenticating = authenticate();
         },
         onError: (error) {
           _errorMessage = loginErrorMessage(error);
@@ -81,6 +94,8 @@ class AuthController extends ChangeNotifier {
       controller.emailController.text = emailController.text;
       controller.passwordController.text = passwordController.text;
       await controller.login();
+      await _authenticating;
+      _authenticating = null;
 
       // authenticate() is called from onAuthenticated callback if successful
       // and it already handles setting _isLoading and notifying listeners
@@ -127,11 +142,13 @@ class AuthController extends ChangeNotifier {
     return 'Unable to sign in. Please try again.';
   }
 
-  /// Authenticates the user if they have the required admin scope.
+  /// Authenticates the user if they may open the dashboard: they hold the
+  /// admin scope or a staff scope, or the server says so.
   /// Called after successful email/password authentication.
-  void authenticate() {
+  Future<void> authenticate() async {
     final user = client.auth.authInfo;
-    if (_hasAdminScope(user)) {
+    if (_hasAdminScope(user, staffScopes) ||
+        (user != null && await _serverAllows())) {
       _isAuthenticated = true;
       _errorMessage = null;
       _isLoading = false;
@@ -141,6 +158,16 @@ class AuthController extends ChangeNotifier {
       _isAuthenticated = false;
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<bool> _serverAllows() async {
+    final ask = serverAccess;
+    if (ask == null) return false;
+    try {
+      return await ask();
+    } catch (_) {
+      return false;
     }
   }
 
@@ -171,6 +198,11 @@ class AuthController extends ChangeNotifier {
   }
 }
 
-bool _hasAdminScope(dynamic authInfo) {
-  return authInfo != null && authInfo.scopeNames.contains('serverpod.admin');
+/// Whether the signed-in user may open the dashboard: administrators, or
+/// staff holding one of [staffScopes].
+bool _hasAdminScope(dynamic authInfo, Set<String> staffScopes) {
+  if (authInfo == null) return false;
+  final Set<String> scopes = {...authInfo.scopeNames};
+  return scopes.contains('serverpod.admin') ||
+      scopes.intersection(staffScopes).isNotEmpty;
 }
