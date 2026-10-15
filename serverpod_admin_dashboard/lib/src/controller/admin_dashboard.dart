@@ -5,6 +5,7 @@ import 'package:serverpod_admin_client/serverpod_admin_client.dart'
     as admin_client;
 import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/tabular_data.dart';
+import 'package:serverpod_admin_dashboard/src/routing/admin_route.dart';
 
 /// Controller holding all shared admin dashboard state and behavior.
 class AdminDashboardController extends ChangeNotifier {
@@ -50,8 +51,9 @@ class AdminDashboardController extends ChangeNotifier {
 
   int _pageIndex = 0;
   int get pageIndex => _pageIndex;
-  int _rowsPerPage = 25;
+  int _rowsPerPage = defaultRowsPerPage;
   int get rowsPerPage => _rowsPerPage;
+  static const defaultRowsPerPage = 25;
   static const rowsPerPageOptions = [10, 25, 50, 100];
   int get pageCount =>
       totalRecords == 0 ? 1 : (totalRecords / _rowsPerPage).ceil();
@@ -92,12 +94,11 @@ class AdminDashboardController extends ChangeNotifier {
   void setSearchQuery(String query) {
     if (query == _searchQuery) return;
     _searchQuery = query;
+    // A new search starts on the first page.
+    _pageIndex = 0;
     notifyListeners();
     _searchDebounce?.cancel();
-    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
-      _pageIndex = 0;
-      _reloadSelected();
-    });
+    _searchDebounce = Timer(const Duration(milliseconds: 350), _reloadSelected);
   }
 
   void clearSearch() {
@@ -237,7 +238,7 @@ class AdminDashboardController extends ChangeNotifier {
       if ((view.search ?? '') == _searchQuery.trim() &&
           view.sortColumn == _sortColumn &&
           (view.sortColumn == null || view.sortDescending == _sortDescending) &&
-          _sameFilters(view.filters, _filters) &&
+          sameFilters(view.filters, _filters) &&
           viewShown.length == shown.length &&
           viewShown.containsAll(shown)) {
         return view;
@@ -253,21 +254,6 @@ class AdminDashboardController extends ChangeNotifier {
     for (final column in resource.columns)
       if (!hidden.contains(column.name)) column.name,
   };
-
-  static bool _sameFilters(
-    List<admin_client.AdminFilter> a,
-    List<admin_client.AdminFilter> b,
-  ) {
-    if (a.length != b.length) return false;
-    for (var i = 0; i < a.length; i++) {
-      if (a[i].column != b[i].column ||
-          a[i].comparison != b[i].comparison ||
-          (a[i].value ?? '') != (b[i].value ?? '')) {
-        return false;
-      }
-    }
-    return true;
-  }
 
   /// Shows [view]'s search, sort, filters and columns, from the first page.
   void applyView(admin_client.AdminSavedView view) {
@@ -593,8 +579,32 @@ class AdminDashboardController extends ChangeNotifier {
 
   /// Opens the row of [resource] with primary key [id].
   Future<void> openRecord(AdminResource resource, String id) async {
+    final row = await _findRow(resource, id);
+    if (row == null) return;
+    _showRecord(resource, row);
+  }
+
+  /// Shows [row] of [resource], whose rows are listed behind it.
+  void _showRecord(AdminResource resource, Map<String, String> row) {
+    if (selectedResource?.key == resource.key && !_showingOverview) {
+      openDetails(resource, row);
+      return;
+    }
+    // One change, so the browser's history gets one entry.
+    _select(resource);
+    detailsResource = resource;
+    detailsRecord = row;
+    notifyListeners();
+    unawaited(loadRecords(resource));
+  }
+
+  /// The row of [resource] with primary key [id], if there is one.
+  Future<Map<String, String>?> _findRow(
+    AdminResource resource,
+    String id,
+  ) async {
     final primary = resource.columns.where((c) => c.isPrimary).firstOrNull;
-    if (primary == null) return;
+    if (primary == null) return null;
     final page = await adminEndpoint.query(
       resource.key,
       admin_client.AdminQuery(
@@ -610,10 +620,130 @@ class AdminDashboardController extends ChangeNotifier {
         ],
       ),
     );
-    final row = page.rows.firstOrNull;
-    if (row == null) return;
-    if (selectedResource?.key != resource.key) await selectResource(resource);
-    openDetails(resource, row);
+    return page.rows.firstOrNull;
+  }
+
+  // Deep links: what is shown, as an address (see AdminRoute).
+  AdminRoute? _pendingRoute;
+  bool _replaceRoute = false;
+
+  /// What is shown as an address: the overview, a page of a table with its
+  /// search, sort and filters, or a record. While a route is applied (or
+  /// waits for the tables after signing in), that route.
+  AdminRoute get route {
+    final pending = _pendingRoute;
+    if (pending != null) return pending;
+    final details = detailsResource;
+    final record = detailsRecord;
+    if (details != null && record != null) {
+      final id = resolvePrimaryKeyValue(details, record);
+      if (id != null) return AdminRoute(resourceKey: details.key, recordId: id);
+    }
+    final resource = selectedResource;
+    if (resource == null || isShowingOverview) return AdminRoute.overview;
+    return AdminRoute(
+      resourceKey: resource.key,
+      page: _pageIndex,
+      rowsPerPage: _rowsPerPage == defaultRowsPerPage ? null : _rowsPerPage,
+      sortColumn: _sortColumn,
+      sortDescending: _sortColumn != null && _sortDescending,
+      search: _searchQuery.trim(),
+      filters: _filters,
+    );
+  }
+
+  /// Whether the last change of [route] corrected the address (a record
+  /// that is gone, a page past the last) rather than went somewhere new, so
+  /// Back skips it. Reading it resets it.
+  bool takeRouteReplace() {
+    final replace = _replaceRoute;
+    _replaceRoute = false;
+    return replace;
+  }
+
+  /// Shows [route], for example from a link or the browser's Back button.
+  /// Before the tables are known (while signing in), it is shown once they
+  /// load.
+  Future<void> applyRoute(AdminRoute route) async {
+    _pendingRoute = route;
+    if (resources.isEmpty) return;
+    await _applyPendingRoute();
+  }
+
+  Future<void> _applyPendingRoute() async {
+    final route = _pendingRoute;
+    if (route == null) return;
+    try {
+      await _showRoute(route);
+    } finally {
+      if (identical(_pendingRoute, route)) {
+        _pendingRoute = null;
+        if (this.route != route) _replaceRoute = true;
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<void> _showRoute(AdminRoute route) async {
+    final resource = resources
+        .where((r) => r.key == route.resourceKey)
+        .firstOrNull;
+    if (resource == null) {
+      showOverview();
+      return;
+    }
+    final id = route.recordId;
+    if (id != null) {
+      final details = detailsResource;
+      final record = detailsRecord;
+      if (details?.key == resource.key &&
+          record != null &&
+          resolvePrimaryKeyValue(resource, record) == id) {
+        return;
+      }
+      final row = await _findRow(resource, id).catchError((Object _) => null);
+      if (!identical(_pendingRoute, route)) return;
+      if (row != null) {
+        _showRecord(resource, row);
+        return;
+      }
+      // Gone: its table instead.
+      route = AdminRoute(resourceKey: resource.key);
+    }
+    final shown =
+        !isShowingOverview &&
+        selectedResource?.key == resource.key &&
+        _pageIndex == route.page &&
+        _rowsPerPage == (route.rowsPerPage ?? defaultRowsPerPage) &&
+        _sortColumn == route.sortColumn &&
+        (_sortColumn == null || _sortDescending == route.sortDescending) &&
+        _searchQuery.trim() == route.search &&
+        sameFilters(_filters, route.filters);
+    if (shown) {
+      // For example back from a record to its table.
+      closeDetails();
+      return;
+    }
+    if (selectedResource?.key == resource.key && !isShowingOverview) {
+      // The same table keeps its rows shown until the new ones arrive.
+      _searchDebounce?.cancel();
+      _selected.clear();
+      detailsResource = null;
+      detailsRecord = null;
+    } else {
+      _select(resource);
+    }
+    _searchQuery = route.search;
+    _sortColumn = route.sortColumn;
+    _sortDescending = route.sortColumn != null && route.sortDescending;
+    _filters = List.unmodifiable(route.filters);
+    _pageIndex = route.page;
+    final rows = route.rowsPerPage;
+    _rowsPerPage = rows != null && rowsPerPageOptions.contains(rows)
+        ? rows
+        : defaultRowsPerPage;
+    notifyListeners();
+    await loadRecords(resource);
   }
 
   /// Lists [resource] narrowed by [filters], for "view all" links.
@@ -621,13 +751,8 @@ class AdminDashboardController extends ChangeNotifier {
     AdminResource resource,
     List<admin_client.AdminFilter> filters,
   ) async {
-    _showSavedViewsOf(resource);
-    selectedResource = resource;
-    _showingOverview = false;
-    closeDetails();
-    _resetQuery();
+    _select(resource);
     _filters = List.unmodifiable(filters);
-    records = const [];
     notifyListeners();
     await loadRecords(resource);
   }
@@ -756,6 +881,11 @@ class AdminDashboardController extends ChangeNotifier {
       notifyListeners();
     }
 
+    // A link opened before signing in.
+    if (_pendingRoute != null && resources.isNotEmpty) {
+      await _applyPendingRoute();
+      return;
+    }
     final current = selectedResource;
     if (current != null && !_showingOverview) {
       await loadRecords(current);
@@ -766,15 +896,21 @@ class AdminDashboardController extends ChangeNotifier {
   }
 
   Future<void> selectResource(AdminResource resource) async {
+    _select(resource);
+    notifyListeners();
+    await loadRecords(resource);
+  }
+
+  /// Shows [resource]'s first page, unfiltered, without its details.
+  void _select(AdminResource resource) {
     _showSavedViewsOf(resource);
     selectedResource = resource;
     _showingOverview = false;
     _selected.clear();
-    closeDetails(); // Close details when changing resource
-    _resetQuery(); // A new table starts unfiltered on its first page
+    detailsResource = null;
+    detailsRecord = null;
+    _resetQuery();
     records = const [];
-    notifyListeners();
-    await loadRecords(resource);
   }
 
   Future<void> loadRecords(
@@ -808,6 +944,7 @@ class AdminDashboardController extends ChangeNotifier {
         // A filter or deletion can leave the page past the last one.
         if (records.isEmpty && totalRecords > 0 && _pageIndex > 0) {
           _pageIndex = pageCount - 1;
+          _replaceRoute = true;
           _isRecordsRefreshInFlight = false;
           return loadRecords(resource, showLoading: showLoading);
         }

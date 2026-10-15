@@ -4,6 +4,7 @@ import 'package:serverpod_admin_client/serverpod_admin_client.dart'
 import 'package:serverpod_admin_dashboard/src/controller/admin_dashboard.dart';
 import 'package:serverpod_admin_dashboard/src/controller/auth_controller.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
+import 'package:serverpod_admin_dashboard/src/routing/admin_router.dart';
 import 'package:serverpod_admin_dashboard/src/screens/home.dart';
 import 'package:serverpod_admin_dashboard/src/screens/home_operations.dart';
 import 'package:serverpod_admin_dashboard/src/screens/login_screen.dart';
@@ -155,6 +156,7 @@ class AdminDashboard extends StatefulWidget {
     this.loginTitle,
     this.loginSubtitle,
     this.staffScopes = const {},
+    this.deepLinks = true,
   });
 
   final ServerpodClientShared client;
@@ -210,6 +212,12 @@ class AdminDashboard extends StatefulWidget {
   /// what each may do.
   final Set<String> staffScopes;
 
+  /// Keeps the open table, record, page, sort, search and filters in the
+  /// address (for example `/admin/#/ride?status__exact=open&page=2`), so
+  /// links can be shared and the browser's Back button works. Turn it off
+  /// when the dashboard is part of an app that owns the address.
+  final bool deepLinks;
+
   @override
   State<AdminDashboard> createState() => _AdminDashboardState();
 }
@@ -232,8 +240,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   bool _isRestoringAuthentication = true;
 
+  late final AdminRouterDelegate _routerDelegate = AdminRouterDelegate(
+    controller: _controller,
+    builder: _buildContent,
+  );
+
   @override
   void dispose() {
+    if (widget.deepLinks) _routerDelegate.dispose();
     _authController.removeListener(_onAuthStateChanged);
     // Note: Don't dispose _authController here as it might be used elsewhere
     super.dispose();
@@ -352,44 +366,59 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return AnimatedBuilder(
       animation: Listenable.merge([_controller, _authController]),
       builder: (context, _) {
+        if (widget.deepLinks) {
+          return MaterialApp.router(
+            title: widget.title,
+            themeMode: _controller.themeMode,
+            theme: _lightTheme,
+            darkTheme: _darkTheme,
+            debugShowCheckedModeBanner: false,
+            routerDelegate: _routerDelegate,
+            routeInformationParser: const AdminRouteParser(),
+          );
+        }
         return MaterialApp(
           title: widget.title,
           themeMode: _controller.themeMode,
           theme: _lightTheme,
           darkTheme: _darkTheme,
           debugShowCheckedModeBanner: false,
-          home: _isRestoringAuthentication
-              ? const Scaffold(
-                  body: Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                )
-              : _authController.isAuthenticated
-                  ? Home(
-                      controller: _controller,
-                      title: widget.title,
-                      customSidebarBuilder: widget.customSidebarBuilder,
-                      sidebarItemCustomizations:
-                          widget.sidebarItemCustomizations,
-                      customBodyBuilder: widget.customBodyBuilder,
-                      customJobsBuilder: widget.customJobsBuilder,
-                      customDetailsBuilder: widget.customDetailsBuilder,
-                      customEditDialogBuilder: widget.customEditDialogBuilder,
-                      customDeleteDialogBuilder:
-                          widget.customDeleteDialogBuilder,
-                      customCreateDialogBuilder:
-                          widget.customCreateDialogBuilder,
-                      customFooterBuilder: widget.customFooterBuilder,
-                      client: widget.client,
-                      onLogout: _handleLogout,
-                    )
-                  : LoginScreen(
-                      authController: _authController,
-                      title: widget.loginTitle ?? 'Serverpod Admin',
-                      subtitle: widget.loginSubtitle,
-                    ),
+          home: Builder(builder: _buildContent),
         );
       },
+    );
+  }
+
+  /// The sign-in screen, or the dashboard once signed in.
+  Widget _buildContent(BuildContext context) {
+    if (_isRestoringAuthentication) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    if (!_authController.isAuthenticated) {
+      return LoginScreen(
+        authController: _authController,
+        title: widget.loginTitle ?? 'Serverpod Admin',
+        subtitle: widget.loginSubtitle,
+      );
+    }
+    return Home(
+      controller: _controller,
+      title: widget.title,
+      customSidebarBuilder: widget.customSidebarBuilder,
+      sidebarItemCustomizations: widget.sidebarItemCustomizations,
+      customBodyBuilder: widget.customBodyBuilder,
+      customJobsBuilder: widget.customJobsBuilder,
+      customDetailsBuilder: widget.customDetailsBuilder,
+      customEditDialogBuilder: widget.customEditDialogBuilder,
+      customDeleteDialogBuilder: widget.customDeleteDialogBuilder,
+      customCreateDialogBuilder: widget.customCreateDialogBuilder,
+      customFooterBuilder: widget.customFooterBuilder,
+      client: widget.client,
+      onLogout: _handleLogout,
     );
   }
 }
