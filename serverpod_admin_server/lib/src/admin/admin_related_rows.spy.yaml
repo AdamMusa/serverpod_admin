@@ -1,0 +1,10 @@
+### Rows of a table that point at a record through one of its foreign keys.
+class: AdminRelatedRows
+fields:
+  resourceKey: String
+  ### The foreign key column holding the record's id.
+  column: String
+  ### The first rows, with the columns asked for.
+  rows: List<Map<String, String>>
+  ### How many rows point at the record.
+  total: int

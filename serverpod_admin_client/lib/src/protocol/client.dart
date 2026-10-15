@@ -28,10 +28,12 @@ import 'package:serverpod_admin_client/src/protocol/admin/admin_query.dart'
     as _i9;
 import 'package:serverpod_admin_client/src/protocol/admin/admin_log_page.dart'
     as _i10;
-import 'package:serverpod_admin_client/src/protocol/admin/admin_saved_view.dart'
+import 'package:serverpod_admin_client/src/protocol/admin/admin_related_rows.dart'
     as _i11;
-import 'package:serverpod_admin_client/src/protocol/admin/admin_action_result.dart'
+import 'package:serverpod_admin_client/src/protocol/admin/admin_saved_view.dart'
     as _i12;
+import 'package:serverpod_admin_client/src/protocol/admin/admin_action_result.dart'
+    as _i13;
 
 /// {@category Endpoint}
 class EndpointAdmin extends _i1.EndpointRef {
@@ -230,9 +232,29 @@ class EndpointAdmin extends _i1.EndpointRef {
     },
   );
 
+  /// The rows of every table the user may see that point at the row [id]
+  /// of [resourceKey] through a foreign key: up to [limit] of each, with
+  /// how many there are, in one request. [columns] gives, by table, the
+  /// columns to return (all the user may see when not given).
+  _i2.Future<List<_i11.AdminRelatedRows>> related(
+    String resourceKey,
+    String id,
+    int limit,
+    Map<String, List<String>>? columns,
+  ) => caller.callServerEndpoint<List<_i11.AdminRelatedRows>>(
+    'serverpod_admin.admin',
+    'related',
+    {
+      'resourceKey': resourceKey,
+      'id': id,
+      'limit': limit,
+      'columns': columns,
+    },
+  );
+
   /// The signed-in user's saved views of [resourceKey], by name.
-  _i2.Future<List<_i11.AdminSavedView>> savedViews(String resourceKey) =>
-      caller.callServerEndpoint<List<_i11.AdminSavedView>>(
+  _i2.Future<List<_i12.AdminSavedView>> savedViews(String resourceKey) =>
+      caller.callServerEndpoint<List<_i12.AdminSavedView>>(
         'serverpod_admin.admin',
         'savedViews',
         {'resourceKey': resourceKey},
@@ -241,12 +263,12 @@ class EndpointAdmin extends _i1.EndpointRef {
   /// Saves [query]'s search, sort and filters and the shown [columns] (null
   /// for the table's defaults) as the signed-in user's view [name] of
   /// [resourceKey], replacing their view of that name. Paging is not saved.
-  _i2.Future<_i11.AdminSavedView> saveView(
+  _i2.Future<_i12.AdminSavedView> saveView(
     String resourceKey,
     String name,
     _i9.AdminQuery query,
     List<String>? columns,
-  ) => caller.callServerEndpoint<_i11.AdminSavedView>(
+  ) => caller.callServerEndpoint<_i12.AdminSavedView>(
     'serverpod_admin.admin',
     'saveView',
     {
@@ -268,10 +290,10 @@ class EndpointAdmin extends _i1.EndpointRef {
   /// Deletes the rows with [ids], in one query unless the table deletes
   /// rows its own way, and records each; rows that cannot be deleted are
   /// counted in the message.
-  _i2.Future<_i12.AdminActionResult> deleteMany(
+  _i2.Future<_i13.AdminActionResult> deleteMany(
     String resourceKey,
     List<String> ids,
-  ) => caller.callServerEndpoint<_i12.AdminActionResult>(
+  ) => caller.callServerEndpoint<_i13.AdminActionResult>(
     'serverpod_admin.admin',
     'deleteMany',
     {
@@ -284,11 +306,11 @@ class EndpointAdmin extends _i1.EndpointRef {
   /// every row with [ids], through the same validation as a single edit:
   /// the rows are read in one query and saved in one query unless the table
   /// saves rows its own way.
-  _i2.Future<_i12.AdminActionResult> updateMany(
+  _i2.Future<_i13.AdminActionResult> updateMany(
     String resourceKey,
     List<String> ids,
     Map<String, String> values,
-  ) => caller.callServerEndpoint<_i12.AdminActionResult>(
+  ) => caller.callServerEndpoint<_i13.AdminActionResult>(
     'serverpod_admin.admin',
     'updateMany',
     {
@@ -300,11 +322,11 @@ class EndpointAdmin extends _i1.EndpointRef {
 
   /// Runs the custom action [name] (registered with `actions:`) on the rows
   /// with [ids], and records it in each row's history.
-  _i2.Future<_i12.AdminActionResult> runAction(
+  _i2.Future<_i13.AdminActionResult> runAction(
     String resourceKey,
     String name,
     List<String> ids,
-  ) => caller.callServerEndpoint<_i12.AdminActionResult>(
+  ) => caller.callServerEndpoint<_i13.AdminActionResult>(
     'serverpod_admin.admin',
     'runAction',
     {

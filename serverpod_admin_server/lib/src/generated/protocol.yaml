@@ -16,6 +16,7 @@ admin:
   - update:
   - delete:
   - history:
+  - related:
   - savedViews:
   - saveView:
   - deleteView:

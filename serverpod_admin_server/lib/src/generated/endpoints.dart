@@ -380,6 +380,42 @@ class Endpoints extends _i1.EndpointDispatch {
                 params['limit'],
               ),
         ),
+        'related': _i1.MethodConnector(
+          name: 'related',
+          params: {
+            'resourceKey': _i1.ParameterDescription(
+              name: 'resourceKey',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'id': _i1.ParameterDescription(
+              name: 'id',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'limit': _i1.ParameterDescription(
+              name: 'limit',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'columns': _i1.ParameterDescription(
+              name: 'columns',
+              type: _i1.getType<Map<String, List<String>>?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint).related(
+                session,
+                params['resourceKey'],
+                params['id'],
+                params['limit'],
+                params['columns'],
+              ),
+        ),
         'savedViews': _i1.MethodConnector(
           name: 'savedViews',
           params: {

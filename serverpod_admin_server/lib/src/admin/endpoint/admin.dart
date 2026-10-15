@@ -25,7 +25,10 @@ import '../../../serverpod_admin_server.dart'
         AdminLogAction,
         AdminLogPage,
         AdminPage,
+        AdminFilter,
+        AdminFilterOperator,
         AdminQuery,
+        AdminRelatedRows,
         AdminResource,
         AdminSavedView,
         AdminTableSummary,
@@ -473,6 +476,54 @@ class AdminEndpoint extends Endpoint {
       offset: offset,
       limit: limit,
     );
+  }
+
+  /// The rows of every table the user may see that point at the row [id]
+  /// of [resourceKey] through a foreign key: up to [limit] of each, with
+  /// how many there are, in one request. [columns] gives, by table, the
+  /// columns to return (all the user may see when not given).
+  Future<List<AdminRelatedRows>> related(
+    Session session,
+    String resourceKey,
+    String id,
+    int limit,
+    Map<String, List<String>>? columns,
+  ) async {
+    final entry = _entryFor(session, resourceKey, AdminOperation.view);
+    final access = AdminAccess.of(session);
+    final links = [
+      for (final other in adminRegister())
+        if (access.can(other, AdminOperation.view))
+          for (final column in other.metadata.columns)
+            if (column.foreignKeyTable == entry.tableName) (other, column.name),
+    ];
+    return Future.wait([
+      for (final (other, column) in links)
+        query(
+          session,
+          other.resourceKey,
+          AdminQuery(
+            offset: 0,
+            limit: limit,
+            sortDescending: false,
+            filters: [
+              AdminFilter(
+                column: column,
+                comparison: AdminFilterOperator.equals,
+                value: id,
+              ),
+            ],
+            columns: columns?[other.resourceKey],
+          ),
+        ).then(
+          (page) => AdminRelatedRows(
+            resourceKey: other.resourceKey,
+            column: column,
+            rows: page.rows,
+            total: page.total,
+          ),
+        ),
+    ]);
   }
 
   /// The signed-in user's saved views of [resourceKey], by name.

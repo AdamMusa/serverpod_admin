@@ -441,6 +441,32 @@ void main() {
       expect((profiles.count, profiles.estimated), (6, false));
     });
 
+    test('a record\'s related rows come in one request', () async {
+      final user = '${profiles[3].authUserId}';
+      final (related, queries) = await measure(
+        () => endpoints.admin.related(
+          admin,
+          'serverpod_auth_core_user',
+          user,
+          10,
+          {
+            'profiles': ['fullName'],
+          },
+        ),
+      );
+      // One query per table pointing at users, no count for a short list.
+      expect(queries, 1, reason: '${QueryCounter.calls}');
+      final profilesOfUser = related.singleWhere(
+        (r) => r.resourceKey == 'profiles',
+      );
+      expect(profilesOfUser.column, 'authUserId');
+      expect(profilesOfUser.total, 1);
+      expect(profilesOfUser.rows.single, {
+        'id': '${profiles[3].id}',
+        'fullName': 'User 3',
+      });
+    });
+
     test('a list page is read in the database', () async {
       final (rows, queries) = await measure(
         () => endpoints.admin.listPage(admin, 'counters', 5, 5),
