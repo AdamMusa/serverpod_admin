@@ -20,8 +20,10 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
     String? authUserColumn,
     bool queryable = false,
     List<AdminAction<T>> actions = const [],
+    AdminOptions options = const AdminOptions(),
     T Function(Session session, T row)? present,
-  }) : _actions = actions,
+  }) : _options = options,
+       _actions = actions,
        _queryable = queryable,
        _present = present,
        _choices = choices,
@@ -47,6 +49,10 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
   final String? _authUserColumn;
   final bool _queryable;
   final List<AdminAction<T>> _actions;
+  final AdminOptions _options;
+
+  @override
+  AdminOptions get options => _options;
   final T Function(Session session, T row)? _present;
   List<AdminColumn>? _adminColumns;
   AdminResource? _metadataCache;
@@ -67,12 +73,57 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
   List<Column> get columns => _resolvedTable.columns;
 
   @override
-  AdminResource get metadata => _metadataCache ??= AdminResource(
-    key: resourceKey,
-    tableName: tableName,
-    columns: [..._resolvedAdminColumns, ...?authUserLink?.columns],
-    actions: _actions.isEmpty ? null : actionInfos,
-  );
+  AdminResource get metadata => _metadataCache ??= _buildMetadata();
+
+  AdminResource _buildMetadata() {
+    final columns = [
+      for (final column in [
+        ..._resolvedAdminColumns,
+        ...?authUserLink?.columns,
+      ])
+        if (!_options.hidden.contains(column.name))
+          column.copyWith(
+            label: _options.labels[column.name],
+            help: _options.help[column.name],
+            readOnly: _options.readOnly.contains(column.name) ? true : null,
+          ),
+    ];
+    return AdminResource(
+      key: resourceKey,
+      tableName: tableName,
+      columns: columns,
+      actions: _actions.isEmpty ? null : actionInfos,
+      label: _options.label,
+      group: _options.group,
+      listColumns: _options.listColumns,
+      sortColumn: _options.ordering,
+      sortDescending: _options.ordering == null ? null : _options.descending,
+      canCreate: _options.canCreate ? null : false,
+      canEdit: _options.canEdit ? null : false,
+      canDelete: _options.canDelete ? null : false,
+      chartColumn: _options.chartColumn ?? _detectChartColumn(columns),
+    );
+  }
+
+  static const _chartNames = [
+    'createdAt',
+    'requestedAt',
+    'insertedAt',
+    'addedAt',
+    'addedTime',
+    'created',
+    'time',
+  ];
+
+  static String? _detectChartColumn(List<AdminColumn> columns) {
+    for (final name in _chartNames) {
+      final column = columns.where((c) => c.name == name).firstOrNull;
+      if (column != null && column.dataType.toLowerCase().contains('date')) {
+        return name;
+      }
+    }
+    return null;
+  }
 
   @override
   List<AdminActionInfo> get actionInfos => [
@@ -110,7 +161,14 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
     AdminQuery query,
   ) async {
     if (!_queryable) return null;
-    final sql = AdminSqlQuery.build(_resolvedTable, metadata.columns, query);
+    final sql = AdminSqlQuery.build(
+      _resolvedTable,
+      metadata.columns,
+      query,
+      searchColumns: _options.searchColumns,
+      defaultSort: _options.ordering,
+      defaultDescending: _options.ordering == null || _options.descending,
+    );
     if (sql == null) return null;
     // ignore: invalid_use_of_internal_member
     final rows = await session.db.find<T>(

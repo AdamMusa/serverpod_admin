@@ -1,0 +1,5 @@
+### How many rows a table gained on one day, for overview charts.
+class: AdminActivityPoint
+fields:
+  day: DateTime
+  count: int

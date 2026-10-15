@@ -5,3 +5,18 @@ fields:
   columns: List<AdminColumn>
   ### Custom actions for selected rows.
   actions: List<AdminActionInfo>?
+  ### Shown in place of the table name.
+  label: String?
+  ### Groups resources in the sidebar.
+  group: String?
+  ### Columns shown in the table at first; the others can be turned on.
+  listColumns: List<String>?
+  ### The default sort, when the administrator has not chosen one.
+  sortColumn: String?
+  sortDescending: bool?
+  ### What the signed-in administrator may do here (null means allowed).
+  canCreate: bool?
+  canEdit: bool?
+  canDelete: bool?
+  ### A date column whose daily counts the overview charts.
+  chartColumn: String?

@@ -12,3 +12,9 @@ fields:
   ### The values a list or set column may hold (for example permission
   ### scopes); the dashboard edits them with a multi-select.
   choices: List<String>?
+  ### Shown in place of the column name.
+  label: String?
+  ### Explains the column in forms and details.
+  help: String?
+  ### Shown but not editable.
+  readOnly: bool?

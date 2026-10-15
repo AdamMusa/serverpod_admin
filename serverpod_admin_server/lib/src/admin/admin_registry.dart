@@ -3,6 +3,7 @@ import 'package:serverpod/protocol.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     show AuthUser;
 import 'package:serverpod_admin_server/src/admin/admin_action.dart';
+import 'package:serverpod_admin_server/src/admin/admin_options.dart';
 import 'package:serverpod_admin_server/src/admin/admin_auth_user_link.dart';
 import 'package:serverpod_admin_server/src/admin/admin_entry.dart';
 import 'package:serverpod_admin_server/src/admin/admin_entry_base.dart';
@@ -25,6 +26,28 @@ class AdminRegistry {
   final Map<Type, List<String>> _enumValues = {};
   List<String> _authScopeNames = [Scope.admin.name!];
 
+  /// Scopes, besides Scope.admin, that may sign in to the dashboard. What
+  /// each may do is set per table with [AdminOptions.permissions]; give the
+  /// same scopes to the dashboard's `staffScopes`.
+  Set<Scope> staffScopes = {};
+
+  final List<AdminMetric> _metrics = [];
+
+  /// Key numbers shown on the overview.
+  List<AdminMetric> get metrics => List.unmodifiable(_metrics);
+
+  /// Adds a key number to the overview, such as "Orders today". A metric
+  /// with the same label is replaced, as the configurator runs again on
+  /// each [adminRegister].
+  void registerMetric(AdminMetric metric) {
+    final index = _metrics.indexWhere((m) => m.label == metric.label);
+    if (index == -1) {
+      _metrics.add(metric);
+    } else {
+      _metrics[index] = metric;
+    }
+  }
+
   /// How long the change history keeps entries; null keeps them forever.
   /// Set it when rows hold personal data you promise to erase.
   Duration? historyRetention;
@@ -39,6 +62,8 @@ class AdminRegistry {
   /// a relation to `serverpod_auth_core_user`) show that user's
   /// `authUser.scopeNames` and `authUser.blocked`, saved to the auth user.
   /// Name the column with [authUserColumn] when it is detected otherwise.
+  /// [options] sets how the table appears and who may change it (see
+  /// [AdminOptions]).
   /// [actions] are custom actions administrators run on selected rows.
   /// [present] adjusts each row read for the dashboard (for example to add a
   /// signed preview link) while paging, sorting and filtering still run in
@@ -60,6 +85,7 @@ class AdminRegistry {
     String? authUserColumn,
     T Function(Session session, T row)? present,
     List<AdminAction<T>> actions = const [],
+    AdminOptions options = const AdminOptions(),
   }) {
     final type = T;
     if (_entries.containsKey(type)) return;
@@ -84,6 +110,7 @@ class AdminRegistry {
       queryable: listRows == null,
       present: present,
       actions: actions,
+      options: options,
       // ignore: invalid_use_of_internal_member
       createRow: createRow ?? (session, row) => session.db.insertRow<T>(row),
       // ignore: invalid_use_of_internal_member
@@ -246,5 +273,7 @@ class AdminRegistry {
     _enumValues.clear();
     _authScopeNames = [Scope.admin.name!];
     historyRetention = null;
+    staffScopes = {};
+    _metrics.clear();
   }
 }

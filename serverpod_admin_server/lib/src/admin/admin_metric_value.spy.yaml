@@ -1,0 +1,7 @@
+### A key number on the overview, such as "Rides today".
+class: AdminMetricValue
+fields:
+  label: String
+  value: String
+  ### A short explanation or comparison.
+  hint: String?

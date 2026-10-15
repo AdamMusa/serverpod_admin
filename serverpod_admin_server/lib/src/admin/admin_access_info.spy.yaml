@@ -1,0 +1,7 @@
+### What the signed-in user may do in the dashboard.
+class: AdminAccessInfo
+fields:
+  ### May open the dashboard at all.
+  allowed: bool
+  ### Has the admin scope: may do everything.
+  admin: bool

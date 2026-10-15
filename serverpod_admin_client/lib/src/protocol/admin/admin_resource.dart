@@ -22,6 +22,15 @@ abstract class AdminResource
     required this.tableName,
     required this.columns,
     this.actions,
+    this.label,
+    this.group,
+    this.listColumns,
+    this.sortColumn,
+    this.sortDescending,
+    this.canCreate,
+    this.canEdit,
+    this.canDelete,
+    this.chartColumn,
   });
 
   factory AdminResource({
@@ -29,6 +38,15 @@ abstract class AdminResource
     required String tableName,
     required List<_i2.AdminColumn> columns,
     List<_i3.AdminActionInfo>? actions,
+    String? label,
+    String? group,
+    List<String>? listColumns,
+    String? sortColumn,
+    bool? sortDescending,
+    bool? canCreate,
+    bool? canEdit,
+    bool? canDelete,
+    String? chartColumn,
   }) = _AdminResourceImpl;
 
   factory AdminResource.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -43,6 +61,27 @@ abstract class AdminResource
           : _i4.Protocol().deserialize<List<_i3.AdminActionInfo>>(
               jsonSerialization['actions'],
             ),
+      label: jsonSerialization['label'] as String?,
+      group: jsonSerialization['group'] as String?,
+      listColumns: jsonSerialization['listColumns'] == null
+          ? null
+          : _i4.Protocol().deserialize<List<String>>(
+              jsonSerialization['listColumns'],
+            ),
+      sortColumn: jsonSerialization['sortColumn'] as String?,
+      sortDescending: jsonSerialization['sortDescending'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['sortDescending']),
+      canCreate: jsonSerialization['canCreate'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['canCreate']),
+      canEdit: jsonSerialization['canEdit'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['canEdit']),
+      canDelete: jsonSerialization['canDelete'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['canDelete']),
+      chartColumn: jsonSerialization['chartColumn'] as String?,
     );
   }
 
@@ -55,6 +94,30 @@ abstract class AdminResource
   /// Custom actions for selected rows.
   List<_i3.AdminActionInfo>? actions;
 
+  /// Shown in place of the table name.
+  String? label;
+
+  /// Groups resources in the sidebar.
+  String? group;
+
+  /// Columns shown in the table at first; the others can be turned on.
+  List<String>? listColumns;
+
+  /// The default sort, when the administrator has not chosen one.
+  String? sortColumn;
+
+  bool? sortDescending;
+
+  /// What the signed-in administrator may do here (null means allowed).
+  bool? canCreate;
+
+  bool? canEdit;
+
+  bool? canDelete;
+
+  /// A date column whose daily counts the overview charts.
+  String? chartColumn;
+
   /// Returns a shallow copy of this [AdminResource]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -63,6 +126,15 @@ abstract class AdminResource
     String? tableName,
     List<_i2.AdminColumn>? columns,
     List<_i3.AdminActionInfo>? actions,
+    String? label,
+    String? group,
+    List<String>? listColumns,
+    String? sortColumn,
+    bool? sortDescending,
+    bool? canCreate,
+    bool? canEdit,
+    bool? canDelete,
+    String? chartColumn,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -73,6 +145,15 @@ abstract class AdminResource
       'columns': columns.toJson(valueToJson: (v) => v.toJson()),
       if (actions != null)
         'actions': actions?.toJson(valueToJson: (v) => v.toJson()),
+      if (label != null) 'label': label,
+      if (group != null) 'group': group,
+      if (listColumns != null) 'listColumns': listColumns?.toJson(),
+      if (sortColumn != null) 'sortColumn': sortColumn,
+      if (sortDescending != null) 'sortDescending': sortDescending,
+      if (canCreate != null) 'canCreate': canCreate,
+      if (canEdit != null) 'canEdit': canEdit,
+      if (canDelete != null) 'canDelete': canDelete,
+      if (chartColumn != null) 'chartColumn': chartColumn,
     };
   }
 
@@ -85,6 +166,15 @@ abstract class AdminResource
       'columns': columns.toJson(valueToJson: (v) => v.toJsonForProtocol()),
       if (actions != null)
         'actions': actions?.toJson(valueToJson: (v) => v.toJsonForProtocol()),
+      if (label != null) 'label': label,
+      if (group != null) 'group': group,
+      if (listColumns != null) 'listColumns': listColumns?.toJson(),
+      if (sortColumn != null) 'sortColumn': sortColumn,
+      if (sortDescending != null) 'sortDescending': sortDescending,
+      if (canCreate != null) 'canCreate': canCreate,
+      if (canEdit != null) 'canEdit': canEdit,
+      if (canDelete != null) 'canDelete': canDelete,
+      if (chartColumn != null) 'chartColumn': chartColumn,
     };
   }
 
@@ -102,11 +192,29 @@ class _AdminResourceImpl extends AdminResource {
     required String tableName,
     required List<_i2.AdminColumn> columns,
     List<_i3.AdminActionInfo>? actions,
+    String? label,
+    String? group,
+    List<String>? listColumns,
+    String? sortColumn,
+    bool? sortDescending,
+    bool? canCreate,
+    bool? canEdit,
+    bool? canDelete,
+    String? chartColumn,
   }) : super._(
          key: key,
          tableName: tableName,
          columns: columns,
          actions: actions,
+         label: label,
+         group: group,
+         listColumns: listColumns,
+         sortColumn: sortColumn,
+         sortDescending: sortDescending,
+         canCreate: canCreate,
+         canEdit: canEdit,
+         canDelete: canDelete,
+         chartColumn: chartColumn,
        );
 
   /// Returns a shallow copy of this [AdminResource]
@@ -118,6 +226,15 @@ class _AdminResourceImpl extends AdminResource {
     String? tableName,
     List<_i2.AdminColumn>? columns,
     Object? actions = _Undefined,
+    Object? label = _Undefined,
+    Object? group = _Undefined,
+    Object? listColumns = _Undefined,
+    Object? sortColumn = _Undefined,
+    Object? sortDescending = _Undefined,
+    Object? canCreate = _Undefined,
+    Object? canEdit = _Undefined,
+    Object? canDelete = _Undefined,
+    Object? chartColumn = _Undefined,
   }) {
     return AdminResource(
       key: key ?? this.key,
@@ -126,6 +243,19 @@ class _AdminResourceImpl extends AdminResource {
       actions: actions is List<_i3.AdminActionInfo>?
           ? actions
           : this.actions?.map((e0) => e0.copyWith()).toList(),
+      label: label is String? ? label : this.label,
+      group: group is String? ? group : this.group,
+      listColumns: listColumns is List<String>?
+          ? listColumns
+          : this.listColumns?.map((e0) => e0).toList(),
+      sortColumn: sortColumn is String? ? sortColumn : this.sortColumn,
+      sortDescending: sortDescending is bool?
+          ? sortDescending
+          : this.sortDescending,
+      canCreate: canCreate is bool? ? canCreate : this.canCreate,
+      canEdit: canEdit is bool? ? canEdit : this.canEdit,
+      canDelete: canDelete is bool? ? canDelete : this.canDelete,
+      chartColumn: chartColumn is String? ? chartColumn : this.chartColumn,
     );
   }
 }

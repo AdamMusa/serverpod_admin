@@ -4,6 +4,7 @@ import 'package:serverpod/serverpod.dart';
 import 'package:serverpod/protocol.dart' show SessionLogEntry;
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
+import 'package:serverpod_admin_server/src/admin/admin_access.dart';
 import 'package:serverpod_admin_server/src/admin/admin_entry_base.dart';
 import 'package:serverpod_admin_server/src/admin/admin_history.dart';
 import 'package:serverpod_admin_server/src/admin/admin_query_engine.dart';
@@ -13,6 +14,9 @@ import '../../admin/admin.dart';
 import '../admin_registry.dart';
 import '../../../serverpod_admin_server.dart'
     show
+        AdminAccessInfo,
+        AdminActivityPoint,
+        AdminMetricValue,
         AdminActionResult,
         AdminLogAction,
         AdminLogPage,
@@ -38,21 +42,125 @@ class AdminEndpoint extends Endpoint {
     return entry;
   }
 
-  /// Checks if the authenticated user has admin permissions (isSuperuser or isStaff).
-  /// Throws an exception if the user doesn't have permissions.
+  /// Signing in is required; what the user may do is checked in each
+  /// method (see [AdminAccess]): administrators everything, staff what
+  /// tables grant their scopes.
   @override
-  Set<Scope> get requiredScopes => {Scope.admin};
+  Set<Scope> get requiredScopes => const {};
 
+  /// Resolves [resourceKey] after checking the user may [operation] it.
+  AdminEntryBase _entryFor(
+    Session session,
+    String resourceKey,
+    AdminOperation operation,
+  ) {
+    final access = AdminAccess.of(session)..requireAllowed();
+    final entry = _resolve(resourceKey);
+    access.require(entry, operation);
+    return entry;
+  }
+
+  /// What the signed-in user may do; never refused, so the dashboard can
+  /// explain a missing role.
+  Future<AdminAccessInfo> access(Session session) async {
+    final access = AdminAccess.of(session);
+    return AdminAccessInfo(allowed: access.allowed, admin: access.admin);
+  }
+
+  /// The tables the user may see, each saying whether they may create, edit
+  /// and delete rows.
   Future<List<AdminResource>> resources(Session session) async {
     adminRegister();
-    return _registry.registeredResourceMetadata;
+    final access = AdminAccess.of(session)..requireAllowed();
+    final resources = <AdminResource>[];
+    for (final entry in _registry.registeredEntries) {
+      try {
+        if (!access.can(entry, AdminOperation.view)) continue;
+        bool? allows(AdminOperation operation) =>
+            access.can(entry, operation) ? null : false;
+        resources.add(
+          entry.metadata.copyWith(
+            canCreate: allows(AdminOperation.create),
+            canEdit: allows(AdminOperation.edit),
+            canDelete: allows(AdminOperation.delete),
+          ),
+        );
+      } catch (error, stackTrace) {
+        session.log(
+          'serverpod_admin: no metadata for ${entry.type} ($error)',
+          level: LogLevel.error,
+          stackTrace: stackTrace,
+        );
+      }
+    }
+    return resources;
+  }
+
+  /// Key numbers for the overview the user may see; a metric that fails
+  /// shows "—".
+  Future<List<AdminMetricValue>> metrics(Session session) async {
+    final access = AdminAccess.of(session)..requireAllowed();
+    return Future.wait([
+      for (final metric in _registry.metrics)
+        if (access.sees(metric))
+          metric
+              .compute(session)
+              .timeout(const Duration(seconds: 10))
+              .then(
+                (value) => AdminMetricValue(
+                  label: metric.label,
+                  value: value,
+                  hint: metric.hint,
+                ),
+              )
+              .catchError(
+                (Object _) => AdminMetricValue(
+                  label: metric.label,
+                  value: '—',
+                  hint: metric.hint,
+                ),
+              ),
+    ]);
+  }
+
+  /// Rows added per day over the last [days] days, by the resource's
+  /// chart column, for the overview.
+  Future<List<AdminActivityPoint>> activity(
+    Session session,
+    String resourceKey,
+    int days,
+  ) async {
+    final entry = _entryFor(session, resourceKey, AdminOperation.view);
+    final name = entry.metadata.chartColumn;
+    final column = entry.columns
+        .where((c) => c.columnName == name && c is ColumnDateTime)
+        .firstOrNull;
+    if (column == null) return const [];
+    String quoted(String identifier) => '"${identifier.replaceAll('"', '""')}"';
+    final rows = await session.db.unsafeQuery(
+      'SELECT date_trunc(\'day\', ${quoted(column.columnName)}) AS day, '
+      'count(*) FROM ${quoted(entry.tableName)} '
+      'WHERE ${quoted(column.columnName)} >= '
+      'now() - make_interval(days => @days) '
+      'GROUP BY 1 ORDER BY 1',
+      parameters: QueryParameters.named({'days': days.clamp(1, 366)}),
+    );
+    return [
+      for (final row in rows)
+        AdminActivityPoint(
+          day: (row[0] as DateTime).toUtc(),
+          count: row[1] as int,
+        ),
+    ];
   }
 
   Future<Map<String, String>> currentUserProfile(Session session) async {
+    AdminAccess.of(session).requireAllowed();
     return _profileToMap(await _findOrCreateCurrentProfile(session));
   }
 
   Future<List<Map<String, String>>> futureCallHistory(Session session) async {
+    AdminAccess.of(session).requireAdmin();
     final entries = await SessionLogEntry.db.find(
       session,
       where: (table) => table.endpoint.equals('FutureCall'),
@@ -68,6 +176,7 @@ class AdminEndpoint extends Endpoint {
     String userName,
     String fullName,
   ) async {
+    AdminAccess.of(session).requireAllowed();
     final authUserId = session.authenticated!.authUserId;
     final profiles = AuthServices.instance.userProfiles;
 
@@ -90,6 +199,7 @@ class AdminEndpoint extends Endpoint {
     String currentPassword,
     String newPassword,
   ) async {
+    AdminAccess.of(session).requireAllowed();
     if (currentPassword.isEmpty || newPassword.isEmpty) {
       throw ArgumentError('Current password and new password are required.');
     }
@@ -127,9 +237,9 @@ class AdminEndpoint extends Endpoint {
     Session session,
     String resourceKey,
   ) async {
-    final entry = _resolve(resourceKey);
+    final entry = _entryFor(session, resourceKey, AdminOperation.view);
     final result = await entry.list(session);
-    return _stringifyRecords(await _withAuthUsers(session, entry, result));
+    return _visibleRows(entry, await _withAuthUsers(session, entry, result));
   }
 
   /// One page of [resourceKey]'s rows: filtered, searched and sorted in the
@@ -139,7 +249,7 @@ class AdminEndpoint extends Endpoint {
     String resourceKey,
     AdminQuery query,
   ) async {
-    final entry = _resolve(resourceKey);
+    final entry = _entryFor(session, resourceKey, AdminOperation.view);
     final bounded = query.copyWith(
       offset: query.offset < 0 ? 0 : query.offset,
       limit: query.limit.clamp(1, adminMaxPageSize),
@@ -147,7 +257,8 @@ class AdminEndpoint extends Endpoint {
     final page = await entry.queryPage(session, bounded);
     if (page != null) {
       return AdminPage(
-        rows: _stringifyRecords(
+        rows: _visibleRows(
+          entry,
           await _withAuthUsers(session, entry, page.rows),
         ),
         total: page.total,
@@ -155,7 +266,8 @@ class AdminEndpoint extends Endpoint {
     }
     final all = await _withAuthUsers(session, entry, await entry.list(session));
     return AdminRowQuery.apply(
-      _stringifyRecords(all),
+      // Hidden values never reach the in-memory search.
+      _visibleRows(entry, all),
       entry.metadata.columns,
       bounded,
     );
@@ -172,10 +284,10 @@ class AdminEndpoint extends Endpoint {
         'Invalid pagination arguments. Offset must be >= 0 and limit > 0.',
       );
     }
-    final entry = _resolve(resourceKey);
+    final entry = _entryFor(session, resourceKey, AdminOperation.view);
     final all = await entry.list(session);
     final window = all.skip(offset).take(limit).toList(growable: false);
-    return _stringifyRecords(await _withAuthUsers(session, entry, window));
+    return _visibleRows(entry, await _withAuthUsers(session, entry, window));
   }
 
   Future<Map<String, dynamic>?> find(
@@ -183,12 +295,12 @@ class AdminEndpoint extends Endpoint {
     String resourceKey,
     String id,
   ) async {
-    final entry = _resolve(resourceKey);
+    final entry = _entryFor(session, resourceKey, AdminOperation.view);
     final result = await entry.find(session, _parseId(entry, id));
     if (result == null) return null;
     return _removeClassName(
       (await _withAuthUsers(session, entry, [result])).single,
-    );
+    )..removeWhere((key, _) => entry.options.hidden.contains(key));
   }
 
   Future<Map<String, String>> create(
@@ -196,7 +308,12 @@ class AdminEndpoint extends Endpoint {
     String resourceKey,
     Map<String, String> data,
   ) async {
-    final entry = _resolve(resourceKey);
+    final entry = _entryFor(session, resourceKey, AdminOperation.create);
+    // Hidden columns are never set from the dashboard.
+    data = {
+      for (final MapEntry(:key, :value) in data.entries)
+        if (!entry.options.hidden.contains(key)) key: value,
+    };
     final normalized = _normalizePayload(entry, data);
     _requireStorable(entry, normalized);
     final authUser = await entry.authUserLink?.change(
@@ -222,10 +339,26 @@ class AdminEndpoint extends Endpoint {
     String resourceKey,
     Map<String, String> data,
   ) async {
-    final entry = _resolve(resourceKey);
+    final entry = _entryFor(session, resourceKey, AdminOperation.edit);
+    final locked = {...entry.options.hidden, ...entry.options.readOnly};
+    data = {
+      for (final MapEntry(:key, :value) in data.entries)
+        if (!locked.contains(key)) key: value,
+    };
     final normalized = _normalizePayload(entry, data);
     final id = normalized[entry.table.id.columnName];
     final stored = id == null ? null : await entry.find(session, id);
+    // Hidden and read-only columns keep their stored values.
+    for (final name in locked) {
+      if (stored == null || !entry.columns.any((c) => c.columnName == name)) {
+        continue;
+      }
+      if (stored.containsKey(name)) {
+        normalized[name] = stored[name];
+      } else {
+        normalized.remove(name);
+      }
+    }
     _requireStorable(entry, normalized, stored: stored);
     final before = stored == null ? null : await _text(session, entry, stored);
     final authUser = await entry.authUserLink?.change(
@@ -248,7 +381,7 @@ class AdminEndpoint extends Endpoint {
   }
 
   Future<bool> delete(Session session, String resourceKey, String id) async {
-    final entry = _resolve(resourceKey);
+    final entry = _entryFor(session, resourceKey, AdminOperation.delete);
     final normalizedId = _parseId(entry, id);
     final stored = await entry.find(session, normalizedId);
     final before = stored == null ? null : await _text(session, entry, stored);
@@ -273,13 +406,26 @@ class AdminEndpoint extends Endpoint {
     String? recordId,
     int offset,
     int limit,
-  ) => AdminHistory.read(
-    session,
-    resourceKey: resourceKey,
-    recordId: recordId,
-    offset: offset,
-    limit: limit,
-  );
+  ) {
+    final access = AdminAccess.of(session)..requireAllowed();
+    if (resourceKey != null) {
+      _entryFor(session, resourceKey, AdminOperation.view);
+    }
+    return AdminHistory.read(
+      session,
+      resourceKey: resourceKey,
+      recordId: recordId,
+      // Staff see the history of the tables they may see.
+      resourceKeys: access.admin || resourceKey != null
+          ? null
+          : {
+              for (final entry in _registry.registeredEntries)
+                if (access.can(entry, AdminOperation.view)) entry.resourceKey,
+            },
+      offset: offset,
+      limit: limit,
+    );
+  }
 
   /// Deletes the rows with [ids], one by one, recording each; rows that
   /// cannot be deleted are counted in the message.
@@ -288,7 +434,7 @@ class AdminEndpoint extends Endpoint {
     String resourceKey,
     List<String> ids,
   ) {
-    final entry = _resolve(resourceKey);
+    final entry = _entryFor(session, resourceKey, AdminOperation.delete);
     return _eachRow(ids, (id) async {
       if (await entry.find(session, _parseId(entry, id)) == null) {
         throw ArgumentError('Row $id no longer exists.');
@@ -306,7 +452,18 @@ class AdminEndpoint extends Endpoint {
     List<String> ids,
     Map<String, String> values,
   ) {
-    final entry = _resolve(resourceKey);
+    final entry = _entryFor(session, resourceKey, AdminOperation.edit);
+    final locked = values.keys.where(
+      (key) =>
+          entry.options.hidden.contains(key) ||
+          entry.options.readOnly.contains(key),
+    );
+    if (locked.isNotEmpty) {
+      throw AdminValidationException(
+        field: locked.first,
+        message: '${locked.first} cannot be changed here.',
+      );
+    }
     final primary = entry.table.id.columnName;
     if (values.containsKey(primary)) {
       throw AdminValidationException(
@@ -335,7 +492,7 @@ class AdminEndpoint extends Endpoint {
     String name,
     List<String> ids,
   ) async {
-    final entry = _resolve(resourceKey);
+    final entry = _entryFor(session, resourceKey, AdminOperation.edit);
     final info = entry.actionInfos.where((a) => a.name == name).firstOrNull;
     if (info == null) {
       throw AdminValidationException(message: 'Unknown action $name.');
@@ -387,7 +544,25 @@ class AdminEndpoint extends Endpoint {
     AdminEntryBase entry,
     Map<String, dynamic> row,
   ) async =>
-      _stringifyRecord((await _withAuthUsers(session, entry, [row])).single);
+      _visibleRows(entry, await _withAuthUsers(session, entry, [row])).single;
+
+  /// Rows as text, without the resource's hidden columns.
+  List<Map<String, String>> _visibleRows(
+    AdminEntryBase entry,
+    List<Map<String, dynamic>> rows,
+  ) {
+    final hidden = entry.options.hidden;
+    return [
+      for (final row in _stringifyRecords(rows))
+        if (hidden.isEmpty)
+          row
+        else
+          {
+            for (final MapEntry(:key, :value) in row.entries)
+              if (!hidden.contains(key)) key: value,
+          },
+    ];
+  }
 
   String _idOf(AdminEntryBase entry, Map<String, String> row) =>
       row[entry.table.id.columnName] ?? '';

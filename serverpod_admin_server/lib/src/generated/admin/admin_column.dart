@@ -26,6 +26,9 @@ abstract class AdminColumn
     this.enumSerializedByName,
     this.isNullable,
     this.choices,
+    this.label,
+    this.help,
+    this.readOnly,
   });
 
   factory AdminColumn({
@@ -39,6 +42,9 @@ abstract class AdminColumn
     bool? enumSerializedByName,
     bool? isNullable,
     List<String>? choices,
+    String? label,
+    String? help,
+    bool? readOnly,
   }) = _AdminColumnImpl;
 
   factory AdminColumn.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -69,6 +75,11 @@ abstract class AdminColumn
           : _i2.Protocol().deserialize<List<String>>(
               jsonSerialization['choices'],
             ),
+      label: jsonSerialization['label'] as String?,
+      help: jsonSerialization['help'] as String?,
+      readOnly: jsonSerialization['readOnly'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['readOnly']),
     );
   }
 
@@ -94,6 +105,15 @@ abstract class AdminColumn
   /// scopes); the dashboard edits them with a multi-select.
   List<String>? choices;
 
+  /// Shown in place of the column name.
+  String? label;
+
+  /// Explains the column in forms and details.
+  String? help;
+
+  /// Shown but not editable.
+  bool? readOnly;
+
   /// Returns a shallow copy of this [AdminColumn]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -108,6 +128,9 @@ abstract class AdminColumn
     bool? enumSerializedByName,
     bool? isNullable,
     List<String>? choices,
+    String? label,
+    String? help,
+    bool? readOnly,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -124,6 +147,9 @@ abstract class AdminColumn
         'enumSerializedByName': enumSerializedByName,
       if (isNullable != null) 'isNullable': isNullable,
       if (choices != null) 'choices': choices?.toJson(),
+      if (label != null) 'label': label,
+      if (help != null) 'help': help,
+      if (readOnly != null) 'readOnly': readOnly,
     };
   }
 
@@ -142,6 +168,9 @@ abstract class AdminColumn
         'enumSerializedByName': enumSerializedByName,
       if (isNullable != null) 'isNullable': isNullable,
       if (choices != null) 'choices': choices?.toJson(),
+      if (label != null) 'label': label,
+      if (help != null) 'help': help,
+      if (readOnly != null) 'readOnly': readOnly,
     };
   }
 
@@ -165,6 +194,9 @@ class _AdminColumnImpl extends AdminColumn {
     bool? enumSerializedByName,
     bool? isNullable,
     List<String>? choices,
+    String? label,
+    String? help,
+    bool? readOnly,
   }) : super._(
          name: name,
          dataType: dataType,
@@ -176,6 +208,9 @@ class _AdminColumnImpl extends AdminColumn {
          enumSerializedByName: enumSerializedByName,
          isNullable: isNullable,
          choices: choices,
+         label: label,
+         help: help,
+         readOnly: readOnly,
        );
 
   /// Returns a shallow copy of this [AdminColumn]
@@ -193,6 +228,9 @@ class _AdminColumnImpl extends AdminColumn {
     Object? enumSerializedByName = _Undefined,
     Object? isNullable = _Undefined,
     Object? choices = _Undefined,
+    Object? label = _Undefined,
+    Object? help = _Undefined,
+    Object? readOnly = _Undefined,
   }) {
     return AdminColumn(
       name: name ?? this.name,
@@ -213,6 +251,9 @@ class _AdminColumnImpl extends AdminColumn {
       choices: choices is List<String>?
           ? choices
           : this.choices?.map((e0) => e0).toList(),
+      label: label is String? ? label : this.label,
+      help: help is String? ? help : this.help,
+      readOnly: readOnly is bool? ? readOnly : this.readOnly,
     );
   }
 }

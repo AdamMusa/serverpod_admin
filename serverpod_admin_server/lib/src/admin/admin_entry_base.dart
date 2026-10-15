@@ -19,9 +19,9 @@ abstract class AdminEntryBase {
   /// The auth user each row extends, if any; its access is edited in the row.
   AdminAuthUserLink? get authUserLink => null;
 
-  /// One page of rows matching [query], read in the database, or null when
-  /// it cannot run there (a custom `listRows`, or columns the table does not
-  /// store); the endpoint then applies it in memory.
+  /// How the table appears and who may change it.
+  AdminOptions get options => const AdminOptions();
+
   /// Custom actions offered for selected rows.
   List<AdminActionInfo> get actionInfos => const [];
 
@@ -30,6 +30,9 @@ abstract class AdminEntryBase {
   Future<String?> runAction(Session session, String name, List<Object> ids) =>
       throw AdminValidationException(message: 'Unknown action $name.');
 
+  /// One page of rows matching [query], read in the database, or null when
+  /// it cannot run there (a custom `listRows`, or columns the table does not
+  /// store); the endpoint then applies it in memory.
   Future<({List<JsonMap> rows, int total})?> queryPage(
     Session session,
     AdminQuery query,

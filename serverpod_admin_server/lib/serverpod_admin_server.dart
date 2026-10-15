@@ -1,5 +1,6 @@
 export 'src/admin/admin.dart';
 export 'src/admin/admin_action.dart';
+export 'src/admin/admin_options.dart';
 export 'src/admin/admin_registry.dart';
 export 'src/admin/admin_user.dart';
 export 'src/admin/admin_web.dart';

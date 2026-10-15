@@ -17,29 +17,39 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _i3;
 import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _i4;
-import 'admin/admin_action_info.dart' as _i5;
-import 'admin/admin_action_result.dart' as _i6;
-import 'admin/admin_column.dart' as _i7;
-import 'admin/admin_filter.dart' as _i8;
-import 'admin/admin_filter_operator.dart' as _i9;
-import 'admin/admin_log_action.dart' as _i10;
-import 'admin/admin_log_entry.dart' as _i11;
-import 'admin/admin_log_page.dart' as _i12;
-import 'admin/admin_page.dart' as _i13;
-import 'admin/admin_query.dart' as _i14;
-import 'admin/admin_resource.dart' as _i15;
-import 'admin/admin_validation_exception.dart' as _i16;
-import 'module_class.dart' as _i17;
+import 'admin/admin_access_info.dart' as _i5;
+import 'admin/admin_action_info.dart' as _i6;
+import 'admin/admin_action_result.dart' as _i7;
+import 'admin/admin_activity_point.dart' as _i8;
+import 'admin/admin_column.dart' as _i9;
+import 'admin/admin_filter.dart' as _i10;
+import 'admin/admin_filter_operator.dart' as _i11;
+import 'admin/admin_log_action.dart' as _i12;
+import 'admin/admin_log_entry.dart' as _i13;
+import 'admin/admin_log_page.dart' as _i14;
+import 'admin/admin_metric_value.dart' as _i15;
+import 'admin/admin_page.dart' as _i16;
+import 'admin/admin_query.dart' as _i17;
+import 'admin/admin_resource.dart' as _i18;
+import 'admin/admin_validation_exception.dart' as _i19;
+import 'module_class.dart' as _i20;
 import 'package:serverpod_admin_server/src/generated/admin/admin_resource.dart'
-    as _i18;
+    as _i21;
+import 'package:serverpod_admin_server/src/generated/admin/admin_metric_value.dart'
+    as _i22;
+import 'package:serverpod_admin_server/src/generated/admin/admin_activity_point.dart'
+    as _i23;
+export 'admin/admin_access_info.dart';
 export 'admin/admin_action_info.dart';
 export 'admin/admin_action_result.dart';
+export 'admin/admin_activity_point.dart';
 export 'admin/admin_column.dart';
 export 'admin/admin_filter.dart';
 export 'admin/admin_filter_operator.dart';
 export 'admin/admin_log_action.dart';
 export 'admin/admin_log_entry.dart';
 export 'admin/admin_log_page.dart';
+export 'admin/admin_metric_value.dart';
 export 'admin/admin_page.dart';
 export 'admin/admin_query.dart';
 export 'admin/admin_resource.dart';
@@ -194,87 +204,105 @@ class Protocol extends _i1.DatabaseSerializationManager {
       }
     }
 
-    if (t == _i5.AdminActionInfo) {
-      return _i5.AdminActionInfo.fromJson(data) as T;
+    if (t == _i5.AdminAccessInfo) {
+      return _i5.AdminAccessInfo.fromJson(data) as T;
     }
-    if (t == _i6.AdminActionResult) {
-      return _i6.AdminActionResult.fromJson(data) as T;
+    if (t == _i6.AdminActionInfo) {
+      return _i6.AdminActionInfo.fromJson(data) as T;
     }
-    if (t == _i7.AdminColumn) {
-      return _i7.AdminColumn.fromJson(data) as T;
+    if (t == _i7.AdminActionResult) {
+      return _i7.AdminActionResult.fromJson(data) as T;
     }
-    if (t == _i8.AdminFilter) {
-      return _i8.AdminFilter.fromJson(data) as T;
+    if (t == _i8.AdminActivityPoint) {
+      return _i8.AdminActivityPoint.fromJson(data) as T;
     }
-    if (t == _i9.AdminFilterOperator) {
-      return _i9.AdminFilterOperator.fromJson(data) as T;
+    if (t == _i9.AdminColumn) {
+      return _i9.AdminColumn.fromJson(data) as T;
     }
-    if (t == _i10.AdminLogAction) {
-      return _i10.AdminLogAction.fromJson(data) as T;
+    if (t == _i10.AdminFilter) {
+      return _i10.AdminFilter.fromJson(data) as T;
     }
-    if (t == _i11.AdminLogEntry) {
-      return _i11.AdminLogEntry.fromJson(data) as T;
+    if (t == _i11.AdminFilterOperator) {
+      return _i11.AdminFilterOperator.fromJson(data) as T;
     }
-    if (t == _i12.AdminLogPage) {
-      return _i12.AdminLogPage.fromJson(data) as T;
+    if (t == _i12.AdminLogAction) {
+      return _i12.AdminLogAction.fromJson(data) as T;
     }
-    if (t == _i13.AdminPage) {
-      return _i13.AdminPage.fromJson(data) as T;
+    if (t == _i13.AdminLogEntry) {
+      return _i13.AdminLogEntry.fromJson(data) as T;
     }
-    if (t == _i14.AdminQuery) {
-      return _i14.AdminQuery.fromJson(data) as T;
+    if (t == _i14.AdminLogPage) {
+      return _i14.AdminLogPage.fromJson(data) as T;
     }
-    if (t == _i15.AdminResource) {
-      return _i15.AdminResource.fromJson(data) as T;
+    if (t == _i15.AdminMetricValue) {
+      return _i15.AdminMetricValue.fromJson(data) as T;
     }
-    if (t == _i16.AdminValidationException) {
-      return _i16.AdminValidationException.fromJson(data) as T;
+    if (t == _i16.AdminPage) {
+      return _i16.AdminPage.fromJson(data) as T;
     }
-    if (t == _i17.ModuleClass) {
-      return _i17.ModuleClass.fromJson(data) as T;
+    if (t == _i17.AdminQuery) {
+      return _i17.AdminQuery.fromJson(data) as T;
     }
-    if (t == _i1.getType<_i5.AdminActionInfo?>()) {
-      return (data != null ? _i5.AdminActionInfo.fromJson(data) : null) as T;
+    if (t == _i18.AdminResource) {
+      return _i18.AdminResource.fromJson(data) as T;
     }
-    if (t == _i1.getType<_i6.AdminActionResult?>()) {
-      return (data != null ? _i6.AdminActionResult.fromJson(data) : null) as T;
+    if (t == _i19.AdminValidationException) {
+      return _i19.AdminValidationException.fromJson(data) as T;
     }
-    if (t == _i1.getType<_i7.AdminColumn?>()) {
-      return (data != null ? _i7.AdminColumn.fromJson(data) : null) as T;
+    if (t == _i20.ModuleClass) {
+      return _i20.ModuleClass.fromJson(data) as T;
     }
-    if (t == _i1.getType<_i8.AdminFilter?>()) {
-      return (data != null ? _i8.AdminFilter.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i5.AdminAccessInfo?>()) {
+      return (data != null ? _i5.AdminAccessInfo.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i9.AdminFilterOperator?>()) {
-      return (data != null ? _i9.AdminFilterOperator.fromJson(data) : null)
+    if (t == _i1.getType<_i6.AdminActionInfo?>()) {
+      return (data != null ? _i6.AdminActionInfo.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i7.AdminActionResult?>()) {
+      return (data != null ? _i7.AdminActionResult.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i8.AdminActivityPoint?>()) {
+      return (data != null ? _i8.AdminActivityPoint.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i9.AdminColumn?>()) {
+      return (data != null ? _i9.AdminColumn.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i10.AdminFilter?>()) {
+      return (data != null ? _i10.AdminFilter.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i11.AdminFilterOperator?>()) {
+      return (data != null ? _i11.AdminFilterOperator.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i10.AdminLogAction?>()) {
-      return (data != null ? _i10.AdminLogAction.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i12.AdminLogAction?>()) {
+      return (data != null ? _i12.AdminLogAction.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i11.AdminLogEntry?>()) {
-      return (data != null ? _i11.AdminLogEntry.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i13.AdminLogEntry?>()) {
+      return (data != null ? _i13.AdminLogEntry.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i12.AdminLogPage?>()) {
-      return (data != null ? _i12.AdminLogPage.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i14.AdminLogPage?>()) {
+      return (data != null ? _i14.AdminLogPage.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i13.AdminPage?>()) {
-      return (data != null ? _i13.AdminPage.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i15.AdminMetricValue?>()) {
+      return (data != null ? _i15.AdminMetricValue.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i14.AdminQuery?>()) {
-      return (data != null ? _i14.AdminQuery.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i16.AdminPage?>()) {
+      return (data != null ? _i16.AdminPage.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i15.AdminResource?>()) {
-      return (data != null ? _i15.AdminResource.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i17.AdminQuery?>()) {
+      return (data != null ? _i17.AdminQuery.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i16.AdminValidationException?>()) {
+    if (t == _i1.getType<_i18.AdminResource?>()) {
+      return (data != null ? _i18.AdminResource.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i19.AdminValidationException?>()) {
       return (data != null
-              ? _i16.AdminValidationException.fromJson(data)
+              ? _i19.AdminValidationException.fromJson(data)
               : null)
           as T;
     }
-    if (t == _i1.getType<_i17.ModuleClass?>()) {
-      return (data != null ? _i17.ModuleClass.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i20.ModuleClass?>()) {
+      return (data != null ? _i20.ModuleClass.fromJson(data) : null) as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
@@ -285,9 +313,9 @@ class Protocol extends _i1.DatabaseSerializationManager {
               : null)
           as T;
     }
-    if (t == List<_i11.AdminLogEntry>) {
+    if (t == List<_i13.AdminLogEntry>) {
       return (data as List)
-              .map((e) => deserialize<_i11.AdminLogEntry>(e))
+              .map((e) => deserialize<_i13.AdminLogEntry>(e))
               .toList()
           as T;
     }
@@ -303,31 +331,45 @@ class Protocol extends _i1.DatabaseSerializationManager {
           )
           as T;
     }
-    if (t == List<_i8.AdminFilter>) {
-      return (data as List).map((e) => deserialize<_i8.AdminFilter>(e)).toList()
-          as T;
-    }
-    if (t == List<_i7.AdminColumn>) {
-      return (data as List).map((e) => deserialize<_i7.AdminColumn>(e)).toList()
-          as T;
-    }
-    if (t == List<_i5.AdminActionInfo>) {
+    if (t == List<_i10.AdminFilter>) {
       return (data as List)
-              .map((e) => deserialize<_i5.AdminActionInfo>(e))
+              .map((e) => deserialize<_i10.AdminFilter>(e))
               .toList()
           as T;
     }
-    if (t == _i1.getType<List<_i5.AdminActionInfo>?>()) {
+    if (t == List<_i9.AdminColumn>) {
+      return (data as List).map((e) => deserialize<_i9.AdminColumn>(e)).toList()
+          as T;
+    }
+    if (t == List<_i6.AdminActionInfo>) {
+      return (data as List)
+              .map((e) => deserialize<_i6.AdminActionInfo>(e))
+              .toList()
+          as T;
+    }
+    if (t == _i1.getType<List<_i6.AdminActionInfo>?>()) {
       return (data != null
               ? (data as List)
-                    .map((e) => deserialize<_i5.AdminActionInfo>(e))
+                    .map((e) => deserialize<_i6.AdminActionInfo>(e))
                     .toList()
               : null)
           as T;
     }
-    if (t == List<_i18.AdminResource>) {
+    if (t == List<_i21.AdminResource>) {
       return (data as List)
-              .map((e) => deserialize<_i18.AdminResource>(e))
+              .map((e) => deserialize<_i21.AdminResource>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i22.AdminMetricValue>) {
+      return (data as List)
+              .map((e) => deserialize<_i22.AdminMetricValue>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i23.AdminActivityPoint>) {
+      return (data as List)
+              .map((e) => deserialize<_i23.AdminActivityPoint>(e))
               .toList()
           as T;
     }
@@ -378,19 +420,22 @@ class Protocol extends _i1.DatabaseSerializationManager {
 
   static String? getClassNameForType(Type type) {
     return switch (type) {
-      _i5.AdminActionInfo => 'AdminActionInfo',
-      _i6.AdminActionResult => 'AdminActionResult',
-      _i7.AdminColumn => 'AdminColumn',
-      _i8.AdminFilter => 'AdminFilter',
-      _i9.AdminFilterOperator => 'AdminFilterOperator',
-      _i10.AdminLogAction => 'AdminLogAction',
-      _i11.AdminLogEntry => 'AdminLogEntry',
-      _i12.AdminLogPage => 'AdminLogPage',
-      _i13.AdminPage => 'AdminPage',
-      _i14.AdminQuery => 'AdminQuery',
-      _i15.AdminResource => 'AdminResource',
-      _i16.AdminValidationException => 'AdminValidationException',
-      _i17.ModuleClass => 'ModuleClass',
+      _i5.AdminAccessInfo => 'AdminAccessInfo',
+      _i6.AdminActionInfo => 'AdminActionInfo',
+      _i7.AdminActionResult => 'AdminActionResult',
+      _i8.AdminActivityPoint => 'AdminActivityPoint',
+      _i9.AdminColumn => 'AdminColumn',
+      _i10.AdminFilter => 'AdminFilter',
+      _i11.AdminFilterOperator => 'AdminFilterOperator',
+      _i12.AdminLogAction => 'AdminLogAction',
+      _i13.AdminLogEntry => 'AdminLogEntry',
+      _i14.AdminLogPage => 'AdminLogPage',
+      _i15.AdminMetricValue => 'AdminMetricValue',
+      _i16.AdminPage => 'AdminPage',
+      _i17.AdminQuery => 'AdminQuery',
+      _i18.AdminResource => 'AdminResource',
+      _i19.AdminValidationException => 'AdminValidationException',
+      _i20.ModuleClass => 'ModuleClass',
       _ => null,
     };
   }
@@ -408,31 +453,37 @@ class Protocol extends _i1.DatabaseSerializationManager {
     }
 
     switch (data) {
-      case _i5.AdminActionInfo():
+      case _i5.AdminAccessInfo():
+        return 'AdminAccessInfo';
+      case _i6.AdminActionInfo():
         return 'AdminActionInfo';
-      case _i6.AdminActionResult():
+      case _i7.AdminActionResult():
         return 'AdminActionResult';
-      case _i7.AdminColumn():
+      case _i8.AdminActivityPoint():
+        return 'AdminActivityPoint';
+      case _i9.AdminColumn():
         return 'AdminColumn';
-      case _i8.AdminFilter():
+      case _i10.AdminFilter():
         return 'AdminFilter';
-      case _i9.AdminFilterOperator():
+      case _i11.AdminFilterOperator():
         return 'AdminFilterOperator';
-      case _i10.AdminLogAction():
+      case _i12.AdminLogAction():
         return 'AdminLogAction';
-      case _i11.AdminLogEntry():
+      case _i13.AdminLogEntry():
         return 'AdminLogEntry';
-      case _i12.AdminLogPage():
+      case _i14.AdminLogPage():
         return 'AdminLogPage';
-      case _i13.AdminPage():
+      case _i15.AdminMetricValue():
+        return 'AdminMetricValue';
+      case _i16.AdminPage():
         return 'AdminPage';
-      case _i14.AdminQuery():
+      case _i17.AdminQuery():
         return 'AdminQuery';
-      case _i15.AdminResource():
+      case _i18.AdminResource():
         return 'AdminResource';
-      case _i16.AdminValidationException():
+      case _i19.AdminValidationException():
         return 'AdminValidationException';
-      case _i17.ModuleClass():
+      case _i20.ModuleClass():
         return 'ModuleClass';
     }
     className = _i2.Protocol().getClassNameForObject(data);
@@ -448,44 +499,53 @@ class Protocol extends _i1.DatabaseSerializationManager {
     if (dataClassName is! String) {
       return super.deserializeByClassName(data);
     }
+    if (dataClassName == 'AdminAccessInfo') {
+      return deserialize<_i5.AdminAccessInfo>(data['data']);
+    }
     if (dataClassName == 'AdminActionInfo') {
-      return deserialize<_i5.AdminActionInfo>(data['data']);
+      return deserialize<_i6.AdminActionInfo>(data['data']);
     }
     if (dataClassName == 'AdminActionResult') {
-      return deserialize<_i6.AdminActionResult>(data['data']);
+      return deserialize<_i7.AdminActionResult>(data['data']);
+    }
+    if (dataClassName == 'AdminActivityPoint') {
+      return deserialize<_i8.AdminActivityPoint>(data['data']);
     }
     if (dataClassName == 'AdminColumn') {
-      return deserialize<_i7.AdminColumn>(data['data']);
+      return deserialize<_i9.AdminColumn>(data['data']);
     }
     if (dataClassName == 'AdminFilter') {
-      return deserialize<_i8.AdminFilter>(data['data']);
+      return deserialize<_i10.AdminFilter>(data['data']);
     }
     if (dataClassName == 'AdminFilterOperator') {
-      return deserialize<_i9.AdminFilterOperator>(data['data']);
+      return deserialize<_i11.AdminFilterOperator>(data['data']);
     }
     if (dataClassName == 'AdminLogAction') {
-      return deserialize<_i10.AdminLogAction>(data['data']);
+      return deserialize<_i12.AdminLogAction>(data['data']);
     }
     if (dataClassName == 'AdminLogEntry') {
-      return deserialize<_i11.AdminLogEntry>(data['data']);
+      return deserialize<_i13.AdminLogEntry>(data['data']);
     }
     if (dataClassName == 'AdminLogPage') {
-      return deserialize<_i12.AdminLogPage>(data['data']);
+      return deserialize<_i14.AdminLogPage>(data['data']);
+    }
+    if (dataClassName == 'AdminMetricValue') {
+      return deserialize<_i15.AdminMetricValue>(data['data']);
     }
     if (dataClassName == 'AdminPage') {
-      return deserialize<_i13.AdminPage>(data['data']);
+      return deserialize<_i16.AdminPage>(data['data']);
     }
     if (dataClassName == 'AdminQuery') {
-      return deserialize<_i14.AdminQuery>(data['data']);
+      return deserialize<_i17.AdminQuery>(data['data']);
     }
     if (dataClassName == 'AdminResource') {
-      return deserialize<_i15.AdminResource>(data['data']);
+      return deserialize<_i18.AdminResource>(data['data']);
     }
     if (dataClassName == 'AdminValidationException') {
-      return deserialize<_i16.AdminValidationException>(data['data']);
+      return deserialize<_i19.AdminValidationException>(data['data']);
     }
     if (dataClassName == 'ModuleClass') {
-      return deserialize<_i17.ModuleClass>(data['data']);
+      return deserialize<_i20.ModuleClass>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
@@ -574,8 +634,8 @@ class Protocol extends _i1.DatabaseSerializationManager {
       }
     }
     switch (t) {
-      case _i11.AdminLogEntry:
-        return _i11.AdminLogEntry.t;
+      case _i13.AdminLogEntry:
+        return _i13.AdminLogEntry.t;
     }
     return null;
   }

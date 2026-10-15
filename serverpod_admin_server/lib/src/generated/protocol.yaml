@@ -1,5 +1,8 @@
 admin:
+  - access:
   - resources:
+  - metrics:
+  - activity:
   - currentUserProfile:
   - futureCallHistory:
   - updateCurrentUserProfile:

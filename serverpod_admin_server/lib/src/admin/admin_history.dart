@@ -62,10 +62,15 @@ class AdminHistory {
     Session session, {
     String? resourceKey,
     String? recordId,
+    Set<String>? resourceKeys,
     int offset = 0,
     int limit = 50,
   }) async {
     Expression? where;
+    if (resourceKeys != null) {
+      if (resourceKeys.isEmpty) return AdminLogPage(entries: [], total: 0);
+      where = AdminLogEntry.t.resourceKey.inSet(resourceKeys);
+    }
     if (resourceKey != null) {
       where = AdminLogEntry.t.resourceKey.equals(resourceKey);
       if (recordId != null) {

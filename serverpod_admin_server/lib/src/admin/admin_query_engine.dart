@@ -20,8 +20,11 @@ class AdminSqlQuery {
   static AdminSqlQuery? build(
     Table table,
     List<AdminColumn> columns,
-    AdminQuery query,
-  ) {
+    AdminQuery query, {
+    Set<String>? searchColumns,
+    String? defaultSort,
+    bool defaultDescending = true,
+  }) {
     Column? stored(String name) =>
         table.columns.where((c) => c.columnName == name).firstOrNull;
     AdminColumn? described(String name) =>
@@ -39,15 +42,22 @@ class AdminSqlQuery {
     final search = query.search?.trim() ?? '';
     if (search.isNotEmpty) {
       final pattern = _literal('%${_escapeLike(search)}%');
+      // Only columns the dashboard may see are searched.
+      final allowed = searchColumns ?? {for (final c in columns) c.name};
       final searchable = table.columns
-          .where(_searchable)
+          .where((c) => _searchable(c) && allowed.contains(c.columnName))
           .map((c) => "$c::text ILIKE $pattern ESCAPE '\\'");
       conditions.add(
         searchable.isEmpty ? 'FALSE' : '(${searchable.join(' OR ')})',
       );
     }
 
-    final sortName = query.sortColumn;
+    final chosen = query.sortColumn;
+    final sortName =
+        chosen ??
+        (defaultSort != null && stored(defaultSort) != null
+            ? defaultSort
+            : null);
     final Column sort;
     if (sortName == null) {
       sort = table.id;
@@ -57,7 +67,9 @@ class AdminSqlQuery {
       if (column == null) return null;
       sort = column;
     }
-    final descending = sortName == null || query.sortDescending;
+    final descending = chosen != null
+        ? query.sortDescending
+        : sortName == null || defaultDescending;
     return AdminSqlQuery._(
       conditions.isEmpty ? null : Expression('(${conditions.join(' AND ')})'),
       [

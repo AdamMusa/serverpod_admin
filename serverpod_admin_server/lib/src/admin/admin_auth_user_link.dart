@@ -4,6 +4,7 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     show AuthUser;
 
 import '../generated/protocol.dart' show AdminColumn, AdminValidationException;
+import 'admin_access.dart';
 import 'admin_registry.dart';
 import 'admin_value_parser.dart';
 
@@ -138,7 +139,15 @@ class AdminAuthUserLink {
         updated.blocked == user.blocked &&
         updated.scopeNames.length == user.scopeNames.length &&
         updated.scopeNames.containsAll(user.scopeNames);
-    return unchanged ? null : updated;
+    if (unchanged) return null;
+    // Staff who may edit the row may not grant themselves more.
+    if (!AdminAccess.of(session).admin) {
+      throw AdminValidationException(
+        field: updated.blocked == user.blocked ? scopeNamesField : blockedField,
+        message: 'Only administrators can change who may sign in.',
+      );
+    }
+    return updated;
   }
 
   /// Rejects a change to [user] that would lock the signed-in admin out of

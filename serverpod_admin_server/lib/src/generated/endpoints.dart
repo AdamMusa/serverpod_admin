@@ -34,6 +34,16 @@ class Endpoints extends _i1.EndpointDispatch {
       name: 'admin',
       endpoint: endpoints['admin']!,
       methodConnectors: {
+        'access': _i1.MethodConnector(
+          name: 'access',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['admin'] as _i2.AdminEndpoint).access(session),
+        ),
         'resources': _i1.MethodConnector(
           name: 'resources',
           params: {},
@@ -43,6 +53,40 @@ class Endpoints extends _i1.EndpointDispatch {
                 Map<String, dynamic> params,
               ) async =>
                   (endpoints['admin'] as _i2.AdminEndpoint).resources(session),
+        ),
+        'metrics': _i1.MethodConnector(
+          name: 'metrics',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['admin'] as _i2.AdminEndpoint).metrics(session),
+        ),
+        'activity': _i1.MethodConnector(
+          name: 'activity',
+          params: {
+            'resourceKey': _i1.ParameterDescription(
+              name: 'resourceKey',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'days': _i1.ParameterDescription(
+              name: 'days',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint).activity(
+                session,
+                params['resourceKey'],
+                params['days'],
+              ),
         ),
         'currentUserProfile': _i1.MethodConnector(
           name: 'currentUserProfile',
