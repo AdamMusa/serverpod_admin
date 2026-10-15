@@ -41,6 +41,25 @@ class _FakeAdmin implements EndpointAdmin {
   Future<List<AdminResource>> resources() async => [_users, _rides];
 
   @override
+  Future<List<AdminRelatedRows>> related(
+    String resourceKey,
+    String id,
+    int limit,
+    Map<String, List<String>>? columns,
+  ) async => resourceKey == 'user_profile'
+      ? [
+          AdminRelatedRows(
+            resourceKey: 'ride',
+            column: 'passengerId',
+            rows: [
+              {'id': '10', 'passengerId': id},
+            ],
+            total: 1,
+          ),
+        ]
+      : [];
+
+  @override
   Future<List<AdminTableSummary>> overview(int days) async => [
     for (final key in ['user_profile', 'ride'])
       AdminTableSummary(

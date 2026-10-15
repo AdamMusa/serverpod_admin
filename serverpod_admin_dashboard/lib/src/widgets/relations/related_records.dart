@@ -148,24 +148,11 @@ class _RelatedGroup extends StatelessWidget {
   /// At most this many of the related table's columns are shown.
   static const _maxColumns = 5;
 
-  /// The key, then the table's list columns (or its first columns), without
-  /// the link to the record.
-  List<AdminColumn> _columns() {
-    final resource = group.resource;
-    final names = resource.listColumns;
-    final candidates = names == null
-        ? resource.columns
-        : [
-            ...resource.columns.where((c) => c.isPrimary),
-            for (final name in names)
-              ?resource.columns.where((c) => c.name == name).firstOrNull,
-          ];
-    final seen = <String>{};
-    return [
-      for (final column in candidates)
-        if (column.name != group.column.name && seen.add(column.name)) column,
-    ].take(_maxColumns).toList();
-  }
+  /// The columns shown inline, without the link to the record.
+  List<AdminColumn> _columns() => [
+    for (final column in AdminDashboardController.inlineColumns(group.resource))
+      if (column.name != group.column.name) column,
+  ].take(_maxColumns).toList();
 
   @override
   Widget build(BuildContext context) {

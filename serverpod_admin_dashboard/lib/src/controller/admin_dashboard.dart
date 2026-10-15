@@ -798,8 +798,8 @@ class AdminDashboardController extends ChangeNotifier {
   }
 
   /// Rows of other resources pointing at [record] through a foreign key:
-  /// up to [limit] of each, with how many there are; tables with rows
-  /// first.
+  /// up to [limit] of each, with how many there are, tables with rows
+  /// first; one request, with only the columns shown inline.
   Future<List<RelatedRows>> relatedRecords(
     AdminResource resource,
     Map<String, String> record, {
@@ -807,46 +807,54 @@ class AdminDashboardController extends ChangeNotifier {
   }) async {
     final id = resolvePrimaryKeyValue(resource, record);
     if (id == null) return const [];
-    final links = [
-      for (final other in resources)
-        for (final column in other.columns)
-          if (column.foreignKeyTable == resource.tableName) (other, column),
+    final List<admin_client.AdminRelatedRows> groups;
+    try {
+      groups = await adminEndpoint.related(resource.key, id, limit, {
+        for (final other in resources)
+          other.key: [for (final column in inlineColumns(other)) column.name],
+      });
+    } catch (_) {
+      return const [];
+    }
+    final related = [
+      for (final group in groups)
+        if (resources.where((r) => r.key == group.resourceKey).firstOrNull
+            case final other?)
+          if (other.columns.where((c) => c.name == group.column).firstOrNull
+              case final column?)
+            RelatedRows(
+              resource: other,
+              column: column,
+              value: id,
+              rows: group.rows,
+              total: group.total,
+            ),
     ];
-    final results = await Future.wait([
-      for (final (other, column) in links)
-        adminEndpoint
-            .query(
-              other.key,
-              admin_client.AdminQuery(
-                offset: 0,
-                limit: limit,
-                sortDescending: false,
-                filters: [
-                  admin_client.AdminFilter(
-                    column: column.name,
-                    comparison: admin_client.AdminFilterOperator.equals,
-                    value: id,
-                  ),
-                ],
-              ),
-            )
-            .then<RelatedRows?>(
-              (page) => RelatedRows(
-                resource: other,
-                column: column,
-                value: id,
-                rows: page.rows,
-                total: page.total,
-              ),
-            )
-            .catchError((Object _) => null),
-    ]);
     return [
-      for (final result in results)
-        if (result != null && result.total > 0) result,
-      for (final result in results)
-        if (result != null && result.total == 0) result,
+      ...related.where((group) => group.total != 0),
+      ...related.where((group) => group.total == 0),
     ];
+  }
+
+  /// The columns a table shows inline among a record's related rows: its
+  /// key, then its list columns or else its first columns.
+  static List<AdminColumn> inlineColumns(
+    AdminResource resource, {
+    int count = 6,
+  }) {
+    final listed = resource.listColumns;
+    final candidates = listed == null
+        ? resource.columns
+        : [
+            ...resource.columns.where((c) => c.isPrimary),
+            for (final name in listed)
+              ?resource.columns.where((c) => c.name == name).firstOrNull,
+          ];
+    final seen = <String>{};
+    return [
+      for (final column in candidates)
+        if (seen.add(column.name)) column,
+    ].take(count).toList();
   }
 
   @override

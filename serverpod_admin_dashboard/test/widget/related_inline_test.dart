@@ -73,6 +73,36 @@ class _FakeAdmin implements EndpointAdmin {
     'payment': <Map<String, String>>[],
   };
   final calls = <String>[];
+  final relatedCalls = <Map<String, List<String>>?>[];
+
+  @override
+  Future<List<AdminRelatedRows>> related(
+    String resourceKey,
+    String id,
+    int limit,
+    Map<String, List<String>>? columns,
+  ) async {
+    relatedCalls.add(columns);
+    final tables = await resources();
+    final table = tables.firstWhere((r) => r.key == resourceKey).tableName;
+    return [
+      for (final other in tables)
+        for (final column in other.columns)
+          if (column.foreignKeyTable == table)
+            () {
+              final rows = [
+                for (final row in data[other.key] ?? <Map<String, String>>[])
+                  if (row[column.name] == id) row,
+              ];
+              return AdminRelatedRows(
+                resourceKey: other.key,
+                column: column.name,
+                rows: rows.take(limit).toList(),
+                total: rows.length,
+              );
+            }(),
+    ];
+  }
 
   @override
   Future<List<AdminResource>> resources() async => [_users, _rides, _payments];
@@ -189,6 +219,9 @@ void main() {
     // Tables without rows are listed too, so a first row can be added; this
     // one cannot be changed here.
     expect(find.text('Payments (0)'), findsOneWidget);
+    // One request, asking each table for the columns shown inline.
+    expect(admin.relatedCalls, hasLength(1));
+    expect(admin.relatedCalls.single!['ride'], ['id', 'status', 'passengerId']);
     // The rows start at the left, under the table's name.
     expect(
       tester.getTopLeft(find.byType(DataTable)).dx,
