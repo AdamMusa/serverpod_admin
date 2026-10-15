@@ -22,6 +22,10 @@ abstract class AdminEntryBase {
   /// How the table appears and who may change it.
   AdminOptions get options => const AdminOptions();
 
+  /// Whether rows are read from the table in the database (no custom
+  /// listRows), so they can be paged, counted and charted there.
+  bool get readsInDatabase => false;
+
   /// Custom actions offered for selected rows.
   List<AdminActionInfo> get actionInfos => const [];
 

@@ -62,6 +62,9 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
 
   @override
   AdminOptions get options => _options;
+
+  @override
+  bool get readsInDatabase => _queryable;
   final T Function(Session session, T row)? _present;
   List<AdminColumn>? _adminColumns;
   AdminResource? _metadataCache;

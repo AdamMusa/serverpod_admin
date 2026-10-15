@@ -21,18 +21,20 @@ import 'package:serverpod_admin_server/src/generated/admin/admin_resource.dart'
     as _i6;
 import 'package:serverpod_admin_server/src/generated/admin/admin_metric_value.dart'
     as _i7;
-import 'package:serverpod_admin_server/src/generated/admin/admin_activity_point.dart'
+import 'package:serverpod_admin_server/src/generated/admin/admin_table_summary.dart'
     as _i8;
-import 'package:serverpod_admin_server/src/generated/admin/admin_page.dart'
+import 'package:serverpod_admin_server/src/generated/admin/admin_activity_point.dart'
     as _i9;
-import 'package:serverpod_admin_server/src/generated/admin/admin_query.dart'
+import 'package:serverpod_admin_server/src/generated/admin/admin_page.dart'
     as _i10;
-import 'package:serverpod_admin_server/src/generated/admin/admin_log_page.dart'
+import 'package:serverpod_admin_server/src/generated/admin/admin_query.dart'
     as _i11;
-import 'package:serverpod_admin_server/src/generated/admin/admin_saved_view.dart'
+import 'package:serverpod_admin_server/src/generated/admin/admin_log_page.dart'
     as _i12;
-import 'package:serverpod_admin_server/src/generated/admin/admin_action_result.dart'
+import 'package:serverpod_admin_server/src/generated/admin/admin_saved_view.dart'
     as _i13;
+import 'package:serverpod_admin_server/src/generated/admin/admin_action_result.dart'
+    as _i14;
 import 'package:serverpod_admin_server/src/generated/protocol.dart';
 import 'package:serverpod_admin_server/src/generated/endpoints.dart';
 export 'package:serverpod_test/serverpod_test_public_exports.dart';
@@ -278,7 +280,38 @@ class _AdminEndpoint {
     });
   }
 
-  _i4.Future<List<_i8.AdminActivityPoint>> activity(
+  _i4.Future<List<_i8.AdminTableSummary>> overview(
+    _i1.TestSessionBuilder sessionBuilder,
+    int days,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'admin',
+            method: 'overview',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'admin',
+          methodName: 'overview',
+          parameters: _i1.testObjectToJson({'days': days}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i4.Future<List<_i8.AdminTableSummary>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i4.Future<List<_i9.AdminActivityPoint>> activity(
     _i1.TestSessionBuilder sessionBuilder,
     String resourceKey,
     int days,
@@ -305,7 +338,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i4.Future<List<_i8.AdminActivityPoint>>);
+                as _i4.Future<List<_i9.AdminActivityPoint>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -474,10 +507,10 @@ class _AdminEndpoint {
     });
   }
 
-  _i4.Future<_i9.AdminPage> query(
+  _i4.Future<_i10.AdminPage> query(
     _i1.TestSessionBuilder sessionBuilder,
     String resourceKey,
-    _i10.AdminQuery query,
+    _i11.AdminQuery query,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -501,7 +534,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i4.Future<_i9.AdminPage>);
+                as _i4.Future<_i10.AdminPage>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -686,7 +719,7 @@ class _AdminEndpoint {
     });
   }
 
-  _i4.Future<_i11.AdminLogPage> history(
+  _i4.Future<_i12.AdminLogPage> history(
     _i1.TestSessionBuilder sessionBuilder,
     String? resourceKey,
     String? recordId,
@@ -717,7 +750,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i4.Future<_i11.AdminLogPage>);
+                as _i4.Future<_i12.AdminLogPage>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -725,7 +758,7 @@ class _AdminEndpoint {
     });
   }
 
-  _i4.Future<List<_i12.AdminSavedView>> savedViews(
+  _i4.Future<List<_i13.AdminSavedView>> savedViews(
     _i1.TestSessionBuilder sessionBuilder,
     String resourceKey,
   ) async {
@@ -748,7 +781,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i4.Future<List<_i12.AdminSavedView>>);
+                as _i4.Future<List<_i13.AdminSavedView>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -756,11 +789,11 @@ class _AdminEndpoint {
     });
   }
 
-  _i4.Future<_i12.AdminSavedView> saveView(
+  _i4.Future<_i13.AdminSavedView> saveView(
     _i1.TestSessionBuilder sessionBuilder,
     String resourceKey,
     String name,
-    _i10.AdminQuery query,
+    _i11.AdminQuery query,
     List<String>? columns,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -787,7 +820,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i4.Future<_i12.AdminSavedView>);
+                as _i4.Future<_i13.AdminSavedView>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -826,7 +859,7 @@ class _AdminEndpoint {
     });
   }
 
-  _i4.Future<_i13.AdminActionResult> deleteMany(
+  _i4.Future<_i14.AdminActionResult> deleteMany(
     _i1.TestSessionBuilder sessionBuilder,
     String resourceKey,
     List<String> ids,
@@ -853,7 +886,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i4.Future<_i13.AdminActionResult>);
+                as _i4.Future<_i14.AdminActionResult>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -861,7 +894,7 @@ class _AdminEndpoint {
     });
   }
 
-  _i4.Future<_i13.AdminActionResult> updateMany(
+  _i4.Future<_i14.AdminActionResult> updateMany(
     _i1.TestSessionBuilder sessionBuilder,
     String resourceKey,
     List<String> ids,
@@ -890,7 +923,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i4.Future<_i13.AdminActionResult>);
+                as _i4.Future<_i14.AdminActionResult>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -898,7 +931,7 @@ class _AdminEndpoint {
     });
   }
 
-  _i4.Future<_i13.AdminActionResult> runAction(
+  _i4.Future<_i14.AdminActionResult> runAction(
     _i1.TestSessionBuilder sessionBuilder,
     String resourceKey,
     String name,
@@ -927,7 +960,7 @@ class _AdminEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i4.Future<_i13.AdminActionResult>);
+                as _i4.Future<_i14.AdminActionResult>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

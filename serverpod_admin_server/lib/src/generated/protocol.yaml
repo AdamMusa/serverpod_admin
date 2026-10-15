@@ -2,6 +2,7 @@ admin:
   - access:
   - resources:
   - metrics:
+  - overview:
   - activity:
   - currentUserProfile:
   - futureCallHistory:

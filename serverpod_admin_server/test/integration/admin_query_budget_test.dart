@@ -2,6 +2,7 @@ import 'package:serverpod/serverpod.dart';
 import 'package:serverpod/protocol.dart'
     show FutureCallEntry, ReadWriteTestEntry, SessionLogEntry;
 import 'package:serverpod_admin_server/serverpod_admin_server.dart';
+import 'package:serverpod_admin_server/src/admin/admin_overview.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     show AuthUser, UserProfile;
 import 'package:test/test.dart';
@@ -392,6 +393,52 @@ void main() {
         expect(deleted.affected, 5);
         expect(deletes, 1 + 5 + 1, reason: '${QueryCounter.calls}');
       });
+    });
+
+    test('the overview takes two queries for every table', () async {
+      final now = DateTime.now().toUtc();
+      await SessionLogEntry.db.insert(sessionBuilder.build(), [
+        for (final days in [0, 0, 2, 40])
+          SessionLogEntry(
+            serverId: 'a',
+            time: now.subtract(Duration(days: days)),
+            touched: now,
+          ),
+      ]);
+      final (summaries, queries) = await measure(
+        () => endpoints.admin.overview(admin, 30),
+      );
+      expect(queries, 2, reason: '${QueryCounter.calls}');
+      final byKey = {for (final s in summaries) s.resourceKey: s};
+      expect(byKey.keys, containsAll(['counters', 'profiles', 'sessions']));
+      expect(
+        (byKey['counters']!.count, byKey['counters']!.estimated),
+        (30, false),
+      );
+      expect(byKey['profiles']!.count, 6);
+      expect(byKey['counters']!.activity, isEmpty);
+      final sessions = byKey['sessions']!;
+      expect(sessions.count, 4);
+      // Rows of the last 30 days, by day, oldest first.
+      expect([for (final p in sessions.activity) p.count], [1, 2]);
+      expect(
+        sessions.activity.first.day.isBefore(sessions.activity.last.day),
+        isTrue,
+      );
+      // The same numbers as the single-table call.
+      final single = await endpoints.admin.activity(admin, 'sessions', 30);
+      expect([for (final p in single) p.count], [1, 2]);
+    });
+
+    test('large tables are estimated, not counted', () async {
+      AdminOverview.exactCountLimit = 10;
+      addTearDown(() => AdminOverview.exactCountLimit = 100000);
+      final summaries = await endpoints.admin.overview(admin, 30);
+      final counters = summaries.firstWhere((s) => s.resourceKey == 'counters');
+      expect(counters.estimated, isTrue);
+      expect(counters.count, greaterThan(10));
+      final profiles = summaries.firstWhere((s) => s.resourceKey == 'profiles');
+      expect((profiles.count, profiles.estimated), (6, false));
     });
 
     test('a list page is read in the database', () async {

@@ -33,16 +33,19 @@ import 'admin/admin_page.dart' as _i17;
 import 'admin/admin_query.dart' as _i18;
 import 'admin/admin_resource.dart' as _i19;
 import 'admin/admin_saved_view.dart' as _i20;
-import 'admin/admin_validation_exception.dart' as _i21;
-import 'module_class.dart' as _i22;
+import 'admin/admin_table_summary.dart' as _i21;
+import 'admin/admin_validation_exception.dart' as _i22;
+import 'module_class.dart' as _i23;
 import 'package:serverpod_admin_server/src/generated/admin/admin_resource.dart'
-    as _i23;
-import 'package:serverpod_admin_server/src/generated/admin/admin_metric_value.dart'
     as _i24;
-import 'package:serverpod_admin_server/src/generated/admin/admin_activity_point.dart'
+import 'package:serverpod_admin_server/src/generated/admin/admin_metric_value.dart'
     as _i25;
-import 'package:serverpod_admin_server/src/generated/admin/admin_saved_view.dart'
+import 'package:serverpod_admin_server/src/generated/admin/admin_table_summary.dart'
     as _i26;
+import 'package:serverpod_admin_server/src/generated/admin/admin_activity_point.dart'
+    as _i27;
+import 'package:serverpod_admin_server/src/generated/admin/admin_saved_view.dart'
+    as _i28;
 export 'admin/admin_access_info.dart';
 export 'admin/admin_action_info.dart';
 export 'admin/admin_action_result.dart';
@@ -59,6 +62,7 @@ export 'admin/admin_page.dart';
 export 'admin/admin_query.dart';
 export 'admin/admin_resource.dart';
 export 'admin/admin_saved_view.dart';
+export 'admin/admin_table_summary.dart';
 export 'admin/admin_validation_exception.dart';
 export 'module_class.dart';
 
@@ -353,11 +357,14 @@ class Protocol extends _i1.DatabaseSerializationManager {
     if (t == _i20.AdminSavedView) {
       return _i20.AdminSavedView.fromJson(data) as T;
     }
-    if (t == _i21.AdminValidationException) {
-      return _i21.AdminValidationException.fromJson(data) as T;
+    if (t == _i21.AdminTableSummary) {
+      return _i21.AdminTableSummary.fromJson(data) as T;
     }
-    if (t == _i22.ModuleClass) {
-      return _i22.ModuleClass.fromJson(data) as T;
+    if (t == _i22.AdminValidationException) {
+      return _i22.AdminValidationException.fromJson(data) as T;
+    }
+    if (t == _i23.ModuleClass) {
+      return _i23.ModuleClass.fromJson(data) as T;
     }
     if (t == _i1.getType<_i5.AdminAccessInfo?>()) {
       return (data != null ? _i5.AdminAccessInfo.fromJson(data) : null) as T;
@@ -408,14 +415,17 @@ class Protocol extends _i1.DatabaseSerializationManager {
     if (t == _i1.getType<_i20.AdminSavedView?>()) {
       return (data != null ? _i20.AdminSavedView.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i21.AdminValidationException?>()) {
+    if (t == _i1.getType<_i21.AdminTableSummary?>()) {
+      return (data != null ? _i21.AdminTableSummary.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i22.AdminValidationException?>()) {
       return (data != null
-              ? _i21.AdminValidationException.fromJson(data)
+              ? _i22.AdminValidationException.fromJson(data)
               : null)
           as T;
     }
-    if (t == _i1.getType<_i22.ModuleClass?>()) {
-      return (data != null ? _i22.ModuleClass.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i23.ModuleClass?>()) {
+      return (data != null ? _i23.ModuleClass.fromJson(data) : null) as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
@@ -482,21 +492,33 @@ class Protocol extends _i1.DatabaseSerializationManager {
               : null)
           as T;
     }
-    if (t == List<_i23.AdminResource>) {
+    if (t == List<_i8.AdminActivityPoint>) {
       return (data as List)
-              .map((e) => deserialize<_i23.AdminResource>(e))
+              .map((e) => deserialize<_i8.AdminActivityPoint>(e))
               .toList()
           as T;
     }
-    if (t == List<_i24.AdminMetricValue>) {
+    if (t == List<_i24.AdminResource>) {
       return (data as List)
-              .map((e) => deserialize<_i24.AdminMetricValue>(e))
+              .map((e) => deserialize<_i24.AdminResource>(e))
               .toList()
           as T;
     }
-    if (t == List<_i25.AdminActivityPoint>) {
+    if (t == List<_i25.AdminMetricValue>) {
       return (data as List)
-              .map((e) => deserialize<_i25.AdminActivityPoint>(e))
+              .map((e) => deserialize<_i25.AdminMetricValue>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i26.AdminTableSummary>) {
+      return (data as List)
+              .map((e) => deserialize<_i26.AdminTableSummary>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i27.AdminActivityPoint>) {
+      return (data as List)
+              .map((e) => deserialize<_i27.AdminActivityPoint>(e))
               .toList()
           as T;
     }
@@ -530,9 +552,9 @@ class Protocol extends _i1.DatabaseSerializationManager {
               : null)
           as T;
     }
-    if (t == List<_i26.AdminSavedView>) {
+    if (t == List<_i28.AdminSavedView>) {
       return (data as List)
-              .map((e) => deserialize<_i26.AdminSavedView>(e))
+              .map((e) => deserialize<_i28.AdminSavedView>(e))
               .toList()
           as T;
     }
@@ -575,8 +597,9 @@ class Protocol extends _i1.DatabaseSerializationManager {
       _i18.AdminQuery => 'AdminQuery',
       _i19.AdminResource => 'AdminResource',
       _i20.AdminSavedView => 'AdminSavedView',
-      _i21.AdminValidationException => 'AdminValidationException',
-      _i22.ModuleClass => 'ModuleClass',
+      _i21.AdminTableSummary => 'AdminTableSummary',
+      _i22.AdminValidationException => 'AdminValidationException',
+      _i23.ModuleClass => 'ModuleClass',
       _ => null,
     };
   }
@@ -626,9 +649,11 @@ class Protocol extends _i1.DatabaseSerializationManager {
         return 'AdminResource';
       case _i20.AdminSavedView():
         return 'AdminSavedView';
-      case _i21.AdminValidationException():
+      case _i21.AdminTableSummary():
+        return 'AdminTableSummary';
+      case _i22.AdminValidationException():
         return 'AdminValidationException';
-      case _i22.ModuleClass():
+      case _i23.ModuleClass():
         return 'ModuleClass';
     }
     className = _i2.Protocol().getClassNameForObject(data);
@@ -692,11 +717,14 @@ class Protocol extends _i1.DatabaseSerializationManager {
     if (dataClassName == 'AdminSavedView') {
       return deserialize<_i20.AdminSavedView>(data['data']);
     }
+    if (dataClassName == 'AdminTableSummary') {
+      return deserialize<_i21.AdminTableSummary>(data['data']);
+    }
     if (dataClassName == 'AdminValidationException') {
-      return deserialize<_i21.AdminValidationException>(data['data']);
+      return deserialize<_i22.AdminValidationException>(data['data']);
     }
     if (dataClassName == 'ModuleClass') {
-      return deserialize<_i22.ModuleClass>(data['data']);
+      return deserialize<_i23.ModuleClass>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);

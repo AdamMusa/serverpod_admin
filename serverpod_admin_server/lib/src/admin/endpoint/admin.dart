@@ -7,6 +7,7 @@ import 'package:serverpod_auth_idp_server/providers/email.dart';
 import 'package:serverpod_admin_server/src/admin/admin_access.dart';
 import 'package:serverpod_admin_server/src/admin/admin_auth_user_link.dart';
 import 'package:serverpod_admin_server/src/admin/admin_entry_base.dart';
+import 'package:serverpod_admin_server/src/admin/admin_overview.dart';
 import 'package:serverpod_admin_server/src/admin/admin_history.dart'
     show AdminChange, AdminHistory;
 import 'package:serverpod_admin_server/src/admin/admin_query_engine.dart';
@@ -27,6 +28,7 @@ import '../../../serverpod_admin_server.dart'
         AdminQuery,
         AdminResource,
         AdminSavedView,
+        AdminTableSummary,
         AdminValidationException;
 
 class AdminEndpoint extends Endpoint {
@@ -128,6 +130,17 @@ class AdminEndpoint extends Endpoint {
     ]);
   }
 
+  /// Every table the user may see with its number of rows and the rows it
+  /// gained on each of the last [days] days: the overview in one request
+  /// and two queries.
+  Future<List<AdminTableSummary>> overview(Session session, int days) async {
+    final access = AdminAccess.of(session)..requireAllowed();
+    return AdminOverview.summarize(session, [
+      for (final entry in adminRegister())
+        if (access.can(entry, AdminOperation.view)) entry,
+    ], days: days);
+  }
+
   /// Rows added per day over the last [days] days, by the resource's
   /// chart column, for the overview.
   Future<List<AdminActivityPoint>> activity(
@@ -136,27 +149,10 @@ class AdminEndpoint extends Endpoint {
     int days,
   ) async {
     final entry = _entryFor(session, resourceKey, AdminOperation.view);
-    final name = entry.metadata.chartColumn;
-    final column = entry.columns
-        .where((c) => c.columnName == name && c is ColumnDateTime)
-        .firstOrNull;
-    if (column == null) return const [];
-    String quoted(String identifier) => '"${identifier.replaceAll('"', '""')}"';
-    final rows = await session.db.unsafeQuery(
-      'SELECT date_trunc(\'day\', ${quoted(column.columnName)}) AS day, '
-      'count(*) FROM ${quoted(entry.tableName)} '
-      'WHERE ${quoted(column.columnName)} >= '
-      'now() - make_interval(days => @days) '
-      'GROUP BY 1 ORDER BY 1',
-      parameters: QueryParameters.named({'days': days.clamp(1, 366)}),
-    );
-    return [
-      for (final row in rows)
-        AdminActivityPoint(
-          day: (row[0] as DateTime).toUtc(),
-          count: row[1] as int,
-        ),
-    ];
+    final activity = await AdminOverview.dailyRows(session, [
+      entry,
+    ], days: days);
+    return activity[entry] ?? const [];
   }
 
   Future<Map<String, String>> currentUserProfile(Session session) async {

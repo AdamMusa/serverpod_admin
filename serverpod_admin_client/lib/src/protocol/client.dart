@@ -18,18 +18,20 @@ import 'package:serverpod_admin_client/src/protocol/admin/admin_resource.dart'
     as _i4;
 import 'package:serverpod_admin_client/src/protocol/admin/admin_metric_value.dart'
     as _i5;
-import 'package:serverpod_admin_client/src/protocol/admin/admin_activity_point.dart'
+import 'package:serverpod_admin_client/src/protocol/admin/admin_table_summary.dart'
     as _i6;
-import 'package:serverpod_admin_client/src/protocol/admin/admin_page.dart'
+import 'package:serverpod_admin_client/src/protocol/admin/admin_activity_point.dart'
     as _i7;
-import 'package:serverpod_admin_client/src/protocol/admin/admin_query.dart'
+import 'package:serverpod_admin_client/src/protocol/admin/admin_page.dart'
     as _i8;
-import 'package:serverpod_admin_client/src/protocol/admin/admin_log_page.dart'
+import 'package:serverpod_admin_client/src/protocol/admin/admin_query.dart'
     as _i9;
-import 'package:serverpod_admin_client/src/protocol/admin/admin_saved_view.dart'
+import 'package:serverpod_admin_client/src/protocol/admin/admin_log_page.dart'
     as _i10;
-import 'package:serverpod_admin_client/src/protocol/admin/admin_action_result.dart'
+import 'package:serverpod_admin_client/src/protocol/admin/admin_saved_view.dart'
     as _i11;
+import 'package:serverpod_admin_client/src/protocol/admin/admin_action_result.dart'
+    as _i12;
 
 /// {@category Endpoint}
 class EndpointAdmin extends _i1.EndpointRef {
@@ -65,12 +67,22 @@ class EndpointAdmin extends _i1.EndpointRef {
         {},
       );
 
+  /// Every table the user may see with its number of rows and the rows it
+  /// gained on each of the last [days] days: the overview in one request
+  /// and two queries.
+  _i2.Future<List<_i6.AdminTableSummary>> overview(int days) =>
+      caller.callServerEndpoint<List<_i6.AdminTableSummary>>(
+        'serverpod_admin.admin',
+        'overview',
+        {'days': days},
+      );
+
   /// Rows added per day over the last [days] days, by the resource's
   /// chart column, for the overview.
-  _i2.Future<List<_i6.AdminActivityPoint>> activity(
+  _i2.Future<List<_i7.AdminActivityPoint>> activity(
     String resourceKey,
     int days,
-  ) => caller.callServerEndpoint<List<_i6.AdminActivityPoint>>(
+  ) => caller.callServerEndpoint<List<_i7.AdminActivityPoint>>(
     'serverpod_admin.admin',
     'activity',
     {
@@ -126,10 +138,10 @@ class EndpointAdmin extends _i1.EndpointRef {
 
   /// One page of [resourceKey]'s rows: filtered, searched and sorted in the
   /// database when possible, with the total number of matching rows.
-  _i2.Future<_i7.AdminPage> query(
+  _i2.Future<_i8.AdminPage> query(
     String resourceKey,
-    _i8.AdminQuery query,
-  ) => caller.callServerEndpoint<_i7.AdminPage>(
+    _i9.AdminQuery query,
+  ) => caller.callServerEndpoint<_i8.AdminPage>(
     'serverpod_admin.admin',
     'query',
     {
@@ -202,12 +214,12 @@ class EndpointAdmin extends _i1.EndpointRef {
 
   /// The change history, newest first: everything, one resource's, or one
   /// row's when [recordId] is given too.
-  _i2.Future<_i9.AdminLogPage> history(
+  _i2.Future<_i10.AdminLogPage> history(
     String? resourceKey,
     String? recordId,
     int offset,
     int limit,
-  ) => caller.callServerEndpoint<_i9.AdminLogPage>(
+  ) => caller.callServerEndpoint<_i10.AdminLogPage>(
     'serverpod_admin.admin',
     'history',
     {
@@ -219,8 +231,8 @@ class EndpointAdmin extends _i1.EndpointRef {
   );
 
   /// The signed-in user's saved views of [resourceKey], by name.
-  _i2.Future<List<_i10.AdminSavedView>> savedViews(String resourceKey) =>
-      caller.callServerEndpoint<List<_i10.AdminSavedView>>(
+  _i2.Future<List<_i11.AdminSavedView>> savedViews(String resourceKey) =>
+      caller.callServerEndpoint<List<_i11.AdminSavedView>>(
         'serverpod_admin.admin',
         'savedViews',
         {'resourceKey': resourceKey},
@@ -229,12 +241,12 @@ class EndpointAdmin extends _i1.EndpointRef {
   /// Saves [query]'s search, sort and filters and the shown [columns] (null
   /// for the table's defaults) as the signed-in user's view [name] of
   /// [resourceKey], replacing their view of that name. Paging is not saved.
-  _i2.Future<_i10.AdminSavedView> saveView(
+  _i2.Future<_i11.AdminSavedView> saveView(
     String resourceKey,
     String name,
-    _i8.AdminQuery query,
+    _i9.AdminQuery query,
     List<String>? columns,
-  ) => caller.callServerEndpoint<_i10.AdminSavedView>(
+  ) => caller.callServerEndpoint<_i11.AdminSavedView>(
     'serverpod_admin.admin',
     'saveView',
     {
@@ -253,12 +265,13 @@ class EndpointAdmin extends _i1.EndpointRef {
     {'id': id},
   );
 
-  /// Deletes the rows with [ids], one by one, recording each; rows that
-  /// cannot be deleted are counted in the message.
-  _i2.Future<_i11.AdminActionResult> deleteMany(
+  /// Deletes the rows with [ids], in one query unless the table deletes
+  /// rows its own way, and records each; rows that cannot be deleted are
+  /// counted in the message.
+  _i2.Future<_i12.AdminActionResult> deleteMany(
     String resourceKey,
     List<String> ids,
-  ) => caller.callServerEndpoint<_i11.AdminActionResult>(
+  ) => caller.callServerEndpoint<_i12.AdminActionResult>(
     'serverpod_admin.admin',
     'deleteMany',
     {
@@ -268,13 +281,14 @@ class EndpointAdmin extends _i1.EndpointRef {
   );
 
   /// Sets [values] (column name to text, as the edit form sends them) on
-  /// every row with [ids], through the same validation and hooks as a
-  /// single edit.
-  _i2.Future<_i11.AdminActionResult> updateMany(
+  /// every row with [ids], through the same validation as a single edit:
+  /// the rows are read in one query and saved in one query unless the table
+  /// saves rows its own way.
+  _i2.Future<_i12.AdminActionResult> updateMany(
     String resourceKey,
     List<String> ids,
     Map<String, String> values,
-  ) => caller.callServerEndpoint<_i11.AdminActionResult>(
+  ) => caller.callServerEndpoint<_i12.AdminActionResult>(
     'serverpod_admin.admin',
     'updateMany',
     {
@@ -286,11 +300,11 @@ class EndpointAdmin extends _i1.EndpointRef {
 
   /// Runs the custom action [name] (registered with `actions:`) on the rows
   /// with [ids], and records it in each row's history.
-  _i2.Future<_i11.AdminActionResult> runAction(
+  _i2.Future<_i12.AdminActionResult> runAction(
     String resourceKey,
     String name,
     List<String> ids,
-  ) => caller.callServerEndpoint<_i11.AdminActionResult>(
+  ) => caller.callServerEndpoint<_i12.AdminActionResult>(
     'serverpod_admin.admin',
     'runAction',
     {

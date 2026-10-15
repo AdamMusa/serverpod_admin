@@ -1,0 +1,13 @@
+### A table on the overview: how many rows it has and how many it gained on
+### each recent day.
+class: AdminTableSummary
+fields:
+  resourceKey: String
+  ### The number of rows; -1 when it could not be read.
+  count: int
+  ### The count is Postgres's estimate, for tables too large to count on
+  ### every visit.
+  estimated: bool
+  ### Rows added per day, oldest first, by the table's chart column; empty
+  ### without one.
+  activity: List<AdminActivityPoint>
