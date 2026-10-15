@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.19
+
+- An overview home page with every table's row count and recent actions.
+- Record pages have Details, Related (rows pointing at the record, with a
+  link to all of them) and History tabs.
+- Foreign keys show the related row's name and open it; pickers in forms
+  search the related table instead of loading it whole.
+- Select rows (or all matching), then delete them, set a field on all of
+  them, or run the model's custom actions.
+
 ## 1.0.18
 
 - Tables page, sort (click a column header), search and filter on the server,

@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.19
+
+- Change history: creations, edits, deletions and custom actions made in the
+  dashboard are recorded in the new `serverpod_admin_log` table (create a
+  migration after upgrading), readable with `admin.history`. Secret-looking
+  fields are recorded without values; `registry.historyRetention` limits how
+  long entries are kept.
+- Bulk changes: `deleteMany` and `updateMany` apply to many rows through the
+  same validation and hooks as single edits, reporting rows that failed.
+- Custom actions: `register<T>(actions: [AdminAction(...)])` adds actions
+  administrators run on selected rows (`runAction`).
+- Filters accept `oneOf` (comma-separated values).
+
 ## 1.0.18
 
 - Listings are paged, sorted, searched and filtered in the database through

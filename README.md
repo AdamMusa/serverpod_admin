@@ -56,6 +56,10 @@ No more writing boilerplate CRUD endpoints. Register your models once, and insta
 - **Search, Filter & Sort** – Search every text column, add filters that fit each column (contains, is / is not, at least / at most, on or before / after, empty), and sort by any column; all of it runs in the database
 - **Pagination** – Pages are read from the database, so large tables stay fast
 - **Documents & Links** – URLs open inside the dashboard: images with zoom, PDFs in the browser's viewer, other pages one click away
+- **Overview** – A home page with every table's row count and the latest changes
+- **Change History** – Who created, changed, deleted or ran an action on each row, and which values changed (like Django's admin log), on every record and as recent actions
+- **Bulk Changes & Custom Actions** – Select rows (or every row matching the filters), then delete them, set a field on all of them, or run actions you register per model
+- **Relationships** – Foreign keys show the related row's name and open it; every record lists the rows pointing at it, with a link to all of them; pickers search instead of loading whole tables
 - **Create & Edit** – Intuitive forms for managing records
 - **Delete** – Safe deletion with proper validation
 - **Column Visibility** – Hide the columns you do not need on wide tables
@@ -230,6 +234,39 @@ registry.register<Document>(
 
 A custom `listRows` still works, but then those operations run in memory over
 every row it returns.
+
+Custom actions run on the rows an administrator selects, like Django admin
+actions. Each run is recorded in the rows' history:
+
+```dart
+registry.register<Order>(actions: [
+  AdminAction(
+    name: 'ship',
+    label: 'Mark as shipped',
+    run: (session, orders) async {
+      for (final order in orders) {
+        await Order.db.updateRow(session, order.copyWith(shipped: true));
+      }
+      return '${orders.length} orders shipped.';
+    },
+  ),
+]);
+```
+
+The dashboard also offers "Set field" and "Delete selected" for any
+selection; they go through the same validation and `updateRow` hooks as a
+single edit.
+
+The change history is stored in the module's `serverpod_admin_log` table.
+After upgrading to 1.0.19, create and apply a migration in your server
+(`serverpod create-migration`). Changes to fields that look secret
+(passwords, tokens, hashes) are recorded without their values. To keep the
+history only for a while, for example when rows hold personal data you
+promise to erase:
+
+```dart
+registry.historyRetention = const Duration(days: 30);
+```
 
 ### 3. Install the Prebuilt Dashboard
 

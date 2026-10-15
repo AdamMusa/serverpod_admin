@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.19
+
+- Added `AdminLogEntry`, `AdminLogAction`, `AdminLogPage`, `AdminActionInfo`,
+  `AdminActionResult`, `AdminFilterOperator.oneOf` and `AdminResource.actions`,
+  with `history`, `deleteMany`, `updateMany` and `runAction`.
+
 ## 1.0.18
 
 - Added `AdminQuery`, `AdminFilter`, `AdminFilterOperator` and `AdminPage`,
