@@ -94,8 +94,8 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
       // Actions see rows as stored, not as presented to the dashboard.
       final row = _queryable
           // ignore: invalid_use_of_internal_member
-          ? await session.db.findById<T>(id)
-          : await _findRowById(session, id);
+          ? await session.db.findById<T>(_rowId(id))
+          : await _findRowById(session, _rowId(id));
       if (row != null) rows.add(row);
     }
     return action.run(session, rows);
@@ -143,7 +143,7 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
 
   @override
   Future<TableRow?> findRowById(Session session, Object id) async {
-    final row = await _findRowById(session, id);
+    final row = await _findRowById(session, _rowId(id));
     return row;
   }
 
@@ -161,7 +161,20 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
 
   @override
   Future<void> deleteById(Session session, Object id) async {
-    await _deleteById(session, id);
+    await _deleteById(session, _rowId(id));
+  }
+
+  /// [id] as the table's key type: ids arrive as text from the dashboard,
+  /// and UUID keys are looked up as UuidValue.
+  Object _rowId(Object id) {
+    if (_resolvedTable.id is ColumnUuid && id is String) {
+      try {
+        return UuidValue.withValidation(id);
+      } on FormatException {
+        throw AdminValidationException(message: '$id is not a valid id.');
+      }
+    }
+    return id;
   }
 
   Table get _resolvedTable {
