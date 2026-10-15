@@ -101,20 +101,30 @@ class _RecordsBodyState extends State<RecordsBody> {
     _loadForeignLabels();
   }
 
-  /// Names the related rows of every foreign key shown on this page.
+  /// Names the related rows of every foreign key shown on this page: one
+  /// request per related table, however many columns point at it.
   Future<void> _loadForeignLabels() async {
     final load = widget.loadForeignLabels;
     if (load == null) return;
     final records = widget.records;
+    final byTable = <String, List<AdminColumn>>{};
+    for (final column in widget.resource.columns) {
+      final table = column.foreignKeyTable;
+      if (table == null || widget.hiddenColumns.contains(column.name)) continue;
+      (byTable[table] ??= []).add(column);
+    }
     final labels = <String, Map<String, String>>{};
     await Future.wait([
-      for (final column in widget.resource.columns)
-        if (column.foreignKeyTable != null &&
-            !widget.hiddenColumns.contains(column.name))
-          load(column, {
+      for (final columns in byTable.values)
+        load(columns.first, {
+          for (final column in columns)
             for (final record in records)
               if ((record[column.name] ?? '').isNotEmpty) record[column.name]!,
-          }).then((names) => labels[column.name] = names),
+        }).then((names) {
+          for (final column in columns) {
+            labels[column.name] = names;
+          }
+        }),
     ]);
     if (mounted && identical(records, widget.records)) {
       setState(() => _foreignLabels = labels);
