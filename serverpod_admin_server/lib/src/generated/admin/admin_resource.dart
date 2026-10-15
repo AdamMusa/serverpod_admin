@@ -13,7 +13,8 @@
 import 'package:serverpod/serverpod.dart' as _i1;
 import '../admin/admin_column.dart' as _i2;
 import '../admin/admin_action_info.dart' as _i3;
-import 'package:serverpod_admin_server/src/generated/protocol.dart' as _i4;
+import '../admin/admin_fieldset_info.dart' as _i4;
+import 'package:serverpod_admin_server/src/generated/protocol.dart' as _i5;
 
 abstract class AdminResource
     implements _i1.SerializableModel, _i1.ProtocolSerialization {
@@ -31,6 +32,7 @@ abstract class AdminResource
     this.canEdit,
     this.canDelete,
     this.chartColumn,
+    this.fieldsets,
   });
 
   factory AdminResource({
@@ -47,25 +49,26 @@ abstract class AdminResource
     bool? canEdit,
     bool? canDelete,
     String? chartColumn,
+    List<_i4.AdminFieldsetInfo>? fieldsets,
   }) = _AdminResourceImpl;
 
   factory AdminResource.fromJson(Map<String, dynamic> jsonSerialization) {
     return AdminResource(
       key: jsonSerialization['key'] as String,
       tableName: jsonSerialization['tableName'] as String,
-      columns: _i4.Protocol().deserialize<List<_i2.AdminColumn>>(
+      columns: _i5.Protocol().deserialize<List<_i2.AdminColumn>>(
         jsonSerialization['columns'],
       ),
       actions: jsonSerialization['actions'] == null
           ? null
-          : _i4.Protocol().deserialize<List<_i3.AdminActionInfo>>(
+          : _i5.Protocol().deserialize<List<_i3.AdminActionInfo>>(
               jsonSerialization['actions'],
             ),
       label: jsonSerialization['label'] as String?,
       group: jsonSerialization['group'] as String?,
       listColumns: jsonSerialization['listColumns'] == null
           ? null
-          : _i4.Protocol().deserialize<List<String>>(
+          : _i5.Protocol().deserialize<List<String>>(
               jsonSerialization['listColumns'],
             ),
       sortColumn: jsonSerialization['sortColumn'] as String?,
@@ -82,6 +85,11 @@ abstract class AdminResource
           ? null
           : _i1.BoolJsonExtension.fromJson(jsonSerialization['canDelete']),
       chartColumn: jsonSerialization['chartColumn'] as String?,
+      fieldsets: jsonSerialization['fieldsets'] == null
+          ? null
+          : _i5.Protocol().deserialize<List<_i4.AdminFieldsetInfo>>(
+              jsonSerialization['fieldsets'],
+            ),
     );
   }
 
@@ -118,6 +126,11 @@ abstract class AdminResource
   /// A date column whose daily counts the overview charts.
   String? chartColumn;
 
+  /// Groups of fields shown together in forms and details, in order. The
+  /// columns no group names (except the primary key) end in a group
+  /// named "Other".
+  List<_i4.AdminFieldsetInfo>? fieldsets;
+
   /// Returns a shallow copy of this [AdminResource]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -135,6 +148,7 @@ abstract class AdminResource
     bool? canEdit,
     bool? canDelete,
     String? chartColumn,
+    List<_i4.AdminFieldsetInfo>? fieldsets,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -154,6 +168,8 @@ abstract class AdminResource
       if (canEdit != null) 'canEdit': canEdit,
       if (canDelete != null) 'canDelete': canDelete,
       if (chartColumn != null) 'chartColumn': chartColumn,
+      if (fieldsets != null)
+        'fieldsets': fieldsets?.toJson(valueToJson: (v) => v.toJson()),
     };
   }
 
@@ -175,6 +191,10 @@ abstract class AdminResource
       if (canEdit != null) 'canEdit': canEdit,
       if (canDelete != null) 'canDelete': canDelete,
       if (chartColumn != null) 'chartColumn': chartColumn,
+      if (fieldsets != null)
+        'fieldsets': fieldsets?.toJson(
+          valueToJson: (v) => v.toJsonForProtocol(),
+        ),
     };
   }
 
@@ -201,6 +221,7 @@ class _AdminResourceImpl extends AdminResource {
     bool? canEdit,
     bool? canDelete,
     String? chartColumn,
+    List<_i4.AdminFieldsetInfo>? fieldsets,
   }) : super._(
          key: key,
          tableName: tableName,
@@ -215,6 +236,7 @@ class _AdminResourceImpl extends AdminResource {
          canEdit: canEdit,
          canDelete: canDelete,
          chartColumn: chartColumn,
+         fieldsets: fieldsets,
        );
 
   /// Returns a shallow copy of this [AdminResource]
@@ -235,6 +257,7 @@ class _AdminResourceImpl extends AdminResource {
     Object? canEdit = _Undefined,
     Object? canDelete = _Undefined,
     Object? chartColumn = _Undefined,
+    Object? fieldsets = _Undefined,
   }) {
     return AdminResource(
       key: key ?? this.key,
@@ -256,6 +279,9 @@ class _AdminResourceImpl extends AdminResource {
       canEdit: canEdit is bool? ? canEdit : this.canEdit,
       canDelete: canDelete is bool? ? canDelete : this.canDelete,
       chartColumn: chartColumn is String? ? chartColumn : this.chartColumn,
+      fieldsets: fieldsets is List<_i4.AdminFieldsetInfo>?
+          ? fieldsets
+          : this.fieldsets?.map((e0) => e0.copyWith()).toList(),
     );
   }
 }

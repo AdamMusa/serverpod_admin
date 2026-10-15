@@ -20,3 +20,7 @@ fields:
   canDelete: bool?
   ### A date column whose daily counts the overview charts.
   chartColumn: String?
+  ### Groups of fields shown together in forms and details, in order. The
+  ### columns no group names (except the primary key) end in a group
+  ### named "Other".
+  fieldsets: List<AdminFieldsetInfo>?

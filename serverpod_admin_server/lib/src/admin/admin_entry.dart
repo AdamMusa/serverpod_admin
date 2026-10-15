@@ -102,7 +102,35 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
       canEdit: _options.canEdit ? null : false,
       canDelete: _options.canDelete ? null : false,
       chartColumn: _options.chartColumn ?? _detectChartColumn(columns),
+      fieldsets: _resolveFieldsets(columns),
     );
+  }
+
+  /// The table's fieldsets with only the columns the dashboard sees, each
+  /// column once, and the columns no group names in a last "Other" group.
+  List<AdminFieldsetInfo>? _resolveFieldsets(List<AdminColumn> columns) {
+    final fieldsets = _options.fieldsets;
+    if (fieldsets == null) return null;
+    final known = {for (final column in columns) column.name};
+    final placed = <String>{};
+    final resolved = [
+      for (final fieldset in fieldsets)
+        fieldset.info.copyWith(
+          fields: [
+            for (final name in fieldset.fields)
+              if (known.contains(name) && placed.add(name)) name,
+          ],
+        ),
+    ]..removeWhere((fieldset) => fieldset.fields.isEmpty);
+    final rest = [
+      for (final column in columns)
+        if (!column.isPrimary && !placed.contains(column.name)) column.name,
+    ];
+    return [
+      ...resolved,
+      if (rest.isNotEmpty)
+        AdminFieldsetInfo(name: 'Other', fields: rest, collapsed: false),
+    ];
   }
 
   static const _chartNames = [

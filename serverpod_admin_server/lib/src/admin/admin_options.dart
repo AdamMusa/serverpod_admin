@@ -1,5 +1,7 @@
 import 'package:serverpod/serverpod.dart';
 
+import '../generated/protocol.dart' show AdminFieldsetInfo;
+
 /// How a registered table appears and behaves in the dashboard, like a
 /// Django ModelAdmin:
 ///
@@ -15,6 +17,14 @@ import 'package:serverpod/serverpod.dart';
 ///     hidden: {'paymentToken'},
 ///     labels: {'customerId': 'Customer'},
 ///     help: {'status': 'Shipped orders can no longer be edited.'},
+///     fieldsets: [
+///       AdminFieldset(fields: ['customerId', 'status', 'total']),
+///       AdminFieldset(
+///         name: 'Delivery',
+///         fields: ['address', 'shippedAt'],
+///         description: 'Filled in by the warehouse.',
+///       ),
+///     ],
 ///     canDelete: false,
 ///     permissions: AdminPermissions(
 ///       view: {Scope('support')},
@@ -39,6 +49,7 @@ class AdminOptions {
     this.canEdit = true,
     this.canDelete = true,
     this.chartColumn,
+    this.fieldsets,
     this.permissions,
   });
 
@@ -82,10 +93,44 @@ class AdminOptions {
   /// common names such as createdAt when unset).
   final String? chartColumn;
 
+  /// Groups the fields of forms and details, like Django's fieldsets. The
+  /// columns no group names (except the primary key) follow in a group
+  /// named "Other"; hidden and unknown names are left out.
+  final List<AdminFieldset>? fieldsets;
+
   /// Which staff scopes may view, create, edit or delete this table.
   /// Administrators (Scope.admin) may always do everything; without
   /// permissions, staff cannot see the table.
   final AdminPermissions? permissions;
+}
+
+/// A group of fields shown together in the dashboard's forms and details.
+class AdminFieldset {
+  const AdminFieldset({
+    this.name,
+    required this.fields,
+    this.description,
+    this.collapsed = false,
+  });
+
+  /// Shown above the fields; leave it out for an untitled first group.
+  final String? name;
+
+  /// Column names, in the order shown.
+  final List<String> fields;
+
+  /// Explains the group, shown under its name.
+  final String? description;
+
+  /// Starts folded, for fields rarely changed (Django's "collapse" class).
+  final bool collapsed;
+
+  AdminFieldsetInfo get info => AdminFieldsetInfo(
+    name: name,
+    fields: fields,
+    description: description,
+    collapsed: collapsed,
+  );
 }
 
 /// The staff scopes allowed each kind of access to a table. A scope allowed

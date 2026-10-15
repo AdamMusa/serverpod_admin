@@ -1,0 +1,12 @@
+### A titled group of fields in the dashboard's forms and details, like a
+### Django fieldset.
+class: AdminFieldsetInfo
+fields:
+  ### Shown above the fields; an untitled group has none.
+  name: String?
+  ### The column names in the group, in order.
+  fields: List<String>
+  ### Explains the group, shown under its name.
+  description: String?
+  ### Starts folded, for fields rarely changed.
+  collapsed: bool

@@ -36,6 +36,16 @@ void main() {
             labels: const {'endpoint': 'Endpoint name'},
             help: {'slow': 'Took longer than the slow-query limit.'},
             canCreate: false,
+            fieldsets: const [
+              AdminFieldset(fields: ['endpoint', 'method', 'stackTrace']),
+              AdminFieldset(
+                name: 'Timing',
+                fields: ['time', 'duration', 'unknown', 'endpoint'],
+                description: 'When the call ran.',
+                collapsed: true,
+              ),
+              AdminFieldset(name: 'Nothing visible', fields: ['stackTrace']),
+            ],
             permissions: AdminPermissions(view: {_support}, edit: {_support}),
           ),
         );
@@ -145,6 +155,34 @@ void main() {
       expect(column('slow').help, 'Took longer than the slow-query limit.');
       expect(column('serverId').readOnly, isTrue);
       expect(column('endpoint').readOnly, isNull);
+    });
+
+    test('fieldsets group the visible columns, the rest under Other', () async {
+      final resources = await endpoints.admin.resources(admin);
+      final sessions = resources.firstWhere((r) => r.key == 'sessions');
+      final fieldsets = sessions.fieldsets!;
+      expect(
+        [for (final f in fieldsets) (f.name, f.description, f.collapsed)],
+        [
+          (null, null, false),
+          ('Timing', 'When the call ran.', true),
+          ('Other', null, false),
+        ],
+      );
+      // Hidden, unknown and repeated names are left out.
+      expect(fieldsets[0].fields, ['endpoint', 'method']);
+      expect(fieldsets[1].fields, ['time', 'duration']);
+      expect(fieldsets[2].fields, [
+        for (final column in sessions.columns)
+          if (!column.isPrimary &&
+              !{'endpoint', 'method', 'time', 'duration'}.contains(column.name))
+            column.name,
+      ]);
+      expect(fieldsets[2].fields, isNot(contains('stackTrace')));
+
+      // Without fieldsets, forms list every column.
+      final counters = resources.firstWhere((r) => r.key == 'counters');
+      expect(counters.fieldsets, isNull);
     });
 
     test('access says who may open the dashboard', () async {
