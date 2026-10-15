@@ -35,7 +35,11 @@ final _rides = AdminResource(
   listColumns: ['id', 'status', 'passengerId'],
   columns: [
     _col('id', type: 'int', pk: true),
-    _col('passengerId', type: 'int', fk: 'user_profile'),
+    _col(
+      'passengerId',
+      type: 'int',
+      fk: 'user_profile',
+    ).copyWith(label: 'Passenger'),
     _col('status'),
     _col('note'),
   ],
@@ -169,7 +173,7 @@ void main() {
   ) async {
     await pumpUser(tester);
     expect(find.text('Rides (2)'), findsOneWidget);
-    expect(find.text('by passengerId'), findsOneWidget);
+    expect(find.text('by Passenger'), findsOneWidget);
     expect(find.text('done'), findsOneWidget);
     expect(find.text('open'), findsOneWidget);
     // The rides' link to the user is the same in every row, so not shown.
@@ -199,6 +203,7 @@ void main() {
 
     // The link to the user is set and cannot be changed.
     expect(find.text('Read-only.'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'Passenger'), findsOneWidget);
     await tester.enterText(find.widgetWithText(TextFormField, 'status'), 'new');
     await tester.enterText(find.widgetWithText(TextFormField, 'note'), 'z');
     await tester.tap(find.text('Create'));

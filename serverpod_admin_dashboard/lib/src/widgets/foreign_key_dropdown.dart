@@ -57,8 +57,8 @@ class _ForeignKeyDropdownState extends State<ForeignKeyDropdown> {
     final related = _related;
     final decoration = InputDecoration(
       labelText: widget.column.isNullable == true
-          ? '${widget.column.name} (optional)'
-          : widget.column.name,
+          ? '${widget.column.displayName} (optional)'
+          : widget.column.displayName,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       filled: true,
       fillColor: theme.colorScheme.surfaceContainerHighest,
@@ -96,7 +96,7 @@ class _ForeignKeyDropdownState extends State<ForeignKeyDropdown> {
           controller: text,
           focusNode: focusNode,
           decoration: decoration.copyWith(
-            hintText: 'Search ${related.tableName}',
+            hintText: 'Search ${related.displayName}',
             prefixIcon: const Icon(Icons.search),
             suffixIcon: IconButton(
               tooltip: 'Clear',
