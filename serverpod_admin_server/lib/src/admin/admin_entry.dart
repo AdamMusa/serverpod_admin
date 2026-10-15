@@ -201,13 +201,38 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
   ) async {
     final sql = _sql(query);
     if (sql == null) return null;
-    // ignore: invalid_use_of_internal_member
-    final rows = await session.db.find<T>(
-      where: sql.where,
-      orderByList: sql.orderBy,
-      limit: query.limit,
-      offset: query.offset,
-    );
+    final columns = _projection(query.columns);
+    final List<JsonMap> rows;
+    if (columns != null) {
+      // Only the columns asked for are read.
+      final where = sql.where;
+      // ignore: invalid_use_of_internal_member
+      final result = await session.db.unsafeQuery(
+        'SELECT ${columns.join(', ')} FROM $_quotedTable'
+        '${where == null ? '' : ' WHERE $where'} '
+        'ORDER BY ${sql.orderBy.join(', ')} '
+        'LIMIT ${query.limit} OFFSET ${query.offset}',
+      );
+      rows = [
+        for (final row in result)
+          {
+            // As toJson writes them: by field name, without nulls.
+            for (final (index, column) in columns.indexed)
+              if (row[index] != null) column.fieldName: row[index],
+          },
+      ];
+    } else {
+      // ignore: invalid_use_of_internal_member
+      final found = await session.db.find<T>(
+        where: sql.where,
+        orderByList: sql.orderBy,
+        limit: query.limit,
+        offset: query.offset,
+      );
+      rows = [
+        for (final row in found) toJson(_present?.call(session, row) ?? row),
+      ];
+    }
     // A page that is not full holds the last matching rows, so they need no
     // count.
     final last =
@@ -218,13 +243,42 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
         ? -1
         // ignore: invalid_use_of_internal_member
         : await session.db.count<T>(where: sql.where);
-    return (
-      rows: [
-        for (final row in rows) toJson(_present?.call(session, row) ?? row),
-      ],
-      total: total,
-    );
+    return (rows: rows, total: total);
   }
+
+  /// The stored columns to read for [names] (with the key, and the link to
+  /// the auth user when its values are asked for), or null to read whole
+  /// rows: when every column is asked for, rows are presented, or a column
+  /// is not read as toJson writes it.
+  List<Column>? _projection(List<String>? names) {
+    if (names == null || _present != null) return null;
+    final table = _resolvedTable;
+    final link = authUserLink?.column;
+    final wanted = {
+      table.id.columnName,
+      ...names,
+      if (link != null && names.any(AdminAuthUserLink.isField)) link,
+    };
+    final columns = [
+      for (final column in table.columns)
+        if (wanted.contains(column.columnName)) column,
+    ];
+    if (columns.length == table.columns.length) return null;
+    return columns.every(_readAsIs) ? columns : null;
+  }
+
+  /// Columns whose database values are what toJson writes.
+  static bool _readAsIs(Column column) =>
+      (column is ColumnInt && column is! ColumnCount) ||
+      (column is ColumnDouble && column is! ColumnGeographyDistance) ||
+      column is ColumnBool ||
+      column is ColumnString ||
+      column is ColumnDateTime ||
+      column is ColumnUuid ||
+      column is ColumnEnum;
+
+  String get _quotedTable =>
+      '"${_resolvedTable.tableName.replaceAll('"', '""')}"';
 
   @override
   Future<List<String>?> queryIds(Session session, AdminQuery query) async {
@@ -234,7 +288,7 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
     final where = sql.where;
     // ignore: invalid_use_of_internal_member
     final rows = await session.db.unsafeQuery(
-      'SELECT ${table.id} FROM "${table.tableName.replaceAll('"', '""')}"'
+      'SELECT ${table.id} FROM $_quotedTable'
       '${where == null ? '' : ' WHERE $where'} '
       'ORDER BY ${sql.orderBy.join(', ')} LIMIT ${query.limit}',
     );

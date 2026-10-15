@@ -44,6 +44,11 @@ void main() {
             where: (t) => t.id.equals(id as int),
           ),
         );
+        registry.register<AdminLogEntry>(
+          table: AdminLogEntry.t,
+          fromJson: AdminLogEntry.fromJson,
+          resourceKey: 'log',
+        );
         registry.register<UserProfile>(
           table: UserProfile.t,
           fromJson: UserProfile.fromJson,
@@ -552,6 +557,68 @@ void main() {
       );
       expect(users, hasLength(6));
       expect(users, contains('${profiles.first.authUserId}'));
+    });
+
+    test('asking for columns reads only those, with the same values', () async {
+      final now = DateTime.now().toUtc();
+      await SessionLogEntry.db.insert(sessionBuilder.build(), [
+        SessionLogEntry(
+          serverId: 'a',
+          time: now,
+          touched: now,
+          endpoint: 'e',
+          duration: 1.5,
+          numQueries: 3,
+          slow: true,
+        ),
+        SessionLogEntry(serverId: 'b', time: now, touched: now),
+      ]);
+      await endpoints.admin.update(admin, 'counters', {
+        'id': '${counters.first.id}',
+        'number': '99',
+      });
+      for (final key in [
+        'counters',
+        'sessions',
+        'profiles',
+        'serverpod_auth_core_user',
+        'log',
+      ]) {
+        final resource = (await endpoints.admin.resources(
+          admin,
+        )).firstWhere((r) => r.key == key);
+        // Every column but one, so not the whole row.
+        final names = [
+          for (final column in resource.columns)
+            if (!column.isPrimary && !column.name.startsWith('authUser.'))
+              column.name,
+        ]..removeLast();
+        final (narrow, queries) = await measure(
+          () => endpoints.admin.query(
+            admin,
+            key,
+            page(limit: 50, columns: names),
+          ),
+        );
+        final whole = await endpoints.admin.query(admin, key, page(limit: 50));
+        expect(narrow.total, whole.total, reason: key);
+        expect(narrow.rows, [
+          for (final row in whole.rows)
+            {
+              for (final MapEntry(:key, :value) in row.entries)
+                if (key == 'id' || names.contains(key)) key: value,
+            },
+        ], reason: key);
+        expect(queries, lessThanOrEqualTo(2), reason: key);
+        // A JSON column (the users' scopes) is read with whole rows.
+        expect(
+          QueryCounter.calls.first,
+          key == 'serverpod_auth_core_user'
+              ? startsWith('find')
+              : 'unsafeQuery',
+          reason: key,
+        );
+      }
     });
 
     test('a list page is read in the database', () async {
