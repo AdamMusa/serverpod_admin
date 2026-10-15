@@ -117,6 +117,30 @@ class _FakeAdmin implements EndpointAdmin {
   }
 
   @override
+  Future<AdminImportResult> importRows(
+    String resourceKey,
+    List<Map<String, String>> rows,
+  ) async {
+    calls.add('import $resourceKey ${rows.length}');
+    return AdminImportResult(
+      created: 1,
+      updated: 1,
+      skipped: 0,
+      failures: ['row 3: bad'],
+    );
+  }
+
+  @override
+  Future<List<String>> matchingIds(
+    String resourceKey,
+    AdminQuery query,
+    int maxRows,
+  ) async {
+    calls.add('ids $resourceKey');
+    return [for (final row in data[resourceKey]!) row['id']!];
+  }
+
+  @override
   Future<AdminActionResult> deleteMany(String key, List<String> ids) async {
     calls.add('delete $key ${ids.join(',')}');
     return AdminActionResult(affected: ids.length, message: 'Deleted');
@@ -216,5 +240,16 @@ void main() {
     expect(controller.selectedIds, {'10', '11', '12'});
     await controller.deleteSelected();
     expect(admin.calls.last, 'delete ride 10,11,12');
+  });
+
+  test('an import is sent in one request', () async {
+    final result = await controller.importRecords(_rides, [
+      {'passengerId': '1'},
+      {'id': '10', 'passengerId': '2'},
+      {'passengerId': 'x'},
+    ]);
+    expect(admin.calls.where((c) => c.startsWith('import')), ['import ride 3']);
+    expect((result.created, result.updated), (1, 1));
+    expect(result.failures, ['row 3: bad']);
   });
 }

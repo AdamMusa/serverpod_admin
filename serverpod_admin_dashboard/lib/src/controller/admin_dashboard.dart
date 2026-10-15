@@ -189,22 +189,17 @@ class AdminDashboardController extends ChangeNotifier {
   }
 
   /// Every row matching the current search and filters, in the current
-  /// order, for export.
+  /// order and with every column, for export: one request.
   Future<List<Map<String, String>>> fetchAllMatching(
     AdminResource resource, {
     int maxRows = 50000,
   }) async {
     if (resource.key == serverpodJobsKey) return records;
-    final rows = <Map<String, String>>[];
-    while (rows.length < maxRows) {
-      final page = await adminEndpoint.query(
-        resource.key,
-        _query(offset: rows.length, limit: 500).copyWith(columns: null),
-      );
-      rows.addAll(page.rows);
-      if (page.rows.isEmpty || rows.length >= page.total) break;
-    }
-    return rows;
+    return adminEndpoint.exportRows(
+      resource.key,
+      _query().copyWith(columns: null),
+      maxRows,
+    );
   }
 
   static const serverpodJobsKey = 'serverpod_future_call';
@@ -428,12 +423,11 @@ class AdminDashboardController extends ChangeNotifier {
   Future<void> selectAllMatching() async {
     final resource = selectedResource;
     if (resource == null) return;
-    final rows = await fetchAllMatching(resource, maxRows: 10000);
+    // Only the keys are read.
+    final ids = await adminEndpoint.matchingIds(resource.key, _query(), 10000);
     _selected
       ..clear()
-      ..addAll([
-        for (final row in rows) ?resolvePrimaryKeyValue(resource, row),
-      ]);
+      ..addAll(ids);
     notifyListeners();
   }
 
@@ -1135,36 +1129,19 @@ class AdminDashboardController extends ChangeNotifier {
     await _changed(resource);
   }
 
+  /// Creates the rows without a primary key and updates the others, in
+  /// one request.
   Future<TabularImportResult> importRecords(
     AdminResource resource,
     List<Map<String, String>> rows,
   ) async {
-    var created = 0;
-    var updated = 0;
-    var skipped = 0;
-
-    for (final row in rows) {
-      final payload = _cleanImportRow(resource, row);
-      if (payload.isEmpty) {
-        skipped++;
-        continue;
-      }
-
-      final primaryValue = resolvePrimaryKeyValue(resource, payload);
-      if (primaryValue == null) {
-        await adminEndpoint.create(resource.key, payload);
-        created++;
-      } else {
-        await adminEndpoint.update(resource.key, payload);
-        updated++;
-      }
-    }
-
+    final result = await adminEndpoint.importRows(resource.key, rows);
     await _changed(resource);
     return TabularImportResult(
-      created: created,
-      updated: updated,
-      skipped: skipped,
+      created: result.created,
+      updated: result.updated,
+      skipped: result.skipped,
+      failures: result.failures,
     );
   }
 
@@ -1187,23 +1164,6 @@ class AdminDashboardController extends ChangeNotifier {
     final raw = record[primaryColumn.name];
     if (raw == null || raw.isEmpty) return null;
     return raw;
-  }
-
-  Map<String, String> _cleanImportRow(
-    AdminResource resource,
-    Map<String, String> row,
-  ) {
-    final columnNames = resource.columns.map((column) => column.name).toSet();
-    final payload = <String, String>{};
-
-    for (final entry in row.entries) {
-      final key = entry.key.trim();
-      final value = entry.value.trim();
-      if (!columnNames.contains(key) || value.isEmpty) continue;
-      payload[key] = value;
-    }
-
-    return payload;
   }
 }
 

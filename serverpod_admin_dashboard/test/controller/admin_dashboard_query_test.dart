@@ -29,6 +29,18 @@ class _FakeAdmin implements EndpointAdmin {
     );
   }
 
+  final exports = <(AdminQuery, int)>[];
+
+  @override
+  Future<List<Map<String, String>>> exportRows(
+    String resourceKey,
+    AdminQuery query,
+    int maxRows,
+  ) async {
+    exports.add((query, maxRows));
+    return rows.take(maxRows).toList();
+  }
+
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
@@ -128,16 +140,16 @@ void main() {
     expect(controller.records.first['id'], '10');
   });
 
-  test('export reads every matching row, page by page', () async {
+  test('export reads every matching row in one request', () async {
     admin.rows
       ..clear()
       ..addAll(_rows(1200));
+    final asked = admin.queries.length;
     final all = await controller.fetchAllMatching(_resource);
     expect(all, hasLength(1200));
-    expect(
-      admin.queries.reversed.take(3).map((q) => q.limit),
-      everyElement(500),
-    );
+    expect(admin.exports, hasLength(1));
+    expect(admin.exports.single.$2, 50000);
+    expect(admin.queries, hasLength(asked));
   });
 
   test('a page asks for the columns it shows, and labels only names', () async {
@@ -174,6 +186,6 @@ void main() {
 
     // An export reads every column.
     await controller.fetchAllMatching(rides);
-    expect(admin.queries.last.columns, isNull);
+    expect(admin.exports.last.$1.columns, isNull);
   });
 }

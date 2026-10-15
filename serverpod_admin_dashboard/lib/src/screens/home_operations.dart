@@ -193,11 +193,15 @@ class HomeOperations {
       final result = await controller.importRecords(resource, file.rows);
       if (!context.mounted) return;
 
+      final failures = result.failures;
       _showSnackBar(
         'Imported ${result.imported} ${resource.tableName} rows '
         '(${result.created} created, ${result.updated} updated, '
-        '${result.skipped} skipped).',
-        isError: false,
+        '${result.skipped} skipped'
+        '${failures.isEmpty ? '' : ', ${failures.length} failed: '
+                  '${failures.take(3).join('; ')}'
+                  '${failures.length > 3 ? '; …' : ''}'}).',
+        isError: failures.isNotEmpty,
       );
     } catch (error) {
       debugPrint('Failed to import ${resource.key}: $error');

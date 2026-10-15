@@ -24,11 +24,15 @@ class TabularImportResult {
     required this.created,
     required this.updated,
     required this.skipped,
+    this.failures = const [],
   });
 
   final int created;
   final int updated;
   final int skipped;
+
+  /// Rows that could not be saved and why, such as "row 3: …".
+  final List<String> failures;
 
   int get imported => created + updated;
 }
