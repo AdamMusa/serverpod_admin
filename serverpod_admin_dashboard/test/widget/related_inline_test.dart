@@ -236,7 +236,7 @@ void main() {
 
     await tester.tap(find.byTooltip('Delete').first);
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+    await tester.tap(find.text('Delete').last);
     await tester.pumpAndSettle();
     expect(admin.calls.last, 'delete ride 10');
     expect(find.text('Rides (1)'), findsOneWidget);
