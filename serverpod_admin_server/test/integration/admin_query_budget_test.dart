@@ -174,6 +174,44 @@ void main() {
       });
     });
 
+    test('rows are filtered by their auth user in the database', () async {
+      AdminFilter on(
+        String column,
+        AdminFilterOperator comparison, [
+        String? value,
+      ]) => AdminFilter(column: column, comparison: comparison, value: value);
+      Future<List<String?>> names(AdminFilter filter) async {
+        final (result, queries) = await measure(
+          () =>
+              endpoints.admin.query(admin, 'profiles', page(filters: [filter])),
+        );
+        // The page and its rows' auth users, never the whole table.
+        expect(queries, lessThanOrEqualTo(2), reason: '${QueryCounter.calls}');
+        return [for (final row in result.rows) row['fullName']]..sort();
+      }
+
+      expect(
+        await names(on('authUser.blocked', AdminFilterOperator.equals, 'true')),
+        ['User 0', 'User 2', 'User 4'],
+      );
+      expect(
+        await names(
+          on('authUser.blocked', AdminFilterOperator.notEquals, 'true'),
+        ),
+        ['User 1', 'User 3', 'User 5'],
+      );
+      expect(
+        await names(
+          on('authUser.scopeNames', AdminFilterOperator.contains, 's3'),
+        ),
+        ['User 3'],
+      );
+      expect(
+        await names(on('authUser.scopeNames', AdminFilterOperator.isEmpty)),
+        isEmpty,
+      );
+    });
+
     test('auth users are paged in the database, newest first', () async {
       final (result, queries) = await measure(
         () => endpoints.admin.query(

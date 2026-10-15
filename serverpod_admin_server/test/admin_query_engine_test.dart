@@ -152,6 +152,33 @@ void main() {
       ]);
     });
 
+    test('an auth user value is filtered with a subquery', () {
+      final sql = AdminSqlQuery.build(
+        _Things(),
+        [
+          ..._columns,
+          AdminColumn(
+            name: 'authUser.blocked',
+            dataType: 'bool',
+            hasDefault: false,
+            isPrimary: false,
+          ),
+        ],
+        _query(
+          filters: [
+            _filter('authUser.blocked', AdminFilterOperator.equals, 'true'),
+          ],
+        ),
+        authUserColumn: 'name',
+      )!;
+      expect(
+        '${sql.where}',
+        '("thing"."name" IN (SELECT "serverpod_auth_core_user"."id" FROM '
+            '"serverpod_auth_core_user" WHERE '
+            '"serverpod_auth_core_user"."blocked" = TRUE))',
+      );
+    });
+
     test('columns the table does not store run in memory', () {
       expect(
         AdminSqlQuery.build(

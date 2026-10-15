@@ -196,6 +196,7 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
       searchColumns: _options.searchColumns,
       defaultSort: _options.ordering,
       defaultDescending: _options.ordering == null || _options.descending,
+      authUserColumn: authUserLink?.column,
     );
     if (sql == null) return null;
     // ignore: invalid_use_of_internal_member

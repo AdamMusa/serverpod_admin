@@ -1,6 +1,9 @@
 import 'package:serverpod/serverpod.dart';
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    show AuthUser;
 
 import '../generated/protocol.dart';
+import 'admin_auth_user_link.dart';
 
 /// The rows a page may hold.
 const adminMaxPageSize = 500;
@@ -15,8 +18,10 @@ class AdminSqlQuery {
   final Expression? where;
   final List<Column> orderBy;
 
-  /// Null when the query names a column the table does not store (such as an
-  /// auth user's scopes shown on a profile row); then it runs in memory.
+  /// Null when the query names a column the table does not store; then it
+  /// runs in memory. Filters on the values of the auth user a row extends
+  /// (`authUser.blocked`, `authUser.scopeNames`) run in the database when
+  /// [authUserColumn] names the row's link to it.
   static AdminSqlQuery? build(
     Table table,
     List<AdminColumn> columns,
@@ -24,6 +29,7 @@ class AdminSqlQuery {
     Set<String>? searchColumns,
     String? defaultSort,
     bool defaultDescending = true,
+    String? authUserColumn,
   }) {
     Column? stored(String name) =>
         table.columns.where((c) => c.columnName == name).firstOrNull;
@@ -35,7 +41,15 @@ class AdminSqlQuery {
       final column = stored(filter.column);
       final metadata = described(filter.column);
       if (metadata == null) throw _unknownColumn(filter.column);
-      if (column == null) return null;
+      if (column == null) {
+        final link = authUserColumn == null ? null : stored(authUserColumn);
+        final condition = link == null
+            ? null
+            : _authUserCondition(link, metadata, filter);
+        if (condition == null) return null;
+        conditions.add(condition);
+        continue;
+      }
       conditions.add(_condition(column, metadata, filter));
     }
 
@@ -126,6 +140,33 @@ class AdminSqlQuery {
         }
         return '$name <= ${_value(column, metadata, filter)}';
     }
+  }
+
+  /// [filter] on a value of the auth user each row extends, as a subquery on
+  /// the row's [link] to it, so the rows are not read to filter them.
+  static String? _authUserCondition(
+    Column link,
+    AdminColumn metadata,
+    AdminFilter filter,
+  ) {
+    final Column? value = switch (filter.column) {
+      AdminAuthUserLink.blockedField => AuthUser.t.blocked,
+      AdminAuthUserLink.scopeNamesField => AuthUser.t.scopeNames,
+      _ => null,
+    };
+    if (value == null) return null;
+    final users = '"${AuthUser.t.tableName}"';
+    final id = AuthUser.t.id;
+    final matching =
+        '$link IN (SELECT $id FROM $users '
+        'WHERE ${_condition(value, metadata, filter)})';
+    // A row without an auth user shows its values as empty.
+    final emptyMatches =
+        filter.comparison == AdminFilterOperator.isEmpty ||
+        filter.comparison == AdminFilterOperator.notEquals;
+    if (!emptyMatches) return matching;
+    return '($matching OR $link IS NULL OR NOT EXISTS '
+        '(SELECT 1 FROM $users WHERE $id = $link))';
   }
 
   /// The filter value as a SQL literal of the column's type.
