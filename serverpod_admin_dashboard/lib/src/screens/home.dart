@@ -11,6 +11,7 @@ import 'package:serverpod_admin_dashboard/src/widgets/records_view.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/side_bar.dart';
 import 'package:serverpod_admin_client/serverpod_admin_client.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/records_body/records_body.dart';
+import 'package:serverpod_admin_dashboard/src/widgets/overview/overview_view.dart';
 
 class Home extends StatefulWidget {
   const Home({
@@ -140,6 +141,7 @@ class _HomeState extends State<Home> {
     return RecordDetails(
       resource: detailsResource,
       record: detailsRecord,
+      controller: widget.controller,
       showAppBar: false,
       onBack: () => widget.controller.closeDetails(),
       onEdit: canMutateDetails
@@ -246,6 +248,24 @@ class _HomeState extends State<Home> {
         sortDescending: controller.sortDescending,
         onSort: controller.sortBy,
       ),
+      selectedIds: controller.selectedIds,
+      onSelect: controller.toggleSelected,
+      onSelectPage: controller.selectPage,
+      onSelectAllMatching: controller.selectAllMatching,
+      onClearSelection: controller.clearSelection,
+      onDeleteSelected: () => operations.deleteSelected(selectedResource),
+      onSetField: () => operations.setFieldOnSelected(selectedResource),
+      onRunAction: (action) =>
+          operations.runActionOnSelected(selectedResource, action),
+      loadForeignLabels: (column, ids) async {
+        final related = controller.relatedResource(column);
+        if (related == null) return const {};
+        return controller.labelsFor(related, ids);
+      },
+      onOpenForeign: (column, id) {
+        final related = controller.relatedResource(column);
+        if (related != null) controller.openRecord(related, id);
+      },
       onAdd: () => operations.showCreateDialog(selectedResource),
       onImport: () => operations.importRecords(selectedResource),
       // Exports every row matching the search and filters, not one page.
@@ -264,6 +284,10 @@ class _HomeState extends State<Home> {
   Widget _buildMainContent() {
     if (widget.controller.isShowingDetails) {
       return _buildRecordDetails();
+    }
+    if (widget.controller.isShowingOverview &&
+        widget.controller.resources.isNotEmpty) {
+      return OverviewView(controller: widget.controller);
     }
     return _buildRecordsView();
   }
@@ -308,7 +332,13 @@ class _HomeState extends State<Home> {
       resources: widget.controller.resources,
       isLoading: widget.controller.isResourcesLoading,
       errorMessage: widget.controller.resourcesError,
-      selectedResource: widget.controller.selectedResource,
+      selectedResource: widget.controller.isShowingOverview
+          ? null
+          : widget.controller.selectedResource,
+      onOverview: widget.controller.showOverview,
+      isOverviewSelected:
+          widget.controller.isShowingOverview &&
+          !widget.controller.isShowingDetails,
       onRetry: widget.controller.loadResources,
       onSelect: widget.controller.selectResource,
       isCollapsed: widget.controller.isSidebarCollapsed,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:serverpod_admin_client/serverpod_admin_client.dart'
-    show AdminFilter;
+    show AdminActionInfo, AdminFilter;
 import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/tabular_data.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/filters.dart';
@@ -30,6 +30,16 @@ class RecordsView extends StatefulWidget {
     this.onToggleColumn,
     this.onRefresh,
     this.paging,
+    this.selectedIds = const {},
+    this.onSelect,
+    this.onSelectPage,
+    this.onSelectAllMatching,
+    this.onClearSelection,
+    this.onDeleteSelected,
+    this.onSetField,
+    this.onRunAction,
+    this.loadForeignLabels,
+    this.onOpenForeign,
     super.key,
   });
 
@@ -60,6 +70,23 @@ class RecordsView extends StatefulWidget {
 
   /// Server-side paging and sorting; without it the rows are paged here.
   final RecordsPaging? paging;
+
+  /// Selected rows by primary key, and what can be done with them.
+  final Set<String> selectedIds;
+  final void Function(String id, bool selected)? onSelect;
+  final ValueChanged<bool>? onSelectPage;
+  final VoidCallback? onSelectAllMatching;
+  final VoidCallback? onClearSelection;
+  final VoidCallback? onDeleteSelected;
+  final VoidCallback? onSetField;
+  final void Function(AdminActionInfo action)? onRunAction;
+
+  final Future<Map<String, String>> Function(
+    AdminColumn column,
+    Set<String> ids,
+  )?
+  loadForeignLabels;
+  final void Function(AdminColumn column, String id)? onOpenForeign;
 
   @override
   State<RecordsView> createState() => _RecordsViewState();
@@ -111,6 +138,7 @@ class _RecordsViewState extends State<RecordsView> {
           _buildHeader(context),
           const Divider(height: 1, thickness: 1),
           if (widget.filters.isNotEmpty) _buildFilterChips(context),
+          if (widget.selectedIds.isNotEmpty) _buildBulkBar(context),
           _buildRecordsContent(context),
         ],
       ),
@@ -355,7 +383,73 @@ class _RecordsViewState extends State<RecordsView> {
           totalRecords: widget.totalRecords,
           paging: widget.paging,
           hiddenColumns: widget.hiddenColumns,
+          selectedIds: widget.onSelect == null ? null : widget.selectedIds,
+          onSelect: widget.onSelect,
+          onSelectAll: widget.onSelectPage,
+          loadForeignLabels: widget.loadForeignLabels,
+          onOpenForeign: widget.onOpenForeign,
         ),
+      ),
+    );
+  }
+
+  Widget _buildBulkBar(BuildContext context) {
+    final theme = Theme.of(context);
+    final count = widget.selectedIds.length;
+    final total = widget.paging?.totalRecords ?? widget.records.length;
+    final actions = widget.resource!.actions ?? const <AdminActionInfo>[];
+    return Container(
+      margin: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(
+            '$count selected',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (widget.onSelectAllMatching != null && count < total)
+            TextButton(
+              onPressed: widget.onSelectAllMatching,
+              child: Text('Select all $total'),
+            ),
+          if (widget.onSetField != null)
+            FilledButton.tonalIcon(
+              onPressed: widget.onSetField,
+              icon: const Icon(Icons.edit_note),
+              label: const Text('Set field'),
+            ),
+          if (widget.onRunAction != null)
+            for (final action in actions)
+              FilledButton.tonalIcon(
+                onPressed: () => widget.onRunAction!(action),
+                icon: Icon(
+                  action.destructive ? Icons.warning_amber : Icons.bolt,
+                ),
+                label: Text(action.label),
+              ),
+          if (widget.onDeleteSelected != null)
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: theme.colorScheme.error,
+              ),
+              onPressed: widget.onDeleteSelected,
+              icon: const Icon(Icons.delete_outline),
+              label: const Text('Delete selected'),
+            ),
+          TextButton(
+            onPressed: widget.onClearSelection,
+            child: const Text('Clear selection'),
+          ),
+        ],
       ),
     );
   }

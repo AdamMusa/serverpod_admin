@@ -63,6 +63,10 @@ void main() {
       initialThemeMode: ThemeMode.light,
     );
     await controller.loadResources();
+    // The dashboard opens on the overview; rows load once a table is chosen.
+    expect(controller.isShowingOverview, isTrue);
+    expect(admin.queries, isEmpty);
+    await controller.selectResource(_resource);
   });
 
   test('the first page loads with the total', () {

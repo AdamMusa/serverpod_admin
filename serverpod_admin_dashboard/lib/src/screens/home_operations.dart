@@ -6,6 +6,9 @@ import 'package:serverpod_admin_dashboard/src/helpers/tabular_data.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/default_create_dialog.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/default_delete_dialog.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/default_edit_dialog.dart';
+import 'package:serverpod_admin_client/serverpod_admin_client.dart'
+    show AdminActionInfo, AdminActionResult, AdminValidationException;
+import 'package:serverpod_admin_dashboard/src/widgets/bulk/set_field_dialog.dart';
 
 /// Business logic operations for the Home screen.
 /// Separated from UI to avoid setState usage.
@@ -98,10 +101,7 @@ class HomeOperations {
   }
 
   /// Shows the record details page.
-  void showDetailsPage(
-    AdminResource resource,
-    Map<String, String> record,
-  ) {
+  void showDetailsPage(AdminResource resource, Map<String, String> record) {
     controller.openDetails(resource, record);
   }
 
@@ -326,7 +326,9 @@ class HomeOperations {
         controller.detailsResource?.key == resource.key &&
         controller.detailsRecord != null) {
       final detailsPrimaryKey = controller.resolvePrimaryKeyValue(
-          resource, controller.detailsRecord!);
+        resource,
+        controller.detailsRecord!,
+      );
       if (detailsPrimaryKey == primaryValue) {
         controller.closeDetails();
       }
@@ -347,6 +349,98 @@ class HomeOperations {
         isError: true,
       );
     }
+  }
+
+  /// Asks, then deletes the selected rows of [resource].
+  Future<void> deleteSelected(AdminResource resource) async {
+    final count = controller.selectedIds.length;
+    final confirmed = await _confirm(
+      title: 'Delete $count ${count == 1 ? 'row' : 'rows'}?',
+      message:
+          'This cannot be undone. Each deletion is recorded in the '
+          'history.',
+      action: 'Delete',
+      destructive: true,
+    );
+    if (!confirmed) return;
+    await _runBulk(controller.deleteSelected);
+  }
+
+  /// Asks for a column and value, then sets it on the selected rows.
+  Future<void> setFieldOnSelected(AdminResource resource) async {
+    final values = await showSetFieldDialog(
+      context,
+      resource: resource,
+      count: controller.selectedIds.length,
+    );
+    if (values == null || !context.mounted) return;
+    await _runBulk(() => controller.updateSelected(values));
+  }
+
+  /// Runs a custom action on the selected rows, asking first if it says so.
+  Future<void> runActionOnSelected(
+    AdminResource resource,
+    AdminActionInfo action,
+  ) async {
+    final count = controller.selectedIds.length;
+    if (action.confirm) {
+      final confirmed = await _confirm(
+        title: '${action.label}?',
+        message: 'Runs on $count selected ${count == 1 ? 'row' : 'rows'}.',
+        action: action.label,
+        destructive: action.destructive,
+      );
+      if (!confirmed) return;
+    }
+    await _runBulk(() => controller.runActionOnSelected(action.name));
+  }
+
+  Future<void> _runBulk(Future<AdminActionResult> Function() request) async {
+    try {
+      final result = await request();
+      if (!context.mounted) return;
+      _showSnackBar(
+        result.message ?? 'Done (${result.affected}).',
+        isError: false,
+      );
+    } on AdminValidationException catch (error) {
+      if (context.mounted) _showSnackBar(error.message, isError: true);
+    } catch (error) {
+      if (context.mounted) _showSnackBar('$error', isError: true);
+    }
+  }
+
+  Future<bool> _confirm({
+    required String title,
+    required String message,
+    required String action,
+    bool destructive = false,
+  }) async {
+    final theme = Theme.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: destructive
+                ? FilledButton.styleFrom(
+                    backgroundColor: theme.colorScheme.error,
+                    foregroundColor: theme.colorScheme.onError,
+                  )
+                : null,
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(action),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
   }
 
   void _showSnackBar(String message, {required bool isError}) {

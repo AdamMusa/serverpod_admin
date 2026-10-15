@@ -3,6 +3,10 @@ import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/format_value.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/links.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/document/link_value.dart';
+import 'package:serverpod_admin_dashboard/src/controller/admin_dashboard.dart';
+import 'package:serverpod_admin_dashboard/src/widgets/history/record_history.dart';
+import 'package:serverpod_admin_dashboard/src/widgets/relations/foreign_key_value.dart';
+import 'package:serverpod_admin_dashboard/src/widgets/relations/related_records.dart';
 
 class RecordDetails extends StatelessWidget {
   const RecordDetails({
@@ -12,6 +16,7 @@ class RecordDetails extends StatelessWidget {
     this.onDelete,
     this.onBack,
     this.showAppBar = true,
+    this.controller,
   });
 
   final AdminResource resource;
@@ -20,6 +25,10 @@ class RecordDetails extends StatelessWidget {
   final void Function(Map<String, String> record)? onDelete;
   final VoidCallback? onBack;
   final bool showAppBar;
+
+  /// When given, foreign keys open their rows and tabs show related rows
+  /// and the change history.
+  final AdminDashboardController? controller;
 
   @override
   Widget build(BuildContext context) {
@@ -122,7 +131,7 @@ class RecordDetails extends StatelessWidget {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(24),
-              child: _buildDetailsTable(context, theme, columns),
+              child: _buildBody(context, theme, columns),
             ),
           ),
         ],
@@ -177,6 +186,80 @@ class RecordDetails extends StatelessWidget {
     }
 
     return content;
+  }
+
+  Widget _buildBody(
+    BuildContext context,
+    ThemeData theme,
+    List<AdminColumn> columns,
+  ) {
+    final details = _buildDetailsTable(context, theme, columns);
+    final controller = this.controller;
+    if (controller == null) return details;
+    final id = controller.resolvePrimaryKeyValue(resource, record);
+    return DefaultTabController(
+      length: 3,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const TabBar(
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            tabs: [
+              Tab(icon: Icon(Icons.list_alt), text: 'Details'),
+              Tab(icon: Icon(Icons.account_tree_outlined), text: 'Related'),
+              Tab(icon: Icon(Icons.history), text: 'History'),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: TabBarView(
+              children: [
+                details,
+                SingleChildScrollView(
+                  child: RelatedRecords(
+                    controller: controller,
+                    resource: resource,
+                    record: record,
+                  ),
+                ),
+                SingleChildScrollView(
+                  child: RecordHistory(
+                    key: ValueKey('${resource.key}/$id'),
+                    load: (offset, limit) => controller.history(
+                      resourceKey: resource.key,
+                      recordId: id,
+                      offset: offset,
+                      limit: limit,
+                    ),
+                    emptyText:
+                        'This record has not been changed in the '
+                        'dashboard yet.',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _foreignKey(AdminColumn column, String id) {
+    final controller = this.controller!;
+    final related = controller.relatedResource(column);
+    if (related == null) return SelectableText(id);
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: FutureBuilder<Map<String, String>>(
+        future: controller.labelsFor(related, [id]),
+        builder: (context, snapshot) => ForeignKeyValue(
+          id: id,
+          label: snapshot.data?[id],
+          onOpen: () => controller.openRecord(related, id),
+        ),
+      ),
+    );
   }
 
   Widget _buildDetailsTable(
@@ -268,6 +351,11 @@ class RecordDetails extends StatelessWidget {
               // Value column - wraps to multiple lines
               Expanded(
                 child: switch (linkKind(value)) {
+                  _
+                      when controller != null &&
+                          column.foreignKeyTable != null &&
+                          !isEmpty =>
+                    _foreignKey(column, value!.trim()),
                   final kind? => Align(
                     alignment: Alignment.centerLeft,
                     child: LinkValue(

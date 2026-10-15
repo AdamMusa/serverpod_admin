@@ -3,6 +3,7 @@ import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/format_value.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/links.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/document/link_value.dart';
+import 'package:serverpod_admin_dashboard/src/widgets/relations/foreign_key_value.dart';
 
 /// Helper class for building data cells for records table.
 /// Handles boolean values with checkmarks/crosses and regular text values.
@@ -14,6 +15,8 @@ class RecordsDataCell {
     required AdminColumn column,
     required String? value,
     VoidCallback? onTap,
+    String? foreignLabel,
+    VoidCallback? onOpenForeign,
   }) {
     return DataCell(
       ConstrainedBox(
@@ -23,6 +26,18 @@ class RecordsDataCell {
             final theme = Theme.of(context);
             if (isBooleanType(column)) {
               return _buildBooleanCell(parseBooleanValue(value), theme);
+            }
+            if (column.foreignKeyTable != null &&
+                (value ?? '').isNotEmpty &&
+                onOpenForeign != null) {
+              return Align(
+                alignment: Alignment.centerLeft,
+                child: ForeignKeyValue(
+                  id: value!,
+                  label: foreignLabel,
+                  onOpen: onOpenForeign,
+                ),
+              );
             }
             final kind = linkKind(value);
             if (kind != null) {

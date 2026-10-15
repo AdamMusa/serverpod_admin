@@ -49,6 +49,11 @@ class RecordsBody extends StatefulWidget {
     this.totalRecords,
     this.paging,
     this.hiddenColumns = const {},
+    this.selectedIds,
+    this.onSelect,
+    this.onSelectAll,
+    this.loadForeignLabels,
+    this.onOpenForeign,
     super.key,
   });
 
@@ -63,6 +68,17 @@ class RecordsBody extends StatefulWidget {
   final int? totalRecords;
   final RecordsPaging? paging;
   final Set<String> hiddenColumns;
+  final Set<String>? selectedIds;
+  final void Function(String id, bool selected)? onSelect;
+  final ValueChanged<bool>? onSelectAll;
+
+  /// Loads names of the related rows a foreign key column points to.
+  final Future<Map<String, String>> Function(
+    AdminColumn column,
+    Set<String> ids,
+  )?
+  loadForeignLabels;
+  final void Function(AdminColumn column, String id)? onOpenForeign;
 
   @override
   State<RecordsBody> createState() => _RecordsBodyState();
@@ -76,10 +92,33 @@ class _RecordsBodyState extends State<RecordsBody> {
     rowsPerPageOptions: const [5, 10, 25, 50],
   );
 
+  Map<String, Map<String, String>> _foreignLabels = const {};
+
   @override
   void initState() {
     super.initState();
     _paginationController.setTotalRecords(widget.records.length);
+    _loadForeignLabels();
+  }
+
+  /// Names the related rows of every foreign key shown on this page.
+  Future<void> _loadForeignLabels() async {
+    final load = widget.loadForeignLabels;
+    if (load == null) return;
+    final records = widget.records;
+    final labels = <String, Map<String, String>>{};
+    await Future.wait([
+      for (final column in widget.resource.columns)
+        if (column.foreignKeyTable != null &&
+            !widget.hiddenColumns.contains(column.name))
+          load(column, {
+            for (final record in records)
+              if ((record[column.name] ?? '').isNotEmpty) record[column.name]!,
+          }).then((names) => labels[column.name] = names),
+    ]);
+    if (mounted && identical(records, widget.records)) {
+      setState(() => _foreignLabels = labels);
+    }
   }
 
   @override
@@ -96,6 +135,7 @@ class _RecordsBodyState extends State<RecordsBody> {
     if (widget.records.length != oldWidget.records.length) {
       _paginationController.setTotalRecords(widget.records.length);
     }
+    if (!identical(widget.records, oldWidget.records)) _loadForeignLabels();
   }
 
   @override
@@ -196,6 +236,11 @@ class _RecordsBodyState extends State<RecordsBody> {
             sortDescending: paging?.sortDescending ?? false,
             onSort: paging?.onSort,
             hiddenColumns: widget.hiddenColumns,
+            selectedIds: widget.selectedIds,
+            onSelect: widget.onSelect,
+            onSelectAll: widget.onSelectAll,
+            foreignLabels: _foreignLabels,
+            onOpenForeign: widget.onOpenForeign,
           ),
         ),
       ),

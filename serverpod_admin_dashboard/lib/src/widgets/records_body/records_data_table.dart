@@ -16,6 +16,11 @@ class RecordsDataTable extends StatelessWidget {
     this.sortDescending = false,
     this.onSort,
     this.hiddenColumns = const {},
+    this.selectedIds,
+    this.onSelect,
+    this.onSelectAll,
+    this.foreignLabels = const {},
+    this.onOpenForeign,
     super.key,
   });
 
@@ -34,6 +39,15 @@ class RecordsDataTable extends StatelessWidget {
 
   /// Columns left out of the table.
   final Set<String> hiddenColumns;
+
+  /// Selected rows by primary key; with [onSelect], rows get checkboxes.
+  final Set<String>? selectedIds;
+  final void Function(String id, bool selected)? onSelect;
+  final ValueChanged<bool>? onSelectAll;
+
+  /// Names of related rows: column name to {id: name}.
+  final Map<String, Map<String, String>> foreignLabels;
+  final void Function(AdminColumn column, String id)? onOpenForeign;
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +71,10 @@ class RecordsDataTable extends StatelessWidget {
       child: DataTable(
         columnSpacing: 36,
         horizontalMargin: 20,
+        showCheckboxColumn: onSelect != null,
+        onSelectAll: onSelectAll == null
+            ? null
+            : (selected) => onSelectAll!(selected ?? false),
         sortColumnIndex: sortIndex < 0 ? null : sortIndex,
         sortAscending: !sortDescending,
         columns: _buildDataColumns(columns),
@@ -89,6 +107,11 @@ class RecordsDataTable extends StatelessWidget {
                   column: column,
                   value: record[column.name],
                   onTap: onView != null ? () => onView!(record) : null,
+                  foreignLabel:
+                      foreignLabels[column.name]?[record[column.name] ?? ''],
+                  onOpenForeign: onOpenForeign == null
+                      ? null
+                      : () => onOpenForeign!(column, record[column.name]!),
                 ),
               )
               .toList()
@@ -103,7 +126,21 @@ class RecordsDataTable extends StatelessWidget {
               ),
             );
 
-      return DataRow(cells: cells);
+      final id = _primaryValue(record);
+      final select = onSelect;
+      return DataRow(
+        selected: id != null && (selectedIds?.contains(id) ?? false),
+        onSelectChanged: select == null || id == null
+            ? null
+            : (selected) => select(id, selected ?? false),
+        cells: cells,
+      );
     }).toList();
+  }
+
+  String? _primaryValue(Map<String, String> record) {
+    final primary = resource.columns.where((c) => c.isPrimary).firstOrNull;
+    final value = primary == null ? null : record[primary.name];
+    return value == null || value.isEmpty ? null : value;
   }
 }

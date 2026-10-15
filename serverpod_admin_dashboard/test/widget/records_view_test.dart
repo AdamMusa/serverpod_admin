@@ -9,6 +9,14 @@ import 'package:serverpod_admin_dashboard/src/widgets/records_view.dart';
 final _resource = AdminResource(
   key: 'driver_profile',
   tableName: 'driver_profile',
+  actions: [
+    AdminActionInfo(
+      name: 'approve',
+      label: 'Approve drivers',
+      confirm: true,
+      destructive: false,
+    ),
+  ],
   columns: [
     AdminColumn(name: 'id', dataType: 'int', hasDefault: true, isPrimary: true),
     AdminColumn(
@@ -34,6 +42,8 @@ Future<void> _pump(
   void Function(List<AdminFilter>)? onFilters,
   void Function(String)? onSort,
   Set<String> hidden = const {},
+  Set<String> selected = const {},
+  void Function(String)? onBulk,
 }) async {
   tester.view.physicalSize = const Size(1400, 900);
   tester.view.devicePixelRatio = 1;
@@ -63,6 +73,14 @@ Future<void> _pump(
                 hiddenColumns: hidden,
                 onToggleColumn: (_) {},
                 onRefresh: () {},
+                selectedIds: selected,
+                onSelect: (_, _) {},
+                onSelectPage: (_) {},
+                onSelectAllMatching: () => onBulk?.call('all'),
+                onClearSelection: () => onBulk?.call('clear'),
+                onDeleteSelected: () => onBulk?.call('delete'),
+                onSetField: () => onBulk?.call('set'),
+                onRunAction: (action) => onBulk?.call(action.name),
                 paging: RecordsPaging(
                   pageIndex: 0,
                   rowsPerPage: 25,
@@ -134,5 +152,16 @@ void main() {
     expect(applied!.single.column, 'verificationStatus');
     expect(applied!.single.comparison, AdminFilterOperator.equals);
     expect(applied!.single.value, 'approved');
+  });
+
+  testWidgets('selected rows get bulk actions', (tester) async {
+    final used = <String>[];
+    await _pump(tester, selected: {'12'}, onBulk: used.add);
+    expect(find.text('1 selected'), findsOneWidget);
+    for (final label in ['Set field', 'Approve drivers', 'Delete selected']) {
+      await tester.tap(find.text(label));
+    }
+    expect(used, ['set', 'approve', 'delete']);
+    expect(find.byType(Checkbox), findsWidgets);
   });
 }

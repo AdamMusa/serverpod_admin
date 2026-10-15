@@ -109,6 +109,7 @@ class AdminDashboardController extends ChangeNotifier {
   }
 
   void setFilters(List<admin_client.AdminFilter> filters) {
+    _selected.clear();
     _filters = List.unmodifiable(filters);
     _pageIndex = 0;
     _reloadSelected();
@@ -133,6 +134,7 @@ class AdminDashboardController extends ChangeNotifier {
 
   void _resetQuery() {
     _searchDebounce?.cancel();
+    _selected.clear();
     _searchQuery = '';
     _pageIndex = 0;
     _sortColumn = null;
@@ -177,6 +179,320 @@ class AdminDashboardController extends ChangeNotifier {
 
   static const serverpodJobsKey = 'serverpod_future_call';
 
+  // Overview: the landing page with record counts and recent changes.
+  bool _showingOverview = true;
+  bool get isShowingOverview => _showingOverview || selectedResource == null;
+
+  void showOverview() {
+    _showingOverview = true;
+    closeDetails();
+    notifyListeners();
+  }
+
+  /// How many rows each resource has, for the overview.
+  Future<Map<String, int>> resourceCounts() async {
+    final counts = <String, int>{};
+    await Future.wait([
+      for (final resource in resources)
+        adminEndpoint
+            .query(
+              resource.key,
+              admin_client.AdminQuery(
+                offset: 0,
+                limit: 1,
+                sortDescending: false,
+                filters: const [],
+              ),
+            )
+            .then((page) => counts[resource.key] = page.total)
+            .catchError((Object _) => -1),
+    ]);
+    return counts;
+  }
+
+  /// The change history: everything, one resource's or one row's.
+  Future<admin_client.AdminLogPage> history({
+    String? resourceKey,
+    String? recordId,
+    int offset = 0,
+    int limit = 25,
+  }) => adminEndpoint.history(resourceKey, recordId, offset, limit);
+
+  // Selection of rows on the current page, for bulk changes and actions.
+  final Set<String> _selected = {};
+  Set<String> get selectedIds => Set.unmodifiable(_selected);
+
+  void toggleSelected(String id, bool selected) {
+    selected ? _selected.add(id) : _selected.remove(id);
+    notifyListeners();
+  }
+
+  void selectPage(bool selected) {
+    final resource = selectedResource;
+    if (resource == null) return;
+    for (final record in records) {
+      final id = resolvePrimaryKeyValue(resource, record);
+      if (id == null) continue;
+      selected ? _selected.add(id) : _selected.remove(id);
+    }
+    notifyListeners();
+  }
+
+  /// Selects every row matching the search and filters, not only this page.
+  Future<void> selectAllMatching() async {
+    final resource = selectedResource;
+    if (resource == null) return;
+    final rows = await fetchAllMatching(resource, maxRows: 10000);
+    _selected
+      ..clear()
+      ..addAll([
+        for (final row in rows) ?resolvePrimaryKeyValue(resource, row),
+      ]);
+    notifyListeners();
+  }
+
+  void clearSelection() {
+    if (_selected.isEmpty) return;
+    _selected.clear();
+    notifyListeners();
+  }
+
+  Future<admin_client.AdminActionResult> deleteSelected() =>
+      _bulk((resource, ids) => adminEndpoint.deleteMany(resource.key, ids));
+
+  /// Sets [values] (column name to text) on every selected row.
+  Future<admin_client.AdminActionResult> updateSelected(
+    Map<String, String> values,
+  ) => _bulk(
+    (resource, ids) => adminEndpoint.updateMany(resource.key, ids, values),
+  );
+
+  /// Runs the custom action [name] on the selected rows.
+  Future<admin_client.AdminActionResult> runActionOnSelected(String name) =>
+      _bulk(
+        (resource, ids) => adminEndpoint.runAction(resource.key, name, ids),
+      );
+
+  Future<admin_client.AdminActionResult> _bulk(
+    Future<admin_client.AdminActionResult> Function(
+      AdminResource resource,
+      List<String> ids,
+    )
+    request,
+  ) async {
+    final resource = selectedResource;
+    if (resource == null || _selected.isEmpty) {
+      return admin_client.AdminActionResult(affected: 0);
+    }
+    try {
+      return await request(resource, _selected.toList());
+    } finally {
+      _selected.clear();
+      await loadRecords(resource, showLoading: false);
+    }
+  }
+
+  // Relationships between resources.
+  final Map<String, Map<String, String>> _labels = {};
+
+  /// The resource a foreign key [column] points to, if registered.
+  AdminResource? relatedResource(AdminColumn column) {
+    final table = column.foreignKeyTable;
+    if (table == null) return null;
+    return resources
+        .where((r) => r.tableName == table || r.key == table)
+        .firstOrNull;
+  }
+
+  /// How a row of [resource] is named: its first name-like column.
+  static AdminColumn? labelColumn(AdminResource resource) {
+    const preferred = [
+      'fullName',
+      'name',
+      'title',
+      'label',
+      'displayName',
+      'userName',
+      'email',
+      'plate',
+      'make',
+    ];
+    for (final name in preferred) {
+      final column = resource.columns.where((c) => c.name == name).firstOrNull;
+      if (column != null) return column;
+    }
+    return resource.columns
+        .where(
+          (c) =>
+              !c.isPrimary &&
+              c.foreignKeyTable == null &&
+              c.dataType.toLowerCase() == 'string',
+        )
+        .firstOrNull;
+  }
+
+  /// A readable name for [record], such as "Awa Diallo (#12)".
+  static String recordLabel(
+    AdminResource resource,
+    Map<String, String> record,
+  ) {
+    final primary = resource.columns.where((c) => c.isPrimary).firstOrNull;
+    final id = primary == null ? '' : record[primary.name] ?? '';
+    final name = labelColumn(resource);
+    final text = name == null ? '' : record[name.name] ?? '';
+    return text.isEmpty ? '#$id' : '$text (#$id)';
+  }
+
+  /// Names for the rows of [resource] with [ids], cached.
+  Future<Map<String, String>> labelsFor(
+    AdminResource resource,
+    Iterable<String> ids,
+  ) async {
+    final cache = _labels.putIfAbsent(resource.key, () => {});
+    final missing = {
+      for (final id in ids)
+        if (id.isNotEmpty && !cache.containsKey(id)) id,
+    };
+    final primary = resource.columns.where((c) => c.isPrimary).firstOrNull;
+    if (missing.isNotEmpty && primary != null) {
+      try {
+        final page = await adminEndpoint.query(
+          resource.key,
+          admin_client.AdminQuery(
+            offset: 0,
+            limit: missing.length,
+            sortDescending: false,
+            filters: [
+              admin_client.AdminFilter(
+                column: primary.name,
+                comparison: admin_client.AdminFilterOperator.oneOf,
+                value: missing.join(','),
+              ),
+            ],
+          ),
+        );
+        for (final row in page.rows) {
+          final id = row[primary.name];
+          if (id != null) cache[id] = recordLabel(resource, row);
+        }
+      } catch (_) {
+        // Unnamed rows show their id.
+      }
+    }
+    return {
+      for (final id in ids)
+        if (cache[id] case final label?) id: label,
+    };
+  }
+
+  /// Rows of [resource] matching [text], for pickers.
+  Future<List<Map<String, String>>> searchRecords(
+    AdminResource resource,
+    String text, {
+    int limit = 20,
+  }) async {
+    final page = await adminEndpoint.query(
+      resource.key,
+      admin_client.AdminQuery(
+        offset: 0,
+        limit: limit,
+        search: text.trim().isEmpty ? null : text.trim(),
+        sortDescending: false,
+        filters: const [],
+      ),
+    );
+    return page.rows;
+  }
+
+  /// Opens the row of [resource] with primary key [id].
+  Future<void> openRecord(AdminResource resource, String id) async {
+    final primary = resource.columns.where((c) => c.isPrimary).firstOrNull;
+    if (primary == null) return;
+    final page = await adminEndpoint.query(
+      resource.key,
+      admin_client.AdminQuery(
+        offset: 0,
+        limit: 1,
+        sortDescending: false,
+        filters: [
+          admin_client.AdminFilter(
+            column: primary.name,
+            comparison: admin_client.AdminFilterOperator.equals,
+            value: id,
+          ),
+        ],
+      ),
+    );
+    final row = page.rows.firstOrNull;
+    if (row == null) return;
+    if (selectedResource?.key != resource.key) await selectResource(resource);
+    openDetails(resource, row);
+  }
+
+  /// Lists [resource] narrowed by [filters], for "view all" links.
+  Future<void> showFiltered(
+    AdminResource resource,
+    List<admin_client.AdminFilter> filters,
+  ) async {
+    selectedResource = resource;
+    _showingOverview = false;
+    closeDetails();
+    _resetQuery();
+    _filters = List.unmodifiable(filters);
+    records = const [];
+    notifyListeners();
+    await loadRecords(resource);
+  }
+
+  /// Rows of other resources pointing at [record] through a foreign key:
+  /// up to [limit] of each, with how many there are.
+  Future<List<RelatedRows>> relatedRecords(
+    AdminResource resource,
+    Map<String, String> record, {
+    int limit = 5,
+  }) async {
+    final id = resolvePrimaryKeyValue(resource, record);
+    if (id == null) return const [];
+    final links = [
+      for (final other in resources)
+        for (final column in other.columns)
+          if (column.foreignKeyTable == resource.tableName) (other, column),
+    ];
+    final results = await Future.wait([
+      for (final (other, column) in links)
+        adminEndpoint
+            .query(
+              other.key,
+              admin_client.AdminQuery(
+                offset: 0,
+                limit: limit,
+                sortDescending: false,
+                filters: [
+                  admin_client.AdminFilter(
+                    column: column.name,
+                    comparison: admin_client.AdminFilterOperator.equals,
+                    value: id,
+                  ),
+                ],
+              ),
+            )
+            .then<RelatedRows?>(
+              (page) => RelatedRows(
+                resource: other,
+                column: column,
+                value: id,
+                rows: page.rows,
+                total: page.total,
+              ),
+            )
+            .catchError((Object _) => null),
+    ]);
+    return [
+      for (final result in results)
+        if (result != null && result.total > 0) result,
+    ];
+  }
+
   @override
   void dispose() {
     _searchDebounce?.cancel();
@@ -202,8 +518,9 @@ class AdminDashboardController extends ChangeNotifier {
   }
 
   void toggleThemeMode() {
-    _themeMode =
-        _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+    _themeMode = _themeMode == ThemeMode.dark
+        ? ThemeMode.light
+        : ThemeMode.dark;
     notifyListeners();
   }
 
@@ -249,7 +566,7 @@ class AdminDashboardController extends ChangeNotifier {
     }
 
     final current = selectedResource;
-    if (current != null) {
+    if (current != null && !_showingOverview) {
       await loadRecords(current);
     } else {
       records = const [];
@@ -259,6 +576,8 @@ class AdminDashboardController extends ChangeNotifier {
 
   Future<void> selectResource(AdminResource resource) async {
     selectedResource = resource;
+    _showingOverview = false;
+    _selected.clear();
     closeDetails(); // Close details when changing resource
     _resetQuery(); // A new table starts unfiltered on its first page
     records = const [];
@@ -307,7 +626,8 @@ class AdminDashboardController extends ChangeNotifier {
       if (isShowingDetails &&
           detailsResource?.key == resource.key &&
           detailsRecord != null) {
-        final updatedRecord = _findUpdatedDetailsRecord(resource) ??
+        final updatedRecord =
+            _findUpdatedDetailsRecord(resource) ??
             (isJobs ? null : await _fetchDetailsRecord(resource));
         if (updatedRecord != null) {
           detailsRecord = updatedRecord;
@@ -449,10 +769,7 @@ class AdminDashboardController extends ChangeNotifier {
     }
   }
 
-  Future<void> deleteRecord(
-    AdminResource resource,
-    String id,
-  ) async {
+  Future<void> deleteRecord(AdminResource resource, String id) async {
     await adminEndpoint.delete(resource.key, id);
     await loadRecords(resource);
   }
@@ -495,15 +812,17 @@ class AdminDashboardController extends ChangeNotifier {
     AdminResource resource,
     Map<String, String> record,
   ) {
-    final primaryColumn =
-        resource.columns.firstWhere((column) => column.isPrimary, orElse: () {
-      return AdminColumn(
-        name: 'id',
-        dataType: 'String',
-        hasDefault: true,
-        isPrimary: true,
-      );
-    });
+    final primaryColumn = resource.columns.firstWhere(
+      (column) => column.isPrimary,
+      orElse: () {
+        return AdminColumn(
+          name: 'id',
+          dataType: 'String',
+          hasDefault: true,
+          isPrimary: true,
+        );
+      },
+    );
     final raw = record[primaryColumn.name];
     if (raw == null || raw.isEmpty) return null;
     return raw;
@@ -525,4 +844,22 @@ class AdminDashboardController extends ChangeNotifier {
 
     return payload;
   }
+}
+
+/// Rows of [resource] whose [column] points at a record, as listed on that
+/// record's details.
+class RelatedRows {
+  const RelatedRows({
+    required this.resource,
+    required this.column,
+    required this.value,
+    required this.rows,
+    required this.total,
+  });
+
+  final AdminResource resource;
+  final AdminColumn column;
+  final String value;
+  final List<Map<String, String>> rows;
+  final int total;
 }

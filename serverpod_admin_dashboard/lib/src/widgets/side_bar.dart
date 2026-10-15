@@ -20,6 +20,8 @@ class Sidebar extends StatelessWidget {
     this.itemCustomizations,
     this.client,
     this.onLogout,
+    this.onOverview,
+    this.isOverviewSelected = false,
   });
 
   final List<AdminResource> resources;
@@ -34,6 +36,10 @@ class Sidebar extends StatelessWidget {
   final Map<String, SidebarItemCustomization>? itemCustomizations;
   final ServerpodClientShared? client;
   final VoidCallback? onLogout;
+
+  /// Opens the overview page; shown as the first item when given.
+  final VoidCallback? onOverview;
+  final bool isOverviewSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -73,8 +79,9 @@ class Sidebar extends StatelessWidget {
                       size: 20,
                     ),
                     onPressed: onToggleCollapse,
-                    tooltip:
-                        isCollapsed ? 'Expand sidebar' : 'Collapse sidebar',
+                    tooltip: isCollapsed
+                        ? 'Expand sidebar'
+                        : 'Collapse sidebar',
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
@@ -90,15 +97,10 @@ class Sidebar extends StatelessWidget {
             ),
           ),
           // Content
-          Expanded(
-            child: _buildContent(context),
-          ),
+          Expanded(child: _buildContent(context)),
           // User info section at the bottom
           if (client != null && onLogout != null)
-            UserInfoSection(
-              client: client!,
-              onLogout: onLogout!,
-            ),
+            UserInfoSection(client: client!, onLogout: onLogout!),
         ],
       ),
     );
@@ -106,16 +108,11 @@ class Sidebar extends StatelessWidget {
 
   Widget _buildContent(BuildContext context) {
     if (isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (errorMessage != null) {
-      return SidebarError(
-        message: errorMessage!,
-        onRetry: onRetry,
-      );
+      return SidebarError(message: errorMessage!, onRetry: onRetry);
     }
 
     if (resources.isEmpty) {
@@ -123,10 +120,15 @@ class Sidebar extends StatelessWidget {
     }
 
     final theme = Theme.of(context);
+    final overview = onOverview;
     return ListView.builder(
-      itemCount: resources.length,
+      itemCount: resources.length + (overview == null ? 0 : 1),
       padding: EdgeInsets.zero,
-      itemBuilder: (context, index) {
+      itemBuilder: (context, position) {
+        if (overview != null && position == 0) {
+          return _overviewItem(context, overview);
+        }
+        final index = overview == null ? position : position - 1;
         final resource = resources[index];
         final isSelected = selectedResource?.key == resource.key;
         final customization = itemCustomizations?[resource.key];
@@ -161,8 +163,9 @@ class Sidebar extends StatelessWidget {
                       customization?.label ??
                           _formatDefaultResourceLabel(resource.tableName),
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight:
-                            isSelected ? FontWeight.w600 : FontWeight.w400,
+                        fontWeight: isSelected
+                            ? FontWeight.w600
+                            : FontWeight.w400,
                         color: isSelected
                             ? theme.colorScheme.primary
                             : theme.colorScheme.onSurface,
@@ -175,6 +178,49 @@ class Sidebar extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _overviewItem(BuildContext context, VoidCallback onTap) {
+    final theme = Theme.of(context);
+    final selected = isOverviewSelected;
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: selected
+              ? theme.colorScheme.primary.withValues(alpha: 0.08)
+              : Colors.transparent,
+          border: Border(
+            left: BorderSide(
+              color: selected ? theme.colorScheme.primary : Colors.transparent,
+              width: 3,
+            ),
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Icon(
+              Icons.dashboard_outlined,
+              size: 20,
+              color: selected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Overview',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                color: selected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -232,10 +278,7 @@ String _capitalizeWord(String word) {
 }
 
 class _SidebarItemIcon extends StatelessWidget {
-  const _SidebarItemIcon({
-    required this.icon,
-    required this.isSelected,
-  });
+  const _SidebarItemIcon({required this.icon, required this.isSelected});
 
   final IconData? icon;
   final bool isSelected;

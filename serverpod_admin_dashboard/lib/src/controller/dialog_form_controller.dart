@@ -100,8 +100,11 @@ class DialogFormController extends ChangeNotifier {
     if (relatedResource == null) return;
 
     try {
-      final records = await adminController.adminEndpoint.list(
-        relatedResource.key,
+      // A first page only: pickers search as the administrator types.
+      final records = await adminController.searchRecords(
+        relatedResource,
+        '',
+        limit: 50,
       );
       _foreignKeyOptions[column.name] = records;
       notifyListeners();

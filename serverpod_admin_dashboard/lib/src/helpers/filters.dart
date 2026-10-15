@@ -58,6 +58,7 @@ String operatorLabel(AdminFilterOperator operator, FilterValueKind kind) =>
       AdminFilterOperator.equals => 'is',
       AdminFilterOperator.notEquals => 'is not',
       AdminFilterOperator.contains => 'contains',
+      AdminFilterOperator.oneOf => 'is one of',
       AdminFilterOperator.greaterOrEqual =>
         kind == FilterValueKind.date ? 'on or after' : 'at least',
       AdminFilterOperator.lessOrEqual =>
