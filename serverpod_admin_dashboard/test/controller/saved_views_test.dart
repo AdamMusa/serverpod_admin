@@ -41,11 +41,16 @@ class _FakeAdmin implements EndpointAdmin {
     return AdminPage(rows: [], total: 0);
   }
 
+  var viewReads = 0;
+
   @override
-  Future<List<AdminSavedView>> savedViews(String resourceKey) async => [
-    for (final view in views)
-      if (view.resourceKey == resourceKey) view,
-  ]..sort((a, b) => a.name.compareTo(b.name));
+  Future<List<AdminSavedView>> savedViews(String resourceKey) async {
+    viewReads++;
+    return [
+      for (final view in views)
+        if (view.resourceKey == resourceKey) view,
+    ]..sort((a, b) => a.name.compareTo(b.name));
+  }
 
   @override
   Future<AdminSavedView> saveView(
@@ -116,11 +121,28 @@ void main() {
     await controller.loadResources();
   });
 
-  test('a table shows its views once selected', () async {
+  test('a table shows its views once selected, read once', () async {
     admin.views.add(_view('Open rides', filters: [_open]));
     await controller.selectResource(_rides);
     await pumpEventQueue();
     expect([for (final v in controller.savedViews) v.name], ['Open rides']);
+    expect(admin.viewReads, 1);
+
+    final other = AdminResource(
+      key: 'payment',
+      tableName: 'payment',
+      columns: [_col('id', type: 'int', pk: true)],
+    );
+    await controller.selectResource(other);
+    await pumpEventQueue();
+    expect(controller.savedViews, isEmpty);
+    expect(admin.viewReads, 2);
+
+    // Back on rides, its views are not read again.
+    await controller.selectResource(_rides);
+    await pumpEventQueue();
+    expect([for (final v in controller.savedViews) v.name], ['Open rides']);
+    expect(admin.viewReads, 2);
   });
 
   test('a view saves the search, sort, filters and changed columns', () async {

@@ -209,12 +209,16 @@ class AdminDashboardController extends ChangeNotifier {
   List<admin_client.AdminSavedView> savedViews = const [];
   String? _savedViewsKey;
 
-  /// Reads [resource]'s saved views when it is about to be shown.
+  /// Each table's saved views once read, so they are read once.
+  final Map<String, List<admin_client.AdminSavedView>> _savedViewsByKey = {};
+
+  /// Shows [resource]'s saved views, read the first time it is shown.
   void _showSavedViewsOf(AdminResource resource) {
     if (resource.key == _savedViewsKey) return;
     _savedViewsKey = resource.key;
-    savedViews = const [];
-    if (resource.key != serverpodJobsKey) {
+    final known = _savedViewsByKey[resource.key];
+    savedViews = known ?? const [];
+    if (known == null && resource.key != serverpodJobsKey) {
       unawaited(loadSavedViews(resource));
     }
   }
@@ -223,6 +227,7 @@ class AdminDashboardController extends ChangeNotifier {
     List<admin_client.AdminSavedView> views;
     try {
       views = await adminEndpoint.savedViews(resource.key);
+      _savedViewsByKey[resource.key] = views;
     } catch (_) {
       views = const [];
     }
