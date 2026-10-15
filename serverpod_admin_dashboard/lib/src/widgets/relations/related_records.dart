@@ -177,6 +177,7 @@ class _RelatedGroup extends StatelessWidget {
       initiallyExpanded: initiallyExpanded,
       title: Text('${resource.displayName} (${group.total})'),
       subtitle: Text('by ${group.column.displayName}'),
+      expandedAlignment: Alignment.centerLeft,
       expandedCrossAxisAlignment: CrossAxisAlignment.start,
       childrenPadding: const EdgeInsets.only(bottom: 8),
       children: [

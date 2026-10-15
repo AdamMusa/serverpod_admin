@@ -183,6 +183,11 @@ void main() {
     // Tables without rows are listed too, so a first row can be added; this
     // one cannot be changed here.
     expect(find.text('Payments (0)'), findsOneWidget);
+    // The rows start at the left, under the table's name.
+    expect(
+      tester.getTopLeft(find.byType(DataTable)).dx,
+      tester.getTopLeft(find.text('Rides (2)')).dx - 16,
+    );
     expect(find.text('Add Payments'), findsNothing);
     expect(find.text('Add Rides'), findsOneWidget);
   });
