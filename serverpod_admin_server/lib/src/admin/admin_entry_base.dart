@@ -63,6 +63,24 @@ abstract class AdminEntryBase {
   Future<List<JsonMap>> list(Session session) async =>
       (await listRows(session)).map(toJson).toList();
 
+  /// The rows with [ids] that exist, as [find] returns them; in one query
+  /// unless the table reads rows its own way.
+  Future<List<JsonMap>> findMany(Session session, List<Object> ids) async => [
+    for (final id in ids) ?await find(session, id),
+  ];
+
+  /// Saves [rows] (as JSON) in one query and returns them as saved, or
+  /// null when the table saves rows its own way, one at a time.
+  Future<List<JsonMap>?> updateMany(
+    Session session,
+    List<JsonMap> rows,
+  ) async => null;
+
+  /// Deletes the rows with [ids] in one query and returns those deleted, or
+  /// null when the table deletes rows its own way, one at a time.
+  Future<List<JsonMap>?> deleteMany(Session session, List<Object> ids) async =>
+      null;
+
   /// Convenience helper returning a single JSON encoded row.
   Future<JsonMap?> find(Session session, Object id) async {
     final row = await findRowById(session, id);

@@ -118,6 +118,11 @@ class AdminRegistry {
             return row == null ? null : present?.call(session, row) ?? row;
           },
       queryable: listRows == null,
+      // Rows are read, saved and deleted many at a time unless the table
+      // gives its own way to do it one row at a time.
+      batchFind: findRowById == null,
+      batchUpdate: updateRow == null,
+      batchDelete: deleteById == null,
       present: present,
       actions: actions,
       options: options,
@@ -125,16 +130,7 @@ class AdminRegistry {
       createRow: createRow ?? (session, row) => session.db.insertRow<T>(row),
       // ignore: invalid_use_of_internal_member
       updateRow: updateRow ?? (session, row) => session.db.updateRow<T>(row),
-      deleteById:
-          deleteById ??
-          (session, id) async {
-            // ignore: invalid_use_of_internal_member
-            final row = await session.db.findById<T>(id);
-            if (row != null) {
-              // ignore: invalid_use_of_internal_member
-              await session.db.deleteRow<T>(row);
-            }
-          },
+      deleteById: deleteById,
       resourceKey: resourceKey,
       choices: choices,
       authUserColumn: authUserColumn,

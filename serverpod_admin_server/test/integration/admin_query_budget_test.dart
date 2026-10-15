@@ -1,6 +1,6 @@
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod/protocol.dart'
-    show FutureCallEntry, ReadWriteTestEntry;
+    show FutureCallEntry, ReadWriteTestEntry, SessionLogEntry;
 import 'package:serverpod_admin_server/serverpod_admin_server.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     show AuthUser, UserProfile;
@@ -21,6 +21,27 @@ void main() {
           table: ReadWriteTestEntry.t,
           fromJson: ReadWriteTestEntry.fromJson,
           resourceKey: 'counters',
+          actions: [
+            AdminAction(
+              name: 'count',
+              label: 'Count',
+              run: (session, rows) async => '${rows.length} rows',
+            ),
+          ],
+        );
+        // Saves and deletes through its own hooks, one row at a time.
+        registry.register<SessionLogEntry>(
+          table: SessionLogEntry.t,
+          fromJson: SessionLogEntry.fromJson,
+          resourceKey: 'sessions',
+          updateRow: (session, row) => SessionLogEntry.db.updateRow(
+            session,
+            row.copyWith(module: 'hooked'),
+          ),
+          deleteById: (session, id) => SessionLogEntry.db.deleteWhere(
+            session,
+            where: (t) => t.id.equals(id as int),
+          ),
         );
         registry.register<UserProfile>(
           table: UserProfile.t,
@@ -252,6 +273,125 @@ void main() {
       );
       expect(queries, 1, reason: '${QueryCounter.calls}');
       expect([for (final r in rows) r['name']], ['job1', 'job2', 'job3']);
+    });
+
+    group('changes', () {
+      Future<List<AdminLogEntry>> history(String resourceKey) async =>
+          (await endpoints.admin.history(
+            admin,
+            resourceKey,
+            null,
+            0,
+            200,
+          )).entries;
+      List<String> ids(Iterable<ReadWriteTestEntry> rows) => [
+        for (final row in rows) '${row.id}',
+      ];
+
+      test('one row is deleted in one query, and recorded', () async {
+        final (_, queries) = await measure(
+          () => endpoints.admin.delete(admin, 'counters', '${counters[0].id}'),
+        );
+        expect(queries, 2, reason: '${QueryCounter.calls}');
+        final entry = (await history('counters')).first;
+        expect(
+          (entry.recordId, entry.action),
+          ('${counters[0].id}', AdminLogAction.deleted),
+        );
+        expect(entry.changes, contains('"number":"0"'));
+        // A row already gone counts as deleted.
+        await endpoints.admin.delete(admin, 'counters', '${counters[0].id}');
+      });
+
+      test('deleting many rows takes two queries', () async {
+        final chosen = [...ids(counters.take(10)), '999999'];
+        final (result, queries) = await measure(
+          () => endpoints.admin.deleteMany(admin, 'counters', chosen),
+        );
+        expect(queries, 2, reason: '${QueryCounter.calls}');
+        expect(result.affected, 10);
+        expect(result.message, contains('1 failed'));
+        expect(await ReadWriteTestEntry.db.count(sessionBuilder.build()), 20);
+        final deleted = await history('counters');
+        expect(
+          deleted.where((e) => e.action == AdminLogAction.deleted),
+          hasLength(10),
+        );
+      });
+
+      test('updating many rows takes three queries', () async {
+        final (result, queries) = await measure(
+          () => endpoints.admin.updateMany(
+            admin,
+            'counters',
+            ids(counters.take(10)),
+            {'number': '7'},
+          ),
+        );
+        expect(queries, 3, reason: '${QueryCounter.calls}');
+        expect(result.affected, 10);
+        final stored = await ReadWriteTestEntry.db.find(
+          sessionBuilder.build(),
+          where: (t) => t.number.equals(7),
+        );
+        expect(stored, hasLength(10));
+        final updated = (await history(
+          'counters',
+        )).where((e) => e.action == AdminLogAction.updated);
+        // The counter that already held 7 did not change.
+        expect(updated, hasLength(9));
+      });
+
+      test('an action reads its rows in one query', () async {
+        final (result, queries) = await measure(
+          () => endpoints.admin.runAction(
+            admin,
+            'counters',
+            'count',
+            ids(counters.take(10)),
+          ),
+        );
+        expect(queries, 2, reason: '${QueryCounter.calls}');
+        expect(result.message, '10 rows');
+        expect(
+          (await history(
+            'counters',
+          )).where((e) => e.action == AdminLogAction.action),
+          hasLength(10),
+        );
+      });
+
+      test('a table with its own hooks reads its rows in one query', () async {
+        final rows = await SessionLogEntry.db.insert(sessionBuilder.build(), [
+          for (var i = 0; i < 5; i++)
+            SessionLogEntry(
+              serverId: 'a',
+              time: DateTime.now().toUtc(),
+              touched: DateTime.now().toUtc(),
+              endpoint: 'e$i',
+            ),
+        ]);
+        final chosen = [for (final row in rows) '${row.id}'];
+        final (updated, updates) = await measure(
+          () => endpoints.admin.updateMany(admin, 'sessions', chosen, {
+            'endpoint': 'bulk',
+          }),
+        );
+        expect(updated.affected, 5);
+        // One read, its hook for each row, one history insert.
+        expect(updates, 1 + 5 + 1, reason: '${QueryCounter.calls}');
+        final saved = await SessionLogEntry.db.find(
+          sessionBuilder.build(),
+          where: (t) => t.endpoint.equals('bulk'),
+        );
+        expect({for (final row in saved) row.module}, {'hooked'});
+
+        final (deleted, deletes) = await measure(
+          () => endpoints.admin.deleteMany(admin, 'sessions', chosen),
+        );
+        expect(deleted.affected, 5);
+        expect(deletes, 1 + 5 + 1, reason: '${QueryCounter.calls}');
+      });
     });
 
     test('a list page is read in the database', () async {

@@ -26,28 +26,56 @@ class AdminHistory {
     Map<String, String> before = const {},
     Map<String, String> after = const {},
     String? summary,
+  }) => recordAll(
+    session,
+    resourceKey: resourceKey,
+    changes: [
+      AdminChange(
+        recordId: recordId,
+        action: action,
+        before: before,
+        after: after,
+        summary: summary,
+      ),
+    ],
+  );
+
+  /// Records [changes] to rows of [resourceKey] in one insert; never fails
+  /// the edits they describe.
+  static Future<void> recordAll(
+    Session session, {
+    required String resourceKey,
+    required List<AdminChange> changes,
   }) async {
     try {
-      final changes = switch (action) {
-        AdminLogAction.updated => _diff(before, after),
-        AdminLogAction.created => _values(after),
-        AdminLogAction.deleted => _values(before),
-        AdminLogAction.action => <String, Object?>{},
-      };
-      if (action == AdminLogAction.updated && changes.isEmpty) return;
       final actor = session.authenticated?.userIdentifier ?? 'unknown';
-      await AdminLogEntry.db.insertRow(
-        session,
-        AdminLogEntry(
-          actor: actor,
-          actorName: await _actorName(session, actor),
-          resourceKey: resourceKey,
-          recordId: recordId,
-          action: action,
-          changes: jsonEncode(changes),
-          summary: summary,
-        ),
-      );
+      String? actorName;
+      final entries = <AdminLogEntry>[];
+      for (final change in changes) {
+        final values = switch (change.action) {
+          AdminLogAction.updated => _diff(change.before, change.after),
+          AdminLogAction.created => _values(change.after),
+          AdminLogAction.deleted => _values(change.before),
+          AdminLogAction.action => <String, Object?>{},
+        };
+        if (change.action == AdminLogAction.updated && values.isEmpty) {
+          continue;
+        }
+        actorName ??= await _actorName(session, actor) ?? '';
+        entries.add(
+          AdminLogEntry(
+            actor: actor,
+            actorName: actorName.isEmpty ? null : actorName,
+            resourceKey: resourceKey,
+            recordId: change.recordId,
+            action: change.action,
+            changes: jsonEncode(values),
+            summary: change.summary,
+          ),
+        );
+      }
+      if (entries.isEmpty) return;
+      await AdminLogEntry.db.insert(session, entries);
       await _prune(session);
     } catch (error) {
       session.log(
@@ -110,18 +138,33 @@ class AdminHistory {
   static bool _secretField(String name) =>
       _secret.hasMatch(name.toLowerCase().replaceAll(RegExp('[^a-z]'), ''));
 
+  static final _actorNames = <String, ({String? name, DateTime read})>{};
+
+  /// How [actor] is shown, read at most every few minutes rather than for
+  /// every change.
   static Future<String?> _actorName(Session session, String actor) async {
+    final now = DateTime.now();
+    final cached = _actorNames[actor];
+    if (cached != null && now.difference(cached.read) < _actorNameAge) {
+      return cached.name;
+    }
+    String? name;
     try {
       final profile = await AuthServices.instance.userProfiles
           .maybeFindUserProfileByUserId(
             session,
             UuidValue.withValidation(actor),
           );
-      return profile?.email ?? profile?.fullName ?? profile?.userName;
+      name = profile?.email ?? profile?.fullName ?? profile?.userName;
     } catch (_) {
-      return null;
+      name = null;
     }
+    if (_actorNames.length >= 1000) _actorNames.clear();
+    _actorNames[actor] = (name: name, read: now);
+    return name;
   }
+
+  static const _actorNameAge = Duration(minutes: 10);
 
   /// Removes entries older than [AdminRegistry.historyRetention], at most
   /// once an hour per server.
@@ -139,4 +182,21 @@ class AdminHistory {
       where: (t) => t.createdAt < now.subtract(retention),
     );
   }
+}
+
+/// One change to a row, for [AdminHistory.recordAll].
+class AdminChange {
+  const AdminChange({
+    required this.recordId,
+    required this.action,
+    this.before = const {},
+    this.after = const {},
+    this.summary,
+  });
+
+  final String recordId;
+  final AdminLogAction action;
+  final Map<String, String> before;
+  final Map<String, String> after;
+  final String? summary;
 }

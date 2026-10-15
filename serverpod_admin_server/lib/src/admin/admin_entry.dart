@@ -14,17 +14,23 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
     required Future<T?> Function(Session session, Object id) findRowById,
     required Future<T> Function(Session session, T row) createRow,
     required Future<T> Function(Session session, T row) updateRow,
-    required Future<void> Function(Session session, Object id) deleteById,
+    Future<void> Function(Session session, Object id)? deleteById,
     String? resourceKey,
     Map<String, List<String>>? choices,
     String? authUserColumn,
     bool queryable = false,
+    bool batchFind = false,
+    bool batchUpdate = false,
+    bool batchDelete = false,
     List<AdminAction<T>> actions = const [],
     AdminOptions options = const AdminOptions(),
     T Function(Session session, T row)? present,
   }) : _options = options,
        _actions = actions,
        _queryable = queryable,
+       _batchFind = batchFind,
+       _batchUpdate = batchUpdate,
+       _batchDelete = batchDelete,
        _present = present,
        _choices = choices,
        _authUserColumn = authUserColumn,
@@ -43,11 +49,14 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
   final Future<T?> Function(Session session, Object id) _findRowById;
   final Future<T> Function(Session session, T row) _createRow;
   final Future<T> Function(Session session, T row) _updateRow;
-  final Future<void> Function(Session session, Object id) _deleteById;
+  final Future<void> Function(Session session, Object id)? _deleteById;
   final String? _resourceKeyOverride;
   final Map<String, List<String>>? _choices;
   final String? _authUserColumn;
   final bool _queryable;
+  final bool _batchFind;
+  final bool _batchUpdate;
+  final bool _batchDelete;
   final List<AdminAction<T>> _actions;
   final AdminOptions _options;
 
@@ -168,15 +177,11 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
     if (action == null) {
       throw AdminValidationException(message: 'Unknown action $name.');
     }
-    final rows = <T>[];
-    for (final id in ids) {
-      // Actions see rows as stored, not as presented to the dashboard.
-      final row = _queryable
-          // ignore: invalid_use_of_internal_member
-          ? await session.db.findById<T>(_rowId(id))
-          : await _findRowById(session, _rowId(id));
-      if (row != null) rows.add(row);
-    }
+    // Actions see rows as stored, not as presented to the dashboard.
+    final rows = _queryable
+        // ignore: invalid_use_of_internal_member
+        ? await session.db.find<T>(where: _idIn(ids))
+        : [for (final id in ids) ?await _findRowById(session, _rowId(id))];
     return action.run(session, rows);
   }
 
@@ -273,8 +278,46 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
 
   @override
   Future<void> deleteById(Session session, Object id) async {
-    await _deleteById(session, _rowId(id));
+    final delete = _deleteById;
+    if (delete != null) return delete(session, _rowId(id));
+    // ignore: invalid_use_of_internal_member
+    await session.db.deleteWhere<T>(where: _idIn([id]));
   }
+
+  @override
+  Future<List<JsonMap>> findMany(Session session, List<Object> ids) async {
+    if (!_batchFind) return super.findMany(session, ids);
+    if (ids.isEmpty) return const [];
+    // ignore: invalid_use_of_internal_member
+    final rows = await session.db.find<T>(where: _idIn(ids));
+    return [
+      for (final row in rows) toJson(_present?.call(session, row) ?? row),
+    ];
+  }
+
+  @override
+  Future<List<JsonMap>?> updateMany(Session session, List<JsonMap> rows) async {
+    if (!_batchUpdate) return null;
+    if (rows.isEmpty) return const [];
+    // ignore: invalid_use_of_internal_member
+    final updated = await session.db.update<T>([
+      for (final row in rows) _resolvedFromJson(row),
+    ]);
+    return [for (final row in updated) toJson(row)];
+  }
+
+  @override
+  Future<List<JsonMap>?> deleteMany(Session session, List<Object> ids) async {
+    if (!_batchDelete) return null;
+    if (ids.isEmpty) return const [];
+    // ignore: invalid_use_of_internal_member
+    final deleted = await session.db.deleteWhere<T>(where: _idIn(ids));
+    return [for (final row in deleted) toJson(row)];
+  }
+
+  /// The rows whose primary key is one of [ids].
+  Expression _idIn(Iterable<Object> ids) =>
+      AdminSqlQuery.idIn(_resolvedTable, [for (final id in ids) _rowId(id)]);
 
   /// [id] as the table's key type: ids arrive as text from the dashboard,
   /// and UUID keys are looked up as UuidValue.

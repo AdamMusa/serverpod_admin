@@ -7,7 +7,8 @@ import 'package:serverpod_auth_idp_server/providers/email.dart';
 import 'package:serverpod_admin_server/src/admin/admin_access.dart';
 import 'package:serverpod_admin_server/src/admin/admin_auth_user_link.dart';
 import 'package:serverpod_admin_server/src/admin/admin_entry_base.dart';
-import 'package:serverpod_admin_server/src/admin/admin_history.dart';
+import 'package:serverpod_admin_server/src/admin/admin_history.dart'
+    show AdminChange, AdminHistory;
 import 'package:serverpod_admin_server/src/admin/admin_query_engine.dart';
 import 'package:serverpod_admin_server/src/admin/admin_saved_views.dart';
 import 'package:serverpod_admin_server/src/admin/admin_value_parser.dart';
@@ -369,35 +370,7 @@ class AdminEndpoint extends Endpoint {
     Map<String, String> data,
   ) async {
     final entry = _entryFor(session, resourceKey, AdminOperation.edit);
-    final locked = {...entry.options.hidden, ...entry.options.readOnly};
-    data = {
-      for (final MapEntry(:key, :value) in data.entries)
-        if (!locked.contains(key)) key: value,
-    };
-    final normalized = _normalizePayload(entry, data);
-    final id = normalized[entry.table.id.columnName];
-    final stored = id == null ? null : await entry.find(session, id);
-    // Hidden and read-only columns keep their stored values.
-    for (final name in locked) {
-      if (stored == null || !entry.columns.any((c) => c.columnName == name)) {
-        continue;
-      }
-      if (stored.containsKey(name)) {
-        normalized[name] = stored[name];
-      } else {
-        normalized.remove(name);
-      }
-    }
-    _requireStorable(entry, normalized, stored: stored);
-    final before = stored == null ? null : await _text(session, entry, stored);
-    final authUser = await entry.authUserLink?.change(
-      session,
-      normalized,
-      data,
-    );
-    final updated = await entry.update(session, normalized);
-    if (authUser != null) await AuthUser.db.updateRow(session, authUser);
-    final after = await _text(session, entry, updated);
+    final (:before, :after) = await _save(session, entry, data);
     await AdminHistory.record(
       session,
       resourceKey: entry.resourceKey,
@@ -409,20 +382,69 @@ class AdminEndpoint extends Endpoint {
     return after;
   }
 
+  /// Saves [data] over its row and returns the row as text before and
+  /// after. Hidden and read-only columns keep their [stored] values (read
+  /// here unless given); [before] is the stored row as text, when known.
+  Future<({Map<String, String>? before, Map<String, String> after})> _save(
+    Session session,
+    AdminEntryBase entry,
+    Map<String, String> data, {
+    Map<String, dynamic>? stored,
+    Map<String, String>? before,
+  }) async {
+    final normalized = _normalizeUpdate(entry, data);
+    final id = normalized[entry.table.id.columnName];
+    stored ??= id == null ? null : await entry.find(session, id);
+    _keepLocked(entry, normalized, stored);
+    _requireStorable(entry, normalized, stored: stored);
+    before ??= stored == null ? null : await _text(session, entry, stored);
+    final authUser = await entry.authUserLink?.change(
+      session,
+      normalized,
+      data,
+    );
+    final updated = await entry.update(session, normalized);
+    if (authUser != null) await AuthUser.db.updateRow(session, authUser);
+    return (before: before, after: await _text(session, entry, updated));
+  }
+
+  /// [data] for an update, without the columns it may not change.
+  Map<String, dynamic> _normalizeUpdate(
+    AdminEntryBase entry,
+    Map<String, String> data,
+  ) {
+    final locked = {...entry.options.hidden, ...entry.options.readOnly};
+    return _normalizePayload(entry, {
+      for (final MapEntry(:key, :value) in data.entries)
+        if (!locked.contains(key)) key: value,
+    });
+  }
+
+  /// Gives hidden and read-only columns their [stored] values.
+  void _keepLocked(
+    AdminEntryBase entry,
+    Map<String, dynamic> normalized,
+    Map<String, dynamic>? stored,
+  ) {
+    if (stored == null) return;
+    final locked = {...entry.options.hidden, ...entry.options.readOnly};
+    for (final name in locked) {
+      if (!entry.columns.any((c) => c.columnName == name)) continue;
+      if (stored.containsKey(name)) {
+        normalized[name] = stored[name];
+      } else {
+        normalized.remove(name);
+      }
+    }
+  }
+
   Future<bool> delete(Session session, String resourceKey, String id) async {
     final entry = _entryFor(session, resourceKey, AdminOperation.delete);
-    final normalizedId = _parseId(entry, id);
-    final stored = await entry.find(session, normalizedId);
-    final before = stored == null ? null : await _text(session, entry, stored);
-    await entry.delete(session, normalizedId);
-    if (before != null) {
-      await AdminHistory.record(
-        session,
-        resourceKey: entry.resourceKey,
-        recordId: id,
-        action: AdminLogAction.deleted,
-        before: before,
-      );
+    final (:deleted, :failures) = await _deleteRows(session, entry, [id]);
+    await _recordDeleted(session, entry, deleted);
+    // A row that is already gone counts as deleted.
+    if (failures[id] case final message? when message != _gone(id)) {
+      throw AdminValidationException(message: message);
     }
     return true;
   }
@@ -497,31 +519,101 @@ class AdminEndpoint extends Endpoint {
 
   String _owner(Session session) => session.authenticated!.userIdentifier;
 
-  /// Deletes the rows with [ids], one by one, recording each; rows that
-  /// cannot be deleted are counted in the message.
+  /// Deletes the rows with [ids], in one query unless the table deletes
+  /// rows its own way, and records each; rows that cannot be deleted are
+  /// counted in the message.
   Future<AdminActionResult> deleteMany(
     Session session,
     String resourceKey,
     List<String> ids,
-  ) {
+  ) async {
     final entry = _entryFor(session, resourceKey, AdminOperation.delete);
-    return _eachRow(ids, (id) async {
-      if (await entry.find(session, _parseId(entry, id)) == null) {
-        throw ArgumentError('Row $id no longer exists.');
-      }
-      await delete(session, resourceKey, id);
-    }, done: (count) => 'Deleted $count ${_rows(count)}.');
+    final (:deleted, :failures) = await _deleteRows(session, entry, ids);
+    await _recordDeleted(session, entry, deleted);
+    return _result(
+      deleted.length,
+      failures,
+      done: 'Deleted ${deleted.length} ${_rows(deleted.length)}.',
+    );
   }
 
+  /// Deletes the rows with [ids]: in one query that returns them where the
+  /// table allows (one by one when that fails, to tell which row failed),
+  /// else one by one. Returns the deleted rows as text by id, and why the
+  /// others were not deleted.
+  Future<
+    ({Map<String, Map<String, String>> deleted, Map<String, String> failures})
+  >
+  _deleteRows(Session session, AdminEntryBase entry, List<String> ids) async {
+    final deleted = <String, Map<String, String>>{};
+    final failures = <String, String>{};
+    final parsed = {for (final id in ids) id: _parseId(entry, id)};
+    List<Map<String, dynamic>>? batch;
+    try {
+      batch = await entry.deleteMany(session, parsed.values.toList());
+    } catch (_) {
+      batch = null;
+    }
+    if (batch != null) {
+      for (final row in await _texts(session, entry, batch)) {
+        deleted[_idOf(entry, row)] = row;
+      }
+      for (final id in ids) {
+        if (!deleted.containsKey(id)) failures[id] = _gone(id);
+      }
+      return (deleted: deleted, failures: failures);
+    }
+    final stored = {
+      for (final row in await _texts(
+        session,
+        entry,
+        await entry.findMany(session, parsed.values.toList()),
+      ))
+        _idOf(entry, row): row,
+    };
+    for (final id in ids) {
+      final before = stored[id];
+      if (before == null) {
+        failures[id] = _gone(id);
+        continue;
+      }
+      try {
+        await entry.delete(session, parsed[id]!);
+        deleted[id] = before;
+      } catch (error) {
+        failures[id] = _reason(error);
+      }
+    }
+    return (deleted: deleted, failures: failures);
+  }
+
+  Future<void> _recordDeleted(
+    Session session,
+    AdminEntryBase entry,
+    Map<String, Map<String, String>> deleted,
+  ) => AdminHistory.recordAll(
+    session,
+    resourceKey: entry.resourceKey,
+    changes: [
+      for (final MapEntry(key: id, value: before) in deleted.entries)
+        AdminChange(
+          recordId: id,
+          action: AdminLogAction.deleted,
+          before: before,
+        ),
+    ],
+  );
+
   /// Sets [values] (column name to text, as the edit form sends them) on
-  /// every row with [ids], through the same validation and hooks as a
-  /// single edit.
+  /// every row with [ids], through the same validation as a single edit:
+  /// the rows are read in one query and saved in one query unless the table
+  /// saves rows its own way.
   Future<AdminActionResult> updateMany(
     Session session,
     String resourceKey,
     List<String> ids,
     Map<String, String> values,
-  ) {
+  ) async {
     final entry = _entryFor(session, resourceKey, AdminOperation.edit);
     final locked = values.keys.where(
       (key) =>
@@ -541,18 +633,118 @@ class AdminEndpoint extends Endpoint {
         message: 'The primary key cannot be changed in bulk.',
       );
     }
-    return _eachRow(ids, (id) async {
-      final stored = await entry.find(session, _parseId(entry, id));
-      if (stored == null) throw ArgumentError('Row $id no longer exists.');
-      final current = await _text(session, entry, stored);
-      await update(session, resourceKey, {
+    final failures = <String, String>{};
+    final stored = {
+      for (final row in await entry.findMany(session, [
+        for (final id in ids) _parseId(entry, id),
+      ]))
+        _stringifyValue(row[primary]): row,
+    };
+    final current = {
+      for (final row in await _texts(session, entry, stored.values.toList()))
+        _idOf(entry, row): row,
+    };
+    final changes = <AdminChange>[];
+    // Valid rows saved together, with their values as text before.
+    final pending = <({String id, Map<String, dynamic> row})>[];
+    for (final id in ids) {
+      final row = stored[id];
+      final before = current[id];
+      if (row == null || before == null) {
+        failures[id] = _gone(id);
+        continue;
+      }
+      final data = {
         // Empty text stands for null; leaving it out keeps null values null.
-        for (final MapEntry(:key, :value) in current.entries)
+        for (final MapEntry(:key, :value) in before.entries)
           if (value.isNotEmpty) key: value,
         ...values,
-      });
-    }, done: (count) => 'Updated $count ${_rows(count)}.');
+      };
+      // Access changes are checked and saved row by row.
+      if (values.keys.any(AdminAuthUserLink.isField)) {
+        try {
+          final saved = await _save(
+            session,
+            entry,
+            data,
+            stored: row,
+            before: before,
+          );
+          changes.add(_updated(id, before, saved.after));
+        } catch (error) {
+          failures[id] = _reason(error);
+        }
+        continue;
+      }
+      try {
+        final normalized = _normalizeUpdate(entry, data);
+        _keepLocked(entry, normalized, row);
+        _requireStorable(entry, normalized, stored: row);
+        pending.add((id: id, row: normalized));
+      } catch (error) {
+        failures[id] = _reason(error);
+      }
+    }
+    if (pending.isNotEmpty) {
+      List<Map<String, dynamic>>? saved;
+      try {
+        saved = await entry.updateMany(session, [
+          for (final item in pending) item.row,
+        ]);
+      } catch (_) {
+        saved = null;
+      }
+      if (saved != null) {
+        final after = {
+          for (final row in await _texts(session, entry, saved))
+            _idOf(entry, row): row,
+        };
+        for (final item in pending) {
+          if (after[item.id] case final row?) {
+            changes.add(_updated(item.id, current[item.id]!, row));
+          }
+        }
+      } else {
+        // One by one, through the table's own save or to tell which row
+        // failed.
+        for (final item in pending) {
+          try {
+            final updated = await entry.update(session, item.row);
+            changes.add(
+              _updated(
+                item.id,
+                current[item.id]!,
+                await _text(session, entry, updated),
+              ),
+            );
+          } catch (error) {
+            failures[item.id] = _reason(error);
+          }
+        }
+      }
+    }
+    await AdminHistory.recordAll(
+      session,
+      resourceKey: entry.resourceKey,
+      changes: changes,
+    );
+    return _result(
+      changes.length,
+      failures,
+      done: 'Updated ${changes.length} ${_rows(changes.length)}.',
+    );
   }
+
+  static AdminChange _updated(
+    String id,
+    Map<String, String> before,
+    Map<String, String> after,
+  ) => AdminChange(
+    recordId: id,
+    action: AdminLogAction.updated,
+    before: before,
+    after: after,
+  );
 
   /// Runs the custom action [name] (registered with `actions:`) on the rows
   /// with [ids], and records it in each row's history.
@@ -570,41 +762,45 @@ class AdminEndpoint extends Endpoint {
     final message = await entry.runAction(session, name, [
       for (final id in ids) _parseId(entry, id),
     ]);
-    for (final id in ids) {
-      await AdminHistory.record(
-        session,
-        resourceKey: entry.resourceKey,
-        recordId: id,
-        action: AdminLogAction.action,
-        summary: info.label,
-      );
-    }
+    await AdminHistory.recordAll(
+      session,
+      resourceKey: entry.resourceKey,
+      changes: [
+        for (final id in ids)
+          AdminChange(
+            recordId: id,
+            action: AdminLogAction.action,
+            summary: info.label,
+          ),
+      ],
+    );
     return AdminActionResult(affected: ids.length, message: message);
   }
 
-  Future<AdminActionResult> _eachRow(
-    List<String> ids,
-    Future<void> Function(String id) change, {
-    required String Function(int count) done,
-  }) async {
-    var changed = 0;
-    final failures = <String>[];
-    for (final id in ids) {
-      try {
-        await change(id);
-        changed++;
-      } on AdminValidationException catch (error) {
-        failures.add('$id: ${error.message}');
-      } catch (error) {
-        failures.add('$id: $error');
-      }
-    }
-    final message = failures.isEmpty
-        ? done(changed)
-        : '${done(changed)} ${failures.length} failed (${failures.take(3).join('; ')}'
-              '${failures.length > 3 ? '; …' : ''}).';
+  /// What a bulk change did: [done], then how many rows failed and why.
+  static AdminActionResult _result(
+    int changed,
+    Map<String, String> failures, {
+    required String done,
+  }) {
+    final reasons = [
+      for (final MapEntry(key: id, value: reason) in failures.entries)
+        '$id: $reason',
+    ];
+    final message = reasons.isEmpty
+        ? done
+        : '$done ${reasons.length} failed (${reasons.take(3).join('; ')}'
+              '${reasons.length > 3 ? '; …' : ''}).';
     return AdminActionResult(affected: changed, message: message);
   }
+
+  static String _gone(String id) => 'Row $id no longer exists.';
+
+  static String _reason(Object error) => switch (error) {
+    AdminValidationException(:final message) => message,
+    ArgumentError(:final message) => '$message',
+    _ => '$error',
+  };
 
   static String _rows(int count) => count == 1 ? 'row' : 'rows';
 
@@ -613,8 +809,14 @@ class AdminEndpoint extends Endpoint {
     Session session,
     AdminEntryBase entry,
     Map<String, dynamic> row,
-  ) async =>
-      _visibleRows(entry, await _withAuthUsers(session, entry, [row])).single;
+  ) async => (await _texts(session, entry, [row])).single;
+
+  /// Rows as the dashboard shows them, their auth users read in one query.
+  Future<List<Map<String, String>>> _texts(
+    Session session,
+    AdminEntryBase entry,
+    List<Map<String, dynamic>> rows,
+  ) async => _visibleRows(entry, await _withAuthUsers(session, entry, rows));
 
   /// Rows as text, without the resource's hidden columns, and with only
   /// the columns in [only] when given.

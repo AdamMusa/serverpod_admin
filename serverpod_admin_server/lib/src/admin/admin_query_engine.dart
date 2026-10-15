@@ -142,6 +142,17 @@ class AdminSqlQuery {
     }
   }
 
+  /// [table]'s rows whose primary key is one of [ids] (ints, UUIDs or
+  /// text).
+  static Expression idIn(Table table, Iterable<Object> ids) {
+    final literals = [
+      for (final id in ids) id is int ? '$id' : _literal('$id'),
+    ];
+    return Expression(
+      literals.isEmpty ? 'FALSE' : '${table.id} IN (${literals.join(', ')})',
+    );
+  }
+
   /// [filter] on a value of the auth user each row extends, as a subquery on
   /// the row's [link] to it, so the rows are not read to filter them.
   static String? _authUserCondition(
