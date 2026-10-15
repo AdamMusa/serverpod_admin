@@ -15,6 +15,9 @@ admin:
   - update:
   - delete:
   - history:
+  - savedViews:
+  - saveView:
+  - deleteView:
   - deleteMany:
   - updateMany:
   - runAction:

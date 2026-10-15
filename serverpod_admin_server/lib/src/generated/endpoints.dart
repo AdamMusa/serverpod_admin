@@ -362,6 +362,78 @@ class Endpoints extends _i1.EndpointDispatch {
                 params['limit'],
               ),
         ),
+        'savedViews': _i1.MethodConnector(
+          name: 'savedViews',
+          params: {
+            'resourceKey': _i1.ParameterDescription(
+              name: 'resourceKey',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint).savedViews(
+                session,
+                params['resourceKey'],
+              ),
+        ),
+        'saveView': _i1.MethodConnector(
+          name: 'saveView',
+          params: {
+            'resourceKey': _i1.ParameterDescription(
+              name: 'resourceKey',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'name': _i1.ParameterDescription(
+              name: 'name',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'query': _i1.ParameterDescription(
+              name: 'query',
+              type: _i1.getType<_i3.AdminQuery>(),
+              nullable: false,
+            ),
+            'columns': _i1.ParameterDescription(
+              name: 'columns',
+              type: _i1.getType<List<String>?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint).saveView(
+                session,
+                params['resourceKey'],
+                params['name'],
+                params['query'],
+                params['columns'],
+              ),
+        ),
+        'deleteView': _i1.MethodConnector(
+          name: 'deleteView',
+          params: {
+            'id': _i1.ParameterDescription(
+              name: 'id',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint).deleteView(
+                session,
+                params['id'],
+              ),
+        ),
         'deleteMany': _i1.MethodConnector(
           name: 'deleteMany',
           params: {

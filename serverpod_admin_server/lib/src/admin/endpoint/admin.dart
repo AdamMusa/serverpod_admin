@@ -8,6 +8,7 @@ import 'package:serverpod_admin_server/src/admin/admin_access.dart';
 import 'package:serverpod_admin_server/src/admin/admin_entry_base.dart';
 import 'package:serverpod_admin_server/src/admin/admin_history.dart';
 import 'package:serverpod_admin_server/src/admin/admin_query_engine.dart';
+import 'package:serverpod_admin_server/src/admin/admin_saved_views.dart';
 import 'package:serverpod_admin_server/src/admin/admin_value_parser.dart';
 
 import '../../admin/admin.dart';
@@ -23,6 +24,7 @@ import '../../../serverpod_admin_server.dart'
         AdminPage,
         AdminQuery,
         AdminResource,
+        AdminSavedView,
         AdminValidationException;
 
 class AdminEndpoint extends Endpoint {
@@ -426,6 +428,46 @@ class AdminEndpoint extends Endpoint {
       limit: limit,
     );
   }
+
+  /// The signed-in user's saved views of [resourceKey], by name.
+  Future<List<AdminSavedView>> savedViews(Session session, String resourceKey) {
+    final entry = _entryFor(session, resourceKey, AdminOperation.view);
+    return AdminSavedViews.list(
+      session,
+      owner: _owner(session),
+      resourceKey: entry.resourceKey,
+    );
+  }
+
+  /// Saves [query]'s search, sort and filters and the shown [columns] (null
+  /// for the table's defaults) as the signed-in user's view [name] of
+  /// [resourceKey], replacing their view of that name. Paging is not saved.
+  Future<AdminSavedView> saveView(
+    Session session,
+    String resourceKey,
+    String name,
+    AdminQuery query,
+    List<String>? columns,
+  ) {
+    final entry = _entryFor(session, resourceKey, AdminOperation.view);
+    return AdminSavedViews.save(
+      session,
+      owner: _owner(session),
+      entry: entry,
+      name: name,
+      query: query,
+      columns: columns,
+    );
+  }
+
+  /// Deletes the signed-in user's saved view [id]; false when they have no
+  /// such view.
+  Future<bool> deleteView(Session session, int id) {
+    AdminAccess.of(session).requireAllowed();
+    return AdminSavedViews.delete(session, owner: _owner(session), id: id);
+  }
+
+  String _owner(Session session) => session.authenticated!.userIdentifier;
 
   /// Deletes the rows with [ids], one by one, recording each; rows that
   /// cannot be deleted are counted in the message.

@@ -1,0 +1,22 @@
+### Filters, sort, search and visible columns an administrator saved under a
+### name for one table, to apply again later. Views are personal.
+class: AdminSavedView
+table: serverpod_admin_saved_view
+fields:
+  ### The auth user id of the administrator who saved it.
+  owner: String
+  resourceKey: String
+  name: String
+  ### Text matched against the table's searched columns.
+  search: String?
+  ### The chosen sort; none keeps the table's default order.
+  sortColumn: String?
+  sortDescending: bool
+  filters: List<AdminFilter>
+  ### The columns shown in the table; none keeps the table's defaults.
+  shownColumns: List<String>?
+  updatedAt: DateTime, default=now
+indexes:
+  serverpod_admin_saved_view_name_idx:
+    fields: owner, resourceKey, name
+    unique: true
