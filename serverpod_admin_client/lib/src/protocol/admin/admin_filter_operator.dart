@@ -20,7 +20,10 @@ enum AdminFilterOperator implements _i1.SerializableModel {
   greaterOrEqual,
   lessOrEqual,
   isEmpty,
-  isNotEmpty
+  isNotEmpty,
+
+  /// Any of the comma-separated values.
+  oneOf
   ;
 
   static AdminFilterOperator fromJson(String name) {
@@ -39,6 +42,8 @@ enum AdminFilterOperator implements _i1.SerializableModel {
         return AdminFilterOperator.isEmpty;
       case 'isNotEmpty':
         return AdminFilterOperator.isNotEmpty;
+      case 'oneOf':
+        return AdminFilterOperator.oneOf;
       default:
         throw ArgumentError(
           'Value "$name" cannot be converted to "AdminFilterOperator"',

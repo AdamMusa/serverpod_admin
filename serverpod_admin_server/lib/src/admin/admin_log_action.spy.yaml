@@ -1,0 +1,8 @@
+### What an administrator did to a row.
+enum: AdminLogAction
+serialized: byName
+values:
+  - created
+  - updated
+  - deleted
+  - action

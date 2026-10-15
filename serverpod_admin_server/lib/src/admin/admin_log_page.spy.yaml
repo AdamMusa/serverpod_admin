@@ -1,0 +1,5 @@
+### Entries of the change history, newest first, and how many match.
+class: AdminLogPage
+fields:
+  entries: List<AdminLogEntry>
+  total: int

@@ -11,3 +11,7 @@ admin:
   - create:
   - update:
   - delete:
+  - history:
+  - deleteMany:
+  - updateMany:
+  - runAction:

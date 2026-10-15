@@ -12,23 +12,33 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
-import 'admin/admin_column.dart' as _i2;
-import 'admin/admin_filter.dart' as _i3;
-import 'admin/admin_filter_operator.dart' as _i4;
-import 'admin/admin_page.dart' as _i5;
-import 'admin/admin_query.dart' as _i6;
-import 'admin/admin_resource.dart' as _i7;
-import 'admin/admin_validation_exception.dart' as _i8;
-import 'module_class.dart' as _i9;
+import 'admin/admin_action_info.dart' as _i2;
+import 'admin/admin_action_result.dart' as _i3;
+import 'admin/admin_column.dart' as _i4;
+import 'admin/admin_filter.dart' as _i5;
+import 'admin/admin_filter_operator.dart' as _i6;
+import 'admin/admin_log_action.dart' as _i7;
+import 'admin/admin_log_entry.dart' as _i8;
+import 'admin/admin_log_page.dart' as _i9;
+import 'admin/admin_page.dart' as _i10;
+import 'admin/admin_query.dart' as _i11;
+import 'admin/admin_resource.dart' as _i12;
+import 'admin/admin_validation_exception.dart' as _i13;
+import 'module_class.dart' as _i14;
 import 'package:serverpod_admin_client/src/protocol/admin/admin_resource.dart'
-    as _i10;
+    as _i15;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
-    as _i11;
+    as _i16;
 import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
-    as _i12;
+    as _i17;
+export 'admin/admin_action_info.dart';
+export 'admin/admin_action_result.dart';
 export 'admin/admin_column.dart';
 export 'admin/admin_filter.dart';
 export 'admin/admin_filter_operator.dart';
+export 'admin/admin_log_action.dart';
+export 'admin/admin_log_entry.dart';
+export 'admin/admin_log_page.dart';
 export 'admin/admin_page.dart';
 export 'admin/admin_query.dart';
 export 'admin/admin_resource.dart';
@@ -81,55 +91,87 @@ class Protocol extends _i1.SerializationManager {
       }
     }
 
-    if (t == _i2.AdminColumn) {
-      return _i2.AdminColumn.fromJson(data) as T;
+    if (t == _i2.AdminActionInfo) {
+      return _i2.AdminActionInfo.fromJson(data) as T;
     }
-    if (t == _i3.AdminFilter) {
-      return _i3.AdminFilter.fromJson(data) as T;
+    if (t == _i3.AdminActionResult) {
+      return _i3.AdminActionResult.fromJson(data) as T;
     }
-    if (t == _i4.AdminFilterOperator) {
-      return _i4.AdminFilterOperator.fromJson(data) as T;
+    if (t == _i4.AdminColumn) {
+      return _i4.AdminColumn.fromJson(data) as T;
     }
-    if (t == _i5.AdminPage) {
-      return _i5.AdminPage.fromJson(data) as T;
+    if (t == _i5.AdminFilter) {
+      return _i5.AdminFilter.fromJson(data) as T;
     }
-    if (t == _i6.AdminQuery) {
-      return _i6.AdminQuery.fromJson(data) as T;
+    if (t == _i6.AdminFilterOperator) {
+      return _i6.AdminFilterOperator.fromJson(data) as T;
     }
-    if (t == _i7.AdminResource) {
-      return _i7.AdminResource.fromJson(data) as T;
+    if (t == _i7.AdminLogAction) {
+      return _i7.AdminLogAction.fromJson(data) as T;
     }
-    if (t == _i8.AdminValidationException) {
-      return _i8.AdminValidationException.fromJson(data) as T;
+    if (t == _i8.AdminLogEntry) {
+      return _i8.AdminLogEntry.fromJson(data) as T;
     }
-    if (t == _i9.ModuleClass) {
-      return _i9.ModuleClass.fromJson(data) as T;
+    if (t == _i9.AdminLogPage) {
+      return _i9.AdminLogPage.fromJson(data) as T;
     }
-    if (t == _i1.getType<_i2.AdminColumn?>()) {
-      return (data != null ? _i2.AdminColumn.fromJson(data) : null) as T;
+    if (t == _i10.AdminPage) {
+      return _i10.AdminPage.fromJson(data) as T;
     }
-    if (t == _i1.getType<_i3.AdminFilter?>()) {
-      return (data != null ? _i3.AdminFilter.fromJson(data) : null) as T;
+    if (t == _i11.AdminQuery) {
+      return _i11.AdminQuery.fromJson(data) as T;
     }
-    if (t == _i1.getType<_i4.AdminFilterOperator?>()) {
-      return (data != null ? _i4.AdminFilterOperator.fromJson(data) : null)
+    if (t == _i12.AdminResource) {
+      return _i12.AdminResource.fromJson(data) as T;
+    }
+    if (t == _i13.AdminValidationException) {
+      return _i13.AdminValidationException.fromJson(data) as T;
+    }
+    if (t == _i14.ModuleClass) {
+      return _i14.ModuleClass.fromJson(data) as T;
+    }
+    if (t == _i1.getType<_i2.AdminActionInfo?>()) {
+      return (data != null ? _i2.AdminActionInfo.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i3.AdminActionResult?>()) {
+      return (data != null ? _i3.AdminActionResult.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i4.AdminColumn?>()) {
+      return (data != null ? _i4.AdminColumn.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i5.AdminFilter?>()) {
+      return (data != null ? _i5.AdminFilter.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i6.AdminFilterOperator?>()) {
+      return (data != null ? _i6.AdminFilterOperator.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i5.AdminPage?>()) {
-      return (data != null ? _i5.AdminPage.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i7.AdminLogAction?>()) {
+      return (data != null ? _i7.AdminLogAction.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i6.AdminQuery?>()) {
-      return (data != null ? _i6.AdminQuery.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i8.AdminLogEntry?>()) {
+      return (data != null ? _i8.AdminLogEntry.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i7.AdminResource?>()) {
-      return (data != null ? _i7.AdminResource.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i9.AdminLogPage?>()) {
+      return (data != null ? _i9.AdminLogPage.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i8.AdminValidationException?>()) {
-      return (data != null ? _i8.AdminValidationException.fromJson(data) : null)
+    if (t == _i1.getType<_i10.AdminPage?>()) {
+      return (data != null ? _i10.AdminPage.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i11.AdminQuery?>()) {
+      return (data != null ? _i11.AdminQuery.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i12.AdminResource?>()) {
+      return (data != null ? _i12.AdminResource.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i13.AdminValidationException?>()) {
+      return (data != null
+              ? _i13.AdminValidationException.fromJson(data)
+              : null)
           as T;
     }
-    if (t == _i1.getType<_i9.ModuleClass?>()) {
-      return (data != null ? _i9.ModuleClass.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i14.ModuleClass?>()) {
+      return (data != null ? _i14.ModuleClass.fromJson(data) : null) as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
@@ -138,6 +180,12 @@ class Protocol extends _i1.SerializationManager {
       return (data != null
               ? (data as List).map((e) => deserialize<String>(e)).toList()
               : null)
+          as T;
+    }
+    if (t == List<_i8.AdminLogEntry>) {
+      return (data as List)
+              .map((e) => deserialize<_i8.AdminLogEntry>(e))
+              .toList()
           as T;
     }
     if (t == List<Map<String, String>>) {
@@ -152,17 +200,31 @@ class Protocol extends _i1.SerializationManager {
           )
           as T;
     }
-    if (t == List<_i3.AdminFilter>) {
-      return (data as List).map((e) => deserialize<_i3.AdminFilter>(e)).toList()
+    if (t == List<_i5.AdminFilter>) {
+      return (data as List).map((e) => deserialize<_i5.AdminFilter>(e)).toList()
           as T;
     }
-    if (t == List<_i2.AdminColumn>) {
-      return (data as List).map((e) => deserialize<_i2.AdminColumn>(e)).toList()
+    if (t == List<_i4.AdminColumn>) {
+      return (data as List).map((e) => deserialize<_i4.AdminColumn>(e)).toList()
           as T;
     }
-    if (t == List<_i10.AdminResource>) {
+    if (t == List<_i2.AdminActionInfo>) {
       return (data as List)
-              .map((e) => deserialize<_i10.AdminResource>(e))
+              .map((e) => deserialize<_i2.AdminActionInfo>(e))
+              .toList()
+          as T;
+    }
+    if (t == _i1.getType<List<_i2.AdminActionInfo>?>()) {
+      return (data != null
+              ? (data as List)
+                    .map((e) => deserialize<_i2.AdminActionInfo>(e))
+                    .toList()
+              : null)
+          as T;
+    }
+    if (t == List<_i15.AdminResource>) {
+      return (data as List)
+              .map((e) => deserialize<_i15.AdminResource>(e))
               .toList()
           as T;
     }
@@ -196,25 +258,33 @@ class Protocol extends _i1.SerializationManager {
               : null)
           as T;
     }
+    if (t == List<String>) {
+      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
+    }
     try {
-      return _i11.Protocol().deserialize<T>(data, t);
+      return _i16.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     try {
-      return _i12.Protocol().deserialize<T>(data, t);
+      return _i17.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     return super.deserialize<T>(data, t);
   }
 
   static String? getClassNameForType(Type type) {
     return switch (type) {
-      _i2.AdminColumn => 'AdminColumn',
-      _i3.AdminFilter => 'AdminFilter',
-      _i4.AdminFilterOperator => 'AdminFilterOperator',
-      _i5.AdminPage => 'AdminPage',
-      _i6.AdminQuery => 'AdminQuery',
-      _i7.AdminResource => 'AdminResource',
-      _i8.AdminValidationException => 'AdminValidationException',
-      _i9.ModuleClass => 'ModuleClass',
+      _i2.AdminActionInfo => 'AdminActionInfo',
+      _i3.AdminActionResult => 'AdminActionResult',
+      _i4.AdminColumn => 'AdminColumn',
+      _i5.AdminFilter => 'AdminFilter',
+      _i6.AdminFilterOperator => 'AdminFilterOperator',
+      _i7.AdminLogAction => 'AdminLogAction',
+      _i8.AdminLogEntry => 'AdminLogEntry',
+      _i9.AdminLogPage => 'AdminLogPage',
+      _i10.AdminPage => 'AdminPage',
+      _i11.AdminQuery => 'AdminQuery',
+      _i12.AdminResource => 'AdminResource',
+      _i13.AdminValidationException => 'AdminValidationException',
+      _i14.ModuleClass => 'ModuleClass',
       _ => null,
     };
   }
@@ -232,21 +302,31 @@ class Protocol extends _i1.SerializationManager {
     }
 
     switch (data) {
-      case _i2.AdminColumn():
+      case _i2.AdminActionInfo():
+        return 'AdminActionInfo';
+      case _i3.AdminActionResult():
+        return 'AdminActionResult';
+      case _i4.AdminColumn():
         return 'AdminColumn';
-      case _i3.AdminFilter():
+      case _i5.AdminFilter():
         return 'AdminFilter';
-      case _i4.AdminFilterOperator():
+      case _i6.AdminFilterOperator():
         return 'AdminFilterOperator';
-      case _i5.AdminPage():
+      case _i7.AdminLogAction():
+        return 'AdminLogAction';
+      case _i8.AdminLogEntry():
+        return 'AdminLogEntry';
+      case _i9.AdminLogPage():
+        return 'AdminLogPage';
+      case _i10.AdminPage():
         return 'AdminPage';
-      case _i6.AdminQuery():
+      case _i11.AdminQuery():
         return 'AdminQuery';
-      case _i7.AdminResource():
+      case _i12.AdminResource():
         return 'AdminResource';
-      case _i8.AdminValidationException():
+      case _i13.AdminValidationException():
         return 'AdminValidationException';
-      case _i9.ModuleClass():
+      case _i14.ModuleClass():
         return 'ModuleClass';
     }
     return null;
@@ -258,29 +338,44 @@ class Protocol extends _i1.SerializationManager {
     if (dataClassName is! String) {
       return super.deserializeByClassName(data);
     }
+    if (dataClassName == 'AdminActionInfo') {
+      return deserialize<_i2.AdminActionInfo>(data['data']);
+    }
+    if (dataClassName == 'AdminActionResult') {
+      return deserialize<_i3.AdminActionResult>(data['data']);
+    }
     if (dataClassName == 'AdminColumn') {
-      return deserialize<_i2.AdminColumn>(data['data']);
+      return deserialize<_i4.AdminColumn>(data['data']);
     }
     if (dataClassName == 'AdminFilter') {
-      return deserialize<_i3.AdminFilter>(data['data']);
+      return deserialize<_i5.AdminFilter>(data['data']);
     }
     if (dataClassName == 'AdminFilterOperator') {
-      return deserialize<_i4.AdminFilterOperator>(data['data']);
+      return deserialize<_i6.AdminFilterOperator>(data['data']);
+    }
+    if (dataClassName == 'AdminLogAction') {
+      return deserialize<_i7.AdminLogAction>(data['data']);
+    }
+    if (dataClassName == 'AdminLogEntry') {
+      return deserialize<_i8.AdminLogEntry>(data['data']);
+    }
+    if (dataClassName == 'AdminLogPage') {
+      return deserialize<_i9.AdminLogPage>(data['data']);
     }
     if (dataClassName == 'AdminPage') {
-      return deserialize<_i5.AdminPage>(data['data']);
+      return deserialize<_i10.AdminPage>(data['data']);
     }
     if (dataClassName == 'AdminQuery') {
-      return deserialize<_i6.AdminQuery>(data['data']);
+      return deserialize<_i11.AdminQuery>(data['data']);
     }
     if (dataClassName == 'AdminResource') {
-      return deserialize<_i7.AdminResource>(data['data']);
+      return deserialize<_i12.AdminResource>(data['data']);
     }
     if (dataClassName == 'AdminValidationException') {
-      return deserialize<_i8.AdminValidationException>(data['data']);
+      return deserialize<_i13.AdminValidationException>(data['data']);
     }
     if (dataClassName == 'ModuleClass') {
-      return deserialize<_i9.ModuleClass>(data['data']);
+      return deserialize<_i14.ModuleClass>(data['data']);
     }
     return super.deserializeByClassName(data);
   }
@@ -357,10 +452,10 @@ class Protocol extends _i1.SerializationManager {
       return null;
     }
     try {
-      return _i11.Protocol().mapRecordToJson(record);
+      return _i16.Protocol().mapRecordToJson(record);
     } catch (_) {}
     try {
-      return _i12.Protocol().mapRecordToJson(record);
+      return _i17.Protocol().mapRecordToJson(record);
     } catch (_) {}
     throw Exception('Unsupported record type ${record.runtimeType}');
   }

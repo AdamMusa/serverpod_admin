@@ -9,3 +9,5 @@ values:
   - lessOrEqual
   - isEmpty
   - isNotEmpty
+  ### Any of the comma-separated values.
+  - oneOf

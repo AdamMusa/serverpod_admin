@@ -1,0 +1,5 @@
+### What a bulk change or custom action did.
+class: AdminActionResult
+fields:
+  affected: int
+  message: String?

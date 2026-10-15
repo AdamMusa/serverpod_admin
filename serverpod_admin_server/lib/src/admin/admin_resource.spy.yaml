@@ -3,7 +3,5 @@ fields:
   key: String
   tableName: String
   columns: List<AdminColumn>
-
-
-
-
+  ### Custom actions for selected rows.
+  actions: List<AdminActionInfo>?

@@ -18,6 +18,10 @@ import 'package:serverpod_admin_client/src/protocol/admin/admin_page.dart'
     as _i4;
 import 'package:serverpod_admin_client/src/protocol/admin/admin_query.dart'
     as _i5;
+import 'package:serverpod_admin_client/src/protocol/admin/admin_log_page.dart'
+    as _i6;
+import 'package:serverpod_admin_client/src/protocol/admin/admin_action_result.dart'
+    as _i7;
 
 /// {@category Endpoint}
 class EndpointAdmin extends _i1.EndpointRef {
@@ -151,6 +155,71 @@ class EndpointAdmin extends _i1.EndpointRef {
     {
       'resourceKey': resourceKey,
       'id': id,
+    },
+  );
+
+  /// The change history, newest first: everything, one resource's, or one
+  /// row's when [recordId] is given too.
+  _i2.Future<_i6.AdminLogPage> history(
+    String? resourceKey,
+    String? recordId,
+    int offset,
+    int limit,
+  ) => caller.callServerEndpoint<_i6.AdminLogPage>(
+    'serverpod_admin.admin',
+    'history',
+    {
+      'resourceKey': resourceKey,
+      'recordId': recordId,
+      'offset': offset,
+      'limit': limit,
+    },
+  );
+
+  /// Deletes the rows with [ids], one by one, recording each; rows that
+  /// cannot be deleted are counted in the message.
+  _i2.Future<_i7.AdminActionResult> deleteMany(
+    String resourceKey,
+    List<String> ids,
+  ) => caller.callServerEndpoint<_i7.AdminActionResult>(
+    'serverpod_admin.admin',
+    'deleteMany',
+    {
+      'resourceKey': resourceKey,
+      'ids': ids,
+    },
+  );
+
+  /// Sets [values] (column name to text, as the edit form sends them) on
+  /// every row with [ids], through the same validation and hooks as a
+  /// single edit.
+  _i2.Future<_i7.AdminActionResult> updateMany(
+    String resourceKey,
+    List<String> ids,
+    Map<String, String> values,
+  ) => caller.callServerEndpoint<_i7.AdminActionResult>(
+    'serverpod_admin.admin',
+    'updateMany',
+    {
+      'resourceKey': resourceKey,
+      'ids': ids,
+      'values': values,
+    },
+  );
+
+  /// Runs the custom action [name] (registered with `actions:`) on the rows
+  /// with [ids], and records it in each row's history.
+  _i2.Future<_i7.AdminActionResult> runAction(
+    String resourceKey,
+    String name,
+    List<String> ids,
+  ) => caller.callServerEndpoint<_i7.AdminActionResult>(
+    'serverpod_admin.admin',
+    'runAction',
+    {
+      'resourceKey': resourceKey,
+      'name': name,
+      'ids': ids,
     },
   );
 }

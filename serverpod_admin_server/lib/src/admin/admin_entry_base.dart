@@ -22,6 +22,14 @@ abstract class AdminEntryBase {
   /// One page of rows matching [query], read in the database, or null when
   /// it cannot run there (a custom `listRows`, or columns the table does not
   /// store); the endpoint then applies it in memory.
+  /// Custom actions offered for selected rows.
+  List<AdminActionInfo> get actionInfos => const [];
+
+  /// Runs the custom action [name] on the rows with [ids]; returns its
+  /// message for the administrator.
+  Future<String?> runAction(Session session, String name, List<Object> ids) =>
+      throw AdminValidationException(message: 'Unknown action $name.');
+
   Future<({List<JsonMap> rows, int total})?> queryPage(
     Session session,
     AdminQuery query,

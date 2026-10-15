@@ -19,8 +19,10 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
     Map<String, List<String>>? choices,
     String? authUserColumn,
     bool queryable = false,
+    List<AdminAction<T>> actions = const [],
     T Function(Session session, T row)? present,
-  }) : _queryable = queryable,
+  }) : _actions = actions,
+       _queryable = queryable,
        _present = present,
        _choices = choices,
        _authUserColumn = authUserColumn,
@@ -44,6 +46,7 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
   final Map<String, List<String>>? _choices;
   final String? _authUserColumn;
   final bool _queryable;
+  final List<AdminAction<T>> _actions;
   final T Function(Session session, T row)? _present;
   List<AdminColumn>? _adminColumns;
   AdminResource? _metadataCache;
@@ -68,7 +71,35 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
     key: resourceKey,
     tableName: tableName,
     columns: [..._resolvedAdminColumns, ...?authUserLink?.columns],
+    actions: _actions.isEmpty ? null : actionInfos,
   );
+
+  @override
+  List<AdminActionInfo> get actionInfos => [
+    for (final action in _actions) action.info,
+  ];
+
+  @override
+  Future<String?> runAction(
+    Session session,
+    String name,
+    List<Object> ids,
+  ) async {
+    final action = _actions.where((a) => a.name == name).firstOrNull;
+    if (action == null) {
+      throw AdminValidationException(message: 'Unknown action $name.');
+    }
+    final rows = <T>[];
+    for (final id in ids) {
+      // Actions see rows as stored, not as presented to the dashboard.
+      final row = _queryable
+          // ignore: invalid_use_of_internal_member
+          ? await session.db.findById<T>(id)
+          : await _findRowById(session, id);
+      if (row != null) rows.add(row);
+    }
+    return action.run(session, rows);
+  }
 
   @override
   late final AdminAuthUserLink? authUserLink = _resolveAuthUserLink();

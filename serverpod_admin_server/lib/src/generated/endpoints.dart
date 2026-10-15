@@ -282,6 +282,126 @@ class Endpoints extends _i1.EndpointDispatch {
                 params['id'],
               ),
         ),
+        'history': _i1.MethodConnector(
+          name: 'history',
+          params: {
+            'resourceKey': _i1.ParameterDescription(
+              name: 'resourceKey',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'recordId': _i1.ParameterDescription(
+              name: 'recordId',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'offset': _i1.ParameterDescription(
+              name: 'offset',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'limit': _i1.ParameterDescription(
+              name: 'limit',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint).history(
+                session,
+                params['resourceKey'],
+                params['recordId'],
+                params['offset'],
+                params['limit'],
+              ),
+        ),
+        'deleteMany': _i1.MethodConnector(
+          name: 'deleteMany',
+          params: {
+            'resourceKey': _i1.ParameterDescription(
+              name: 'resourceKey',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'ids': _i1.ParameterDescription(
+              name: 'ids',
+              type: _i1.getType<List<String>>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint).deleteMany(
+                session,
+                params['resourceKey'],
+                params['ids'],
+              ),
+        ),
+        'updateMany': _i1.MethodConnector(
+          name: 'updateMany',
+          params: {
+            'resourceKey': _i1.ParameterDescription(
+              name: 'resourceKey',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'ids': _i1.ParameterDescription(
+              name: 'ids',
+              type: _i1.getType<List<String>>(),
+              nullable: false,
+            ),
+            'values': _i1.ParameterDescription(
+              name: 'values',
+              type: _i1.getType<Map<String, String>>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint).updateMany(
+                session,
+                params['resourceKey'],
+                params['ids'],
+                params['values'],
+              ),
+        ),
+        'runAction': _i1.MethodConnector(
+          name: 'runAction',
+          params: {
+            'resourceKey': _i1.ParameterDescription(
+              name: 'resourceKey',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'name': _i1.ParameterDescription(
+              name: 'name',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'ids': _i1.ParameterDescription(
+              name: 'ids',
+              type: _i1.getType<List<String>>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint).runAction(
+                session,
+                params['resourceKey'],
+                params['name'],
+                params['ids'],
+              ),
+        ),
       },
     );
     modules['serverpod_auth_core'] = _i4.Endpoints()

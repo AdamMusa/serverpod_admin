@@ -83,6 +83,22 @@ class AdminSqlQuery {
         return "$name::text ILIKE $pattern ESCAPE '\\'";
       case AdminFilterOperator.equals:
         return '$name = ${_value(column, metadata, filter)}';
+      case AdminFilterOperator.oneOf:
+        final values = _oneOf(filter.value);
+        if (values.isEmpty) return 'FALSE';
+        final literals = [
+          for (final value in values)
+            _value(
+              column,
+              metadata,
+              AdminFilter(
+                column: filter.column,
+                comparison: AdminFilterOperator.equals,
+                value: value,
+              ),
+            ),
+        ];
+        return '$name IN (${literals.join(', ')})';
       case AdminFilterOperator.notEquals:
         return '($name IS NULL OR $name <> ${_value(column, metadata, filter)})';
       case AdminFilterOperator.greaterOrEqual:
@@ -165,6 +181,12 @@ class AdminSqlQuery {
       message: '${filter.column} cannot be compared as greater or less.',
     );
   }
+
+  /// The values of a [AdminFilterOperator.oneOf] filter.
+  static List<String> _oneOf(String? value) => [
+    for (final part in (value ?? '').split(','))
+      if (part.trim().isNotEmpty) part.trim(),
+  ];
 
   static bool _searchable(Column column) =>
       column is ColumnString ||
@@ -255,6 +277,9 @@ class AdminRowQuery {
         wanted.toLowerCase(),
       ),
       AdminFilterOperator.equals => _compare(value, wanted, column) == 0,
+      AdminFilterOperator.oneOf => AdminSqlQuery._oneOf(
+        wanted,
+      ).any((option) => _compare(value, option, column) == 0),
       AdminFilterOperator.notEquals => _compare(value, wanted, column) != 0,
       AdminFilterOperator.greaterOrEqual =>
         value.isNotEmpty && _compare(value, wanted, column) >= 0,

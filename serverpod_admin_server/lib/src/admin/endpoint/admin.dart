@@ -5,13 +5,21 @@ import 'package:serverpod/protocol.dart' show SessionLogEntry;
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
 import 'package:serverpod_admin_server/src/admin/admin_entry_base.dart';
+import 'package:serverpod_admin_server/src/admin/admin_history.dart';
 import 'package:serverpod_admin_server/src/admin/admin_query_engine.dart';
 import 'package:serverpod_admin_server/src/admin/admin_value_parser.dart';
 
 import '../../admin/admin.dart';
 import '../admin_registry.dart';
 import '../../../serverpod_admin_server.dart'
-    show AdminPage, AdminQuery, AdminResource, AdminValidationException;
+    show
+        AdminActionResult,
+        AdminLogAction,
+        AdminLogPage,
+        AdminPage,
+        AdminQuery,
+        AdminResource,
+        AdminValidationException;
 
 class AdminEndpoint extends Endpoint {
   @override
@@ -176,16 +184,7 @@ class AdminEndpoint extends Endpoint {
     String id,
   ) async {
     final entry = _resolve(resourceKey);
-    final primaryColumnMetadata = entry.metadata.columns.firstWhere(
-      (column) => column.isPrimary,
-      orElse: () => entry.metadata.columns.first,
-    );
-    final tableColumn = entry.columns.firstWhere(
-      (column) => column.columnName == primaryColumnMetadata.name,
-      orElse: () => entry.columns.first,
-    );
-    final normalizedId = parseAdminColumnValue(tableColumn, id) ?? id;
-    final result = await entry.find(session, normalizedId);
+    final result = await entry.find(session, _parseId(entry, id));
     if (result == null) return null;
     return _removeClassName(
       (await _withAuthUsers(session, entry, [result])).single,
@@ -207,9 +206,15 @@ class AdminEndpoint extends Endpoint {
     );
     final created = await entry.create(session, normalized);
     if (authUser != null) await AuthUser.db.updateRow(session, authUser);
-    return _stringifyRecord(
-      (await _withAuthUsers(session, entry, [created])).single,
+    final text = await _text(session, entry, created);
+    await AdminHistory.record(
+      session,
+      resourceKey: entry.resourceKey,
+      recordId: _idOf(entry, text),
+      action: AdminLogAction.created,
+      after: text,
     );
+    return text;
   }
 
   Future<Map<String, String>> update(
@@ -220,11 +225,9 @@ class AdminEndpoint extends Endpoint {
     final entry = _resolve(resourceKey);
     final normalized = _normalizePayload(entry, data);
     final id = normalized[entry.table.id.columnName];
-    _requireStorable(
-      entry,
-      normalized,
-      stored: id == null ? null : await entry.find(session, id),
-    );
+    final stored = id == null ? null : await entry.find(session, id);
+    _requireStorable(entry, normalized, stored: stored);
+    final before = stored == null ? null : await _text(session, entry, stored);
     final authUser = await entry.authUserLink?.change(
       session,
       normalized,
@@ -232,24 +235,170 @@ class AdminEndpoint extends Endpoint {
     );
     final updated = await entry.update(session, normalized);
     if (authUser != null) await AuthUser.db.updateRow(session, authUser);
-    return _stringifyRecord(
-      (await _withAuthUsers(session, entry, [updated])).single,
+    final after = await _text(session, entry, updated);
+    await AdminHistory.record(
+      session,
+      resourceKey: entry.resourceKey,
+      recordId: _idOf(entry, after),
+      action: AdminLogAction.updated,
+      before: before ?? const {},
+      after: after,
     );
+    return after;
   }
 
   Future<bool> delete(Session session, String resourceKey, String id) async {
     final entry = _resolve(resourceKey);
-    final primaryColumnMetadata = entry.metadata.columns.firstWhere(
-      (column) => column.isPrimary,
-      orElse: () => entry.metadata.columns.first,
-    );
-    final tableColumn = entry.columns.firstWhere(
-      (column) => column.columnName == primaryColumnMetadata.name,
+    final normalizedId = _parseId(entry, id);
+    final stored = await entry.find(session, normalizedId);
+    final before = stored == null ? null : await _text(session, entry, stored);
+    await entry.delete(session, normalizedId);
+    if (before != null) {
+      await AdminHistory.record(
+        session,
+        resourceKey: entry.resourceKey,
+        recordId: id,
+        action: AdminLogAction.deleted,
+        before: before,
+      );
+    }
+    return true;
+  }
+
+  /// The change history, newest first: everything, one resource's, or one
+  /// row's when [recordId] is given too.
+  Future<AdminLogPage> history(
+    Session session,
+    String? resourceKey,
+    String? recordId,
+    int offset,
+    int limit,
+  ) => AdminHistory.read(
+    session,
+    resourceKey: resourceKey,
+    recordId: recordId,
+    offset: offset,
+    limit: limit,
+  );
+
+  /// Deletes the rows with [ids], one by one, recording each; rows that
+  /// cannot be deleted are counted in the message.
+  Future<AdminActionResult> deleteMany(
+    Session session,
+    String resourceKey,
+    List<String> ids,
+  ) {
+    final entry = _resolve(resourceKey);
+    return _eachRow(ids, (id) async {
+      if (await entry.find(session, _parseId(entry, id)) == null) {
+        throw ArgumentError('Row $id no longer exists.');
+      }
+      await delete(session, resourceKey, id);
+    }, done: (count) => 'Deleted $count ${_rows(count)}.');
+  }
+
+  /// Sets [values] (column name to text, as the edit form sends them) on
+  /// every row with [ids], through the same validation and hooks as a
+  /// single edit.
+  Future<AdminActionResult> updateMany(
+    Session session,
+    String resourceKey,
+    List<String> ids,
+    Map<String, String> values,
+  ) {
+    final entry = _resolve(resourceKey);
+    final primary = entry.table.id.columnName;
+    if (values.containsKey(primary)) {
+      throw AdminValidationException(
+        field: primary,
+        message: 'The primary key cannot be changed in bulk.',
+      );
+    }
+    return _eachRow(ids, (id) async {
+      final stored = await entry.find(session, _parseId(entry, id));
+      if (stored == null) throw ArgumentError('Row $id no longer exists.');
+      final current = await _text(session, entry, stored);
+      await update(session, resourceKey, {
+        // Empty text stands for null; leaving it out keeps null values null.
+        for (final MapEntry(:key, :value) in current.entries)
+          if (value.isNotEmpty) key: value,
+        ...values,
+      });
+    }, done: (count) => 'Updated $count ${_rows(count)}.');
+  }
+
+  /// Runs the custom action [name] (registered with `actions:`) on the rows
+  /// with [ids], and records it in each row's history.
+  Future<AdminActionResult> runAction(
+    Session session,
+    String resourceKey,
+    String name,
+    List<String> ids,
+  ) async {
+    final entry = _resolve(resourceKey);
+    final info = entry.actionInfos.where((a) => a.name == name).firstOrNull;
+    if (info == null) {
+      throw AdminValidationException(message: 'Unknown action $name.');
+    }
+    final message = await entry.runAction(session, name, [
+      for (final id in ids) _parseId(entry, id),
+    ]);
+    for (final id in ids) {
+      await AdminHistory.record(
+        session,
+        resourceKey: entry.resourceKey,
+        recordId: id,
+        action: AdminLogAction.action,
+        summary: info.label,
+      );
+    }
+    return AdminActionResult(affected: ids.length, message: message);
+  }
+
+  Future<AdminActionResult> _eachRow(
+    List<String> ids,
+    Future<void> Function(String id) change, {
+    required String Function(int count) done,
+  }) async {
+    var changed = 0;
+    final failures = <String>[];
+    for (final id in ids) {
+      try {
+        await change(id);
+        changed++;
+      } on AdminValidationException catch (error) {
+        failures.add('$id: ${error.message}');
+      } catch (error) {
+        failures.add('$id: $error');
+      }
+    }
+    final message = failures.isEmpty
+        ? done(changed)
+        : '${done(changed)} ${failures.length} failed (${failures.take(3).join('; ')}'
+              '${failures.length > 3 ? '; …' : ''}).';
+    return AdminActionResult(affected: changed, message: message);
+  }
+
+  static String _rows(int count) => count == 1 ? 'row' : 'rows';
+
+  /// A row as the dashboard shows it, with its auth user's access.
+  Future<Map<String, String>> _text(
+    Session session,
+    AdminEntryBase entry,
+    Map<String, dynamic> row,
+  ) async =>
+      _stringifyRecord((await _withAuthUsers(session, entry, [row])).single);
+
+  String _idOf(AdminEntryBase entry, Map<String, String> row) =>
+      row[entry.table.id.columnName] ?? '';
+
+  /// [id] as the primary key column stores it.
+  Object _parseId(AdminEntryBase entry, String id) {
+    final column = entry.columns.firstWhere(
+      (column) => column.columnName == entry.table.id.columnName,
       orElse: () => entry.columns.first,
     );
-    final normalizedId = parseAdminColumnValue(tableColumn, id) ?? id;
-    await entry.delete(session, normalizedId);
-    return true;
+    return parseAdminColumnValue(column, id) ?? id;
   }
 
   /// Adds the auth user values of rows that extend an auth user.

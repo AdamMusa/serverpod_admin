@@ -12,7 +12,8 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:serverpod/serverpod.dart' as _i1;
 import '../admin/admin_column.dart' as _i2;
-import 'package:serverpod_admin_server/src/generated/protocol.dart' as _i3;
+import '../admin/admin_action_info.dart' as _i3;
+import 'package:serverpod_admin_server/src/generated/protocol.dart' as _i4;
 
 abstract class AdminResource
     implements _i1.SerializableModel, _i1.ProtocolSerialization {
@@ -20,21 +21,28 @@ abstract class AdminResource
     required this.key,
     required this.tableName,
     required this.columns,
+    this.actions,
   });
 
   factory AdminResource({
     required String key,
     required String tableName,
     required List<_i2.AdminColumn> columns,
+    List<_i3.AdminActionInfo>? actions,
   }) = _AdminResourceImpl;
 
   factory AdminResource.fromJson(Map<String, dynamic> jsonSerialization) {
     return AdminResource(
       key: jsonSerialization['key'] as String,
       tableName: jsonSerialization['tableName'] as String,
-      columns: _i3.Protocol().deserialize<List<_i2.AdminColumn>>(
+      columns: _i4.Protocol().deserialize<List<_i2.AdminColumn>>(
         jsonSerialization['columns'],
       ),
+      actions: jsonSerialization['actions'] == null
+          ? null
+          : _i4.Protocol().deserialize<List<_i3.AdminActionInfo>>(
+              jsonSerialization['actions'],
+            ),
     );
   }
 
@@ -44,6 +52,9 @@ abstract class AdminResource
 
   List<_i2.AdminColumn> columns;
 
+  /// Custom actions for selected rows.
+  List<_i3.AdminActionInfo>? actions;
+
   /// Returns a shallow copy of this [AdminResource]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -51,6 +62,7 @@ abstract class AdminResource
     String? key,
     String? tableName,
     List<_i2.AdminColumn>? columns,
+    List<_i3.AdminActionInfo>? actions,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -59,6 +71,8 @@ abstract class AdminResource
       'key': key,
       'tableName': tableName,
       'columns': columns.toJson(valueToJson: (v) => v.toJson()),
+      if (actions != null)
+        'actions': actions?.toJson(valueToJson: (v) => v.toJson()),
     };
   }
 
@@ -69,6 +83,8 @@ abstract class AdminResource
       'key': key,
       'tableName': tableName,
       'columns': columns.toJson(valueToJson: (v) => v.toJsonForProtocol()),
+      if (actions != null)
+        'actions': actions?.toJson(valueToJson: (v) => v.toJsonForProtocol()),
     };
   }
 
@@ -78,12 +94,20 @@ abstract class AdminResource
   }
 }
 
+class _Undefined {}
+
 class _AdminResourceImpl extends AdminResource {
   _AdminResourceImpl({
     required String key,
     required String tableName,
     required List<_i2.AdminColumn> columns,
-  }) : super._(key: key, tableName: tableName, columns: columns);
+    List<_i3.AdminActionInfo>? actions,
+  }) : super._(
+         key: key,
+         tableName: tableName,
+         columns: columns,
+         actions: actions,
+       );
 
   /// Returns a shallow copy of this [AdminResource]
   /// with some or all fields replaced by the given arguments.
@@ -93,11 +117,15 @@ class _AdminResourceImpl extends AdminResource {
     String? key,
     String? tableName,
     List<_i2.AdminColumn>? columns,
+    Object? actions = _Undefined,
   }) {
     return AdminResource(
       key: key ?? this.key,
       tableName: tableName ?? this.tableName,
       columns: columns ?? this.columns.map((e0) => e0.copyWith()).toList(),
+      actions: actions is List<_i3.AdminActionInfo>?
+          ? actions
+          : this.actions?.map((e0) => e0.copyWith()).toList(),
     );
   }
 }

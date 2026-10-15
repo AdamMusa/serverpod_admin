@@ -1,0 +1,23 @@
+### One change made through Serverpod Admin: the history of a row and the
+### dashboard's recent actions.
+class: AdminLogEntry
+table: serverpod_admin_log
+fields:
+  createdAt: DateTime, default=now
+  ### The administrator's auth user id.
+  actor: String
+  ### How the administrator is shown, such as their email address.
+  actorName: String?
+  resourceKey: String
+  recordId: String
+  action: AdminLogAction
+  ### JSON. Updates: {"field": ["before", "after"]}. Creations and deletions:
+  ### the row's values. Fields that look secret are recorded as changed only.
+  changes: String
+  ### A short description, such as the label of a custom action.
+  summary: String?
+indexes:
+  serverpod_admin_log_record_idx:
+    fields: resourceKey, recordId
+  serverpod_admin_log_created_idx:
+    fields: createdAt

@@ -2,6 +2,7 @@ import 'package:serverpod/serverpod.dart';
 import 'package:serverpod/protocol.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     show AuthUser;
+import 'package:serverpod_admin_server/src/admin/admin_action.dart';
 import 'package:serverpod_admin_server/src/admin/admin_auth_user_link.dart';
 import 'package:serverpod_admin_server/src/admin/admin_entry.dart';
 import 'package:serverpod_admin_server/src/admin/admin_entry_base.dart';
@@ -24,6 +25,10 @@ class AdminRegistry {
   final Map<Type, List<String>> _enumValues = {};
   List<String> _authScopeNames = [Scope.admin.name!];
 
+  /// How long the change history keeps entries; null keeps them forever.
+  /// Set it when rows hold personal data you promise to erase.
+  Duration? historyRetention;
+
   /// Registers a new table row type. Table metadata and JSON serialization can
   /// be provided explicitly, but if omitted, they will be resolved from the
   /// host server's [SerializationManager]. This lets host projects register
@@ -34,6 +39,7 @@ class AdminRegistry {
   /// a relation to `serverpod_auth_core_user`) show that user's
   /// `authUser.scopeNames` and `authUser.blocked`, saved to the auth user.
   /// Name the column with [authUserColumn] when it is detected otherwise.
+  /// [actions] are custom actions administrators run on selected rows.
   /// [present] adjusts each row read for the dashboard (for example to add a
   /// signed preview link) while paging, sorting and filtering still run in
   /// the database; a custom [listRows] makes them run in memory instead.
@@ -53,6 +59,7 @@ class AdminRegistry {
     Map<String, List<String>>? choices,
     String? authUserColumn,
     T Function(Session session, T row)? present,
+    List<AdminAction<T>> actions = const [],
   }) {
     final type = T;
     if (_entries.containsKey(type)) return;
@@ -76,6 +83,7 @@ class AdminRegistry {
           },
       queryable: listRows == null,
       present: present,
+      actions: actions,
       // ignore: invalid_use_of_internal_member
       createRow: createRow ?? (session, row) => session.db.insertRow<T>(row),
       // ignore: invalid_use_of_internal_member
@@ -237,5 +245,6 @@ class AdminRegistry {
     _entriesByKey.clear();
     _enumValues.clear();
     _authScopeNames = [Scope.admin.name!];
+    historyRetention = null;
   }
 }

@@ -1,0 +1,9 @@
+### A custom action administrators can run on selected rows.
+class: AdminActionInfo
+fields:
+  name: String
+  label: String
+  ### Ask before running.
+  confirm: bool
+  ### Shown as dangerous, like a deletion.
+  destructive: bool
