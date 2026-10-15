@@ -81,10 +81,7 @@ class AdminAuthUserLink {
     Session session,
     List<Map<String, dynamic>> rows,
   ) async {
-    final ids = {
-      for (final row in rows)
-        if (_authUserId(row) case final id?) id,
-    };
+    final ids = {for (final row in rows) ?_authUserId(row)};
     if (ids.isEmpty) return rows;
     final users = {
       for (final user in await AuthUser.db.find(

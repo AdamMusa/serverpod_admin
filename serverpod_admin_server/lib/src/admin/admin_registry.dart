@@ -208,8 +208,7 @@ class AdminRegistry {
     ),
   }) {
     _authScopeNames = {
-      for (final scope in [Scope.admin, ...scopes])
-        if (scope.name case final name?) name,
+      for (final scope in [Scope.admin, ...scopes]) ?scope.name,
     }.toList();
     register<AuthUser>(
       table: AuthUser.t,

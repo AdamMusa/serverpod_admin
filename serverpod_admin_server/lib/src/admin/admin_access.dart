@@ -18,7 +18,7 @@ class AdminAccess {
   factory AdminAccess.of(Session session) {
     final names = {
       for (final scope in session.authenticated?.scopes ?? const <Scope>{})
-        if (scope.name case final name?) name,
+        ?scope.name,
     };
     return AdminAccess._(names.contains(Scope.admin.name), names);
   }
