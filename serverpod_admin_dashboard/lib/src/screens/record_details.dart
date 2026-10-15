@@ -35,15 +35,18 @@ class RecordDetails extends StatelessWidget {
     final theme = Theme.of(context);
     final columns = resource.columns;
 
-    final cardContent = Container(
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
+    // A Material, so list tiles inside (related rows, history) show their
+    // ink on it.
+    final cardContent = Material(
+      color: theme.scaffoldBackgroundColor,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
+        side: BorderSide(
           color: theme.dividerColor.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
