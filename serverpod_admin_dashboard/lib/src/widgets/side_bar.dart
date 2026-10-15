@@ -43,6 +43,7 @@ class Sidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (isCollapsed && !isInDrawer) return _buildRail(context);
     final theme = Theme.of(context);
     return Container(
       width: 280,
@@ -122,24 +123,110 @@ class Sidebar extends StatelessWidget {
     final overview = onOverview;
     final items = <Widget>[
       if (overview != null) _overviewItem(context, overview),
-      for (final resource in resources)
-        if (resource.group == null) _resourceItem(context, resource),
-      for (final MapEntry(key: group, value: members) in _groups().entries) ...[
-        _groupHeader(context, group),
+      for (final (group, members) in _sections()) ...[
+        if (group != null) _groupHeader(context, group),
         for (final resource in members) _resourceItem(context, resource),
       ],
     ];
     return ListView(padding: EdgeInsets.zero, children: items);
   }
 
-  /// Grouped resources by group, in the order groups first appear.
-  Map<String, List<AdminResource>> _groups() {
-    final groups = <String, List<AdminResource>>{};
+  /// The ungrouped resources first, then each group in the order groups
+  /// first appear.
+  List<(String?, List<AdminResource>)> _sections() {
+    final groups = <String?, List<AdminResource>>{null: []};
     for (final resource in resources) {
-      final group = resource.group;
-      if (group != null) (groups[group] ??= []).add(resource);
+      (groups[resource.group] ??= []).add(resource);
     }
-    return groups;
+    return [
+      for (final MapEntry(key: group, value: members) in groups.entries)
+        if (members.isNotEmpty) (group, members),
+    ];
+  }
+
+  /// The resource's name: the customization's label, else the server's.
+  String _label(AdminResource resource) =>
+      itemCustomizations?[resource.key]?.label ??
+      resource.label ??
+      _formatDefaultResourceLabel(resource.tableName);
+
+  /// The collapsed sidebar: an icon for the overview and each resource,
+  /// named in its tooltip.
+  Widget _buildRail(BuildContext context) {
+    final theme = Theme.of(context);
+    final overview = onOverview;
+    final ready = !isLoading && errorMessage == null;
+    return Container(
+      width: 56,
+      color: theme.scaffoldBackgroundColor,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: IconButton(
+              tooltip: 'Expand sidebar',
+              icon: const Icon(Icons.chevron_right_rounded),
+              onPressed: onToggleCollapse,
+            ),
+          ),
+          Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.1)),
+          if (ready)
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                children: [
+                  if (overview != null)
+                    _railItem(
+                      context,
+                      icon: Icons.dashboard_outlined,
+                      label: 'Overview',
+                      selected: isOverviewSelected,
+                      onTap: overview,
+                    ),
+                  for (final (index, (_, members)) in _sections().indexed) ...[
+                    if (index > 0 || overview != null)
+                      const Divider(indent: 16, endIndent: 16),
+                    for (final resource in members)
+                      _railItem(
+                        context,
+                        icon:
+                            itemCustomizations?[resource.key]?.icon ??
+                            Icons.label_outline,
+                        label: _label(resource),
+                        selected: selectedResource?.key == resource.key,
+                        onTap: () => onSelect(resource),
+                      ),
+                  ],
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _railItem(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    final colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      child: IconButton(
+        tooltip: label,
+        icon: Icon(icon, size: 20),
+        color: selected ? colors.primary : colors.onSurfaceVariant,
+        style: IconButton.styleFrom(
+          backgroundColor: selected
+              ? colors.primary.withValues(alpha: 0.08)
+              : null,
+        ),
+        onPressed: onTap,
+      ),
+    );
   }
 
   Widget _groupHeader(BuildContext context, String group) {
@@ -189,9 +276,7 @@ class Sidebar extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  customization?.label ??
-                      resource.label ??
-                      _formatDefaultResourceLabel(resource.tableName),
+                  _label(resource),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                     color: isSelected

@@ -336,19 +336,7 @@ class _HomeState extends State<Home> {
       return widget.customSidebarBuilder!(context, widget.controller);
     }
 
-    // Default implementation
-    if (widget.controller.isSidebarCollapsed) {
-      return Container(
-        width: 40,
-        alignment: Alignment.topCenter,
-        child: IconButton(
-          tooltip: 'Expand sidebar',
-          icon: const Icon(Icons.chevron_right_rounded),
-          onPressed: () => widget.controller.toggleSidebarCollapsed(),
-        ),
-      );
-    }
-
+    // Default implementation; collapsed, it shows only icons.
     return Sidebar(
       resources: widget.controller.resources,
       isLoading: widget.controller.isResourcesLoading,

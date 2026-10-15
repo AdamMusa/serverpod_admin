@@ -9,19 +9,28 @@ import 'package:serverpod_admin_dashboard/src/screens/home_operations.dart';
 import 'package:serverpod_admin_dashboard/src/screens/login_screen.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 
-/// Lightweight customization for sidebar items.
-/// Allows customizing the label and icon for specific resources by their key.
+/// Lightweight customization of a resource's sidebar item, by resource key:
+/// an icon, a label, or both.
+///
+/// ```dart
+/// sidebarItemCustomizations: {
+///   'ride': SidebarItemCustomization(icon: Icons.local_taxi),
+///   'serverpod_future_call': SidebarItemCustomization(
+///     label: 'Jobs',
+///     icon: Icons.work_history,
+///   ),
+/// }
+/// ```
 class SidebarItemCustomization {
-  const SidebarItemCustomization({
-    required this.label,
-    required this.icon,
-  });
+  const SidebarItemCustomization({this.label, this.icon})
+      : assert(label != null || icon != null, 'Give a label, an icon or both.');
 
-  /// Custom label text to display instead of the resource table name
-  final String label;
+  /// Shown instead of the resource's label (the server's
+  /// AdminOptions.label, else its table name); leave it out to keep that.
+  final String? label;
 
-  /// Custom icon to display instead of the default data object icon
-  final IconData icon;
+  /// Shown instead of the default icon, also in the collapsed sidebar.
+  final IconData? icon;
 }
 
 /// Builder function for custom sidebar widget
@@ -158,8 +167,8 @@ class AdminDashboard extends StatefulWidget {
   final SidebarBuilder? customSidebarBuilder;
 
   /// Optional map of sidebar item customizations.
-  /// Key is the resource key, value contains custom label and icon.
-  /// Example: {'users': SidebarItemCustomization(label: 'Users', icon: Icons.people)}
+  /// Key is the resource key, value contains a custom icon, label or both.
+  /// Example: {'users': SidebarItemCustomization(icon: Icons.people)}
   final Map<String, SidebarItemCustomization>? sidebarItemCustomizations;
 
   /// Optional custom body/records pane builder. If provided, replaces the default records pane.
