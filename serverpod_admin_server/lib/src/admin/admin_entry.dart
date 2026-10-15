@@ -231,8 +231,25 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
 
   @override
   Future<List<TableRow>> listRows(Session session) async {
+    if (_queryable) {
+      // ignore: invalid_use_of_internal_member
+      final rows = await session.db.find<T>(orderByList: _defaultOrder);
+      return [for (final row in rows) _present?.call(session, row) ?? row];
+    }
     final rows = await _listRows(session);
     return rows.cast<TableRow>();
+  }
+
+  /// The table's ordering option, newest first without one.
+  List<Column> get _defaultOrder {
+    final table = _resolvedTable;
+    final name = _options.ordering;
+    final column = table.columns.where((c) => c.columnName == name).firstOrNull;
+    if (column == null) return [table.id.desc()];
+    return [
+      _options.descending ? column.desc() : column.asc(),
+      if (column != table.id) table.id.desc(),
+    ];
   }
 
   @override

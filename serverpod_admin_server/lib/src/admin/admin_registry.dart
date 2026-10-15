@@ -174,33 +174,14 @@ class AdminRegistry {
   /// Registers Serverpod's persisted future-call jobs table.
   ///
   /// This exposes the `serverpod_future_call` table through the same generic
-  /// admin resource metadata and CRUD pipeline as application tables.
+  /// admin resource metadata and CRUD pipeline as application tables, next
+  /// job first.
   void registerServerpodJobs() {
     register<FutureCallEntry>(
       table: FutureCallEntry.t,
       fromJson: FutureCallEntry.fromJson,
-      listRows: (session) =>
-          FutureCallEntry.db.find(session, orderBy: (table) => table.time),
-      findRowById: (session, id) async {
-        final normalizedId = id is int
-            ? id
-            : (id is String ? int.tryParse(id) : null);
-        if (normalizedId == null) return null;
-        return FutureCallEntry.db.findById(session, normalizedId);
-      },
-      createRow: (session, row) => FutureCallEntry.db.insertRow(session, row),
-      updateRow: (session, row) => FutureCallEntry.db.updateRow(session, row),
-      deleteById: (session, id) async {
-        final normalizedId = id is int
-            ? id
-            : (id is String ? int.tryParse(id) : null);
-        if (normalizedId == null) return;
-        await FutureCallEntry.db.deleteWhere(
-          session,
-          where: (table) => table.id.equals(normalizedId),
-        );
-      },
       resourceKey: 'serverpod_future_call',
+      options: const AdminOptions(ordering: 'time'),
     );
   }
 
@@ -217,19 +198,26 @@ class AdminRegistry {
   ///
   /// Identities come from sign-up or [AdminUser.create]; they cannot be created
   /// or deleted here, so logins and app records are never orphaned.
-  void registerAuthUsers({Iterable<Scope> scopes = const []}) {
+  ///
+  /// [options] set how the table appears: by default newest users first,
+  /// without Add or Delete buttons.
+  void registerAuthUsers({
+    Iterable<Scope> scopes = const [],
+    AdminOptions options = const AdminOptions(
+      ordering: 'createdAt',
+      descending: true,
+      canCreate: false,
+      canDelete: false,
+    ),
+  }) {
     _authScopeNames = {
       for (final scope in [Scope.admin, ...scopes])
         if (scope.name case final name?) name,
     }.toList();
-    UuidValue uuid(Object id) =>
-        id is UuidValue ? id : UuidValue.fromString(id.toString());
     register<AuthUser>(
       table: AuthUser.t,
       fromJson: AuthUser.fromJson,
-      listRows: (session) =>
-          AuthUser.db.find(session, orderBy: (table) => table.createdAt),
-      findRowById: (session, id) => AuthUser.db.findById(session, uuid(id)),
+      options: options,
       createRow: (session, row) => throw StateError(
         'Users are created by signing up, or with AdminUser.create.',
       ),

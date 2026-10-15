@@ -1,5 +1,6 @@
 import 'package:serverpod/serverpod.dart';
-import 'package:serverpod/protocol.dart' show ReadWriteTestEntry;
+import 'package:serverpod/protocol.dart'
+    show FutureCallEntry, ReadWriteTestEntry;
 import 'package:serverpod_admin_server/serverpod_admin_server.dart';
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     show AuthUser, UserProfile;
@@ -15,6 +16,7 @@ void main() {
     setUpAll(() {
       configureAdminModule((registry) {
         registry.registerAuthUsers();
+        registry.registerServerpodJobs();
         registry.register<ReadWriteTestEntry>(
           table: ReadWriteTestEntry.t,
           fromJson: ReadWriteTestEntry.fromJson,
@@ -170,6 +172,48 @@ void main() {
         expect(first['authUser.blocked'], 'true');
         expect(first.containsKey('authUser.scopeNames'), isFalse);
       });
+    });
+
+    test('auth users are paged in the database, newest first', () async {
+      final (result, queries) = await measure(
+        () => endpoints.admin.query(
+          admin,
+          'serverpod_auth_core_user',
+          page(
+            filters: [
+              AdminFilter(
+                column: 'blocked',
+                comparison: AdminFilterOperator.equals,
+                value: 'true',
+              ),
+            ],
+          ),
+        ),
+      );
+      expect(queries, 1, reason: '${QueryCounter.calls}');
+      expect(result.total, 3);
+      expect(result.rows.first['id'], '${profiles[4].authUserId}');
+      final users = (await endpoints.admin.resources(
+        admin,
+      )).firstWhere((r) => r.key == 'serverpod_auth_core_user');
+      expect((users.canCreate, users.canDelete), (false, false));
+    });
+
+    test('jobs are listed next first, in one query', () async {
+      final now = DateTime.now().toUtc();
+      await FutureCallEntry.db.insert(sessionBuilder.build(), [
+        for (final hours in [3, 1, 2])
+          FutureCallEntry(
+            name: 'job$hours',
+            time: now.add(Duration(hours: hours)),
+            serverId: 'test',
+          ),
+      ]);
+      final (rows, queries) = await measure(
+        () => endpoints.admin.list(admin, 'serverpod_future_call'),
+      );
+      expect(queries, 1, reason: '${QueryCounter.calls}');
+      expect([for (final r in rows) r['name']], ['job1', 'job2', 'job3']);
     });
 
     test('a list page is read in the database', () async {
