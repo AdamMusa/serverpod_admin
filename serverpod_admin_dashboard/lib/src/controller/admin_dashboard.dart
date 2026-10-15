@@ -197,6 +197,122 @@ class AdminDashboardController extends ChangeNotifier {
 
   static const serverpodJobsKey = 'serverpod_future_call';
 
+  // Saved views: the signed-in user's named searches, sorts, filters and
+  // columns of the selected resource.
+  List<admin_client.AdminSavedView> savedViews = const [];
+  String? _savedViewsKey;
+
+  /// Reads [resource]'s saved views when it is about to be shown.
+  void _showSavedViewsOf(AdminResource resource) {
+    if (resource.key == _savedViewsKey) return;
+    _savedViewsKey = resource.key;
+    savedViews = const [];
+    if (resource.key != serverpodJobsKey) {
+      unawaited(loadSavedViews(resource));
+    }
+  }
+
+  Future<void> loadSavedViews(AdminResource resource) async {
+    List<admin_client.AdminSavedView> views;
+    try {
+      views = await adminEndpoint.savedViews(resource.key);
+    } catch (_) {
+      views = const [];
+    }
+    if (_savedViewsKey != resource.key) return;
+    savedViews = views;
+    notifyListeners();
+  }
+
+  /// The saved view showing what is shown now: the same search, sort,
+  /// filters and columns.
+  admin_client.AdminSavedView? get currentView {
+    final resource = selectedResource;
+    if (resource == null) return null;
+    final shown = _shownColumns(resource, hiddenColumns(resource));
+    for (final view in savedViews) {
+      final viewShown =
+          view.shownColumns?.toSet() ??
+          _shownColumns(resource, _defaultHidden(resource));
+      if ((view.search ?? '') == _searchQuery.trim() &&
+          view.sortColumn == _sortColumn &&
+          (view.sortColumn == null || view.sortDescending == _sortDescending) &&
+          _sameFilters(view.filters, _filters) &&
+          viewShown.length == shown.length &&
+          viewShown.containsAll(shown)) {
+        return view;
+      }
+    }
+    return null;
+  }
+
+  static Set<String> _shownColumns(
+    AdminResource resource,
+    Set<String> hidden,
+  ) => {
+    for (final column in resource.columns)
+      if (!hidden.contains(column.name)) column.name,
+  };
+
+  static bool _sameFilters(
+    List<admin_client.AdminFilter> a,
+    List<admin_client.AdminFilter> b,
+  ) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].column != b[i].column ||
+          a[i].comparison != b[i].comparison ||
+          (a[i].value ?? '') != (b[i].value ?? '')) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /// Shows [view]'s search, sort, filters and columns, from the first page.
+  void applyView(admin_client.AdminSavedView view) {
+    final resource = selectedResource;
+    if (resource == null || view.resourceKey != resource.key) return;
+    _searchDebounce?.cancel();
+    _selected.clear();
+    _searchQuery = view.search ?? '';
+    _sortColumn = view.sortColumn;
+    _sortDescending = view.sortColumn != null && view.sortDescending;
+    _filters = List.unmodifiable(view.filters);
+    final shown = view.shownColumns;
+    if (shown == null) {
+      _hiddenColumns.remove(resource.key);
+    } else {
+      _hiddenColumns[resource.key] = {
+        for (final column in resource.columns)
+          if (!shown.contains(column.name)) column.name,
+      };
+    }
+    _pageIndex = 0;
+    _reloadSelected();
+  }
+
+  /// Saves what is shown (search, sort, filters and, once changed, the
+  /// columns) as the view [name], replacing the user's view of that name.
+  Future<admin_client.AdminSavedView> saveView(String name) async {
+    final resource = selectedResource!;
+    final hidden = _hiddenColumns[resource.key];
+    final view = await adminEndpoint.saveView(
+      resource.key,
+      name,
+      _query(),
+      hidden == null ? null : _shownColumns(resource, hidden).toList(),
+    );
+    await loadSavedViews(resource);
+    return view;
+  }
+
+  Future<void> deleteView(admin_client.AdminSavedView view) async {
+    await adminEndpoint.deleteView(view.id!);
+    final resource = selectedResource;
+    if (resource != null) await loadSavedViews(resource);
+  }
+
   // Overview: the landing page with record counts and recent changes.
   bool _showingOverview = true;
   bool get isShowingOverview => _showingOverview || selectedResource == null;
@@ -505,6 +621,7 @@ class AdminDashboardController extends ChangeNotifier {
     AdminResource resource,
     List<admin_client.AdminFilter> filters,
   ) async {
+    _showSavedViewsOf(resource);
     selectedResource = resource;
     _showingOverview = false;
     closeDetails();
@@ -649,6 +766,7 @@ class AdminDashboardController extends ChangeNotifier {
   }
 
   Future<void> selectResource(AdminResource resource) async {
+    _showSavedViewsOf(resource);
     selectedResource = resource;
     _showingOverview = false;
     _selected.clear();

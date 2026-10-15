@@ -7,8 +7,13 @@ import 'package:serverpod_admin_dashboard/src/widgets/default_create_dialog.dart
 import 'package:serverpod_admin_dashboard/src/widgets/default_delete_dialog.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/default_edit_dialog.dart';
 import 'package:serverpod_admin_client/serverpod_admin_client.dart'
-    show AdminActionInfo, AdminActionResult, AdminValidationException;
+    show
+        AdminActionInfo,
+        AdminActionResult,
+        AdminSavedView,
+        AdminValidationException;
 import 'package:serverpod_admin_dashboard/src/widgets/bulk/set_field_dialog.dart';
+import 'package:serverpod_admin_dashboard/src/widgets/views/save_view_dialog.dart';
 
 /// Business logic operations for the Home screen.
 /// Separated from UI to avoid setState usage.
@@ -398,6 +403,42 @@ class HomeOperations {
       if (!confirmed) return;
     }
     await _runBulk(() => controller.runActionOnSelected(action.name));
+  }
+
+  /// Asks for a name, then saves the table's search, sort, filters and
+  /// columns as a view of that name (the current view's name at first).
+  Future<void> saveView(AdminResource resource) async {
+    final name = await showSaveViewDialog(
+      context,
+      title: 'Save view of ${resource.displayName}',
+      initial: controller.currentView?.name ?? '',
+    );
+    if (name == null || !context.mounted) return;
+    try {
+      final view = await controller.saveView(name);
+      if (context.mounted) {
+        _showSnackBar('Saved the view “${view.name}”.', isError: false);
+      }
+    } on AdminValidationException catch (error) {
+      if (context.mounted) _showSnackBar(error.message, isError: true);
+    } catch (error) {
+      if (context.mounted) {
+        _showSnackBar('Failed to save the view: $error', isError: true);
+      }
+    }
+  }
+
+  Future<void> deleteView(AdminSavedView view) async {
+    try {
+      await controller.deleteView(view);
+      if (context.mounted) {
+        _showSnackBar('Deleted the view “${view.name}”.', isError: false);
+      }
+    } catch (error) {
+      if (context.mounted) {
+        _showSnackBar('Failed to delete the view: $error', isError: true);
+      }
+    }
   }
 
   Future<void> _runBulk(Future<AdminActionResult> Function() request) async {

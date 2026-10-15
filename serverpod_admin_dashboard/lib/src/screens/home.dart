@@ -299,6 +299,11 @@ class _HomeState extends State<Home> {
                 operations.showDeleteConfirmation(selectedResource, record)
           : null,
       onView: (record) => operations.showDetailsPage(selectedResource, record),
+      savedViews: controller.savedViews,
+      currentView: controller.currentView,
+      onApplyView: controller.applyView,
+      onSaveView: () => operations.saveView(selectedResource),
+      onDeleteView: operations.deleteView,
     );
   }
 

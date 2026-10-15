@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:serverpod_admin_client/serverpod_admin_client.dart'
-    show AdminActionInfo, AdminFilter;
+    show AdminActionInfo, AdminFilter, AdminSavedView;
 import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/tabular_data.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/filters.dart';
@@ -40,6 +40,11 @@ class RecordsView extends StatefulWidget {
     this.onRunAction,
     this.loadForeignLabels,
     this.onOpenForeign,
+    this.savedViews = const [],
+    this.currentView,
+    this.onApplyView,
+    this.onSaveView,
+    this.onDeleteView,
     super.key,
   });
 
@@ -87,6 +92,14 @@ class RecordsView extends StatefulWidget {
   )?
   loadForeignLabels;
   final void Function(AdminColumn column, String id)? onOpenForeign;
+
+  /// The user's saved views of this table, the one showing now, and what
+  /// can be done with them; [onSaveView] saves what is shown.
+  final List<AdminSavedView> savedViews;
+  final AdminSavedView? currentView;
+  final ValueChanged<AdminSavedView>? onApplyView;
+  final VoidCallback? onSaveView;
+  final ValueChanged<AdminSavedView>? onDeleteView;
 
   @override
   State<RecordsView> createState() => _RecordsViewState();
@@ -202,7 +215,53 @@ class _RecordsViewState extends State<RecordsView> {
           ),
         ),
         const SizedBox(height: 6),
-        _buildRecordsCountChip(context),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _buildRecordsCountChip(context),
+            if (widget.currentView case final view?)
+              Chip(
+                avatar: const Icon(Icons.bookmark, size: 18),
+                label: Text(view.name, style: theme.textTheme.labelLarge),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSavedViewsMenu(BuildContext context) {
+    final current = widget.currentView;
+    return MenuAnchor(
+      builder: (context, controller, child) => IconButton.filledTonal(
+        tooltip: 'Saved views',
+        onPressed: () =>
+            controller.isOpen ? controller.close() : controller.open(),
+        icon: Icon(current == null ? Icons.bookmark_border : Icons.bookmark),
+      ),
+      menuChildren: [
+        for (final view in widget.savedViews)
+          MenuItemButton(
+            leadingIcon: Icon(
+              view.id == current?.id ? Icons.check : Icons.bookmark_border,
+            ),
+            onPressed: () => widget.onApplyView?.call(view),
+            child: Text(view.name),
+          ),
+        if (widget.savedViews.isNotEmpty) const Divider(height: 1),
+        if (widget.onSaveView != null)
+          MenuItemButton(
+            leadingIcon: const Icon(Icons.bookmark_add_outlined),
+            onPressed: widget.onSaveView,
+            child: const Text('Save view…'),
+          ),
+        if (current != null && widget.onDeleteView != null)
+          MenuItemButton(
+            leadingIcon: const Icon(Icons.bookmark_remove_outlined),
+            onPressed: () => widget.onDeleteView!(current),
+            child: Text('Delete “${current.name}”'),
+          ),
       ],
     );
   }
@@ -241,6 +300,8 @@ class _RecordsViewState extends State<RecordsView> {
               icon: const Icon(Icons.filter_list),
             ),
           ),
+        if (widget.onSaveView != null || widget.savedViews.isNotEmpty)
+          _buildSavedViewsMenu(context),
         if (widget.onToggleColumn != null)
           MenuAnchor(
             builder: (context, controller, child) => IconButton.filledTonal(
