@@ -38,21 +38,18 @@ Future<void> main() async {
 class ServerpodAdminApp extends StatelessWidget {
   const ServerpodAdminApp({super.key});
 
+  /// The dashboard is the app, so it keeps what is open in the address.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return AdminDashboard(
+      client: client,
       title: 'Serverpod Admin',
-      debugShowCheckedModeBanner: false,
-      home: AdminDashboard(
-        client: client,
-        title: 'Serverpod Admin',
-        sidebarItemCustomizations: const {
-          serverpodJobsResourceKey: SidebarItemCustomization(
-            label: 'Jobs',
-            icon: Icons.work_history,
-          ),
-        },
-      ),
+      sidebarItemCustomizations: const {
+        serverpodJobsResourceKey: SidebarItemCustomization(
+          label: 'Jobs',
+          icon: Icons.work_history,
+        ),
+      },
     );
   }
 }

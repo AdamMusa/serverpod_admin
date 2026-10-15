@@ -214,8 +214,9 @@ class AdminDashboard extends StatefulWidget {
 
   /// Keeps the open table, record, page, sort, search and filters in the
   /// address (for example `/admin/#/ride?status__exact=open&page=2`), so
-  /// links can be shared and the browser's Back button works. Turn it off
-  /// when the dashboard is part of an app that owns the address.
+  /// links can be shared and the browser's Back button works. It applies
+  /// when the dashboard is the app (`runApp(AdminDashboard(...))`); inside
+  /// another app's MaterialApp, which owns the address, it is off.
   final bool deepLinks;
 
   @override
@@ -245,9 +246,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
     builder: _buildContent,
   );
 
+  bool _routing = false;
+
   @override
   void dispose() {
-    if (widget.deepLinks) _routerDelegate.dispose();
+    if (_routing) _routerDelegate.dispose();
     _authController.removeListener(_onAuthStateChanged);
     // Note: Don't dispose _authController here as it might be used elsewhere
     super.dispose();
@@ -363,10 +366,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    // Inside another app, that app's navigator owns the address.
+    final routing = widget.deepLinks && Navigator.maybeOf(context) == null;
+    _routing = _routing || routing;
     return AnimatedBuilder(
       animation: Listenable.merge([_controller, _authController]),
       builder: (context, _) {
-        if (widget.deepLinks) {
+        if (routing) {
           return MaterialApp.router(
             title: widget.title,
             themeMode: _controller.themeMode,
