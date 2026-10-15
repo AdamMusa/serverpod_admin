@@ -33,12 +33,22 @@ class AdminRegistry {
 
   final List<AdminMetric> _metrics = [];
 
+  bool _configured = false;
+
+  /// Runs [configure] the first time it is called after a [reset], so
+  /// requests reuse the registered tables instead of registering them
+  /// again.
+  void ensureConfigured(void Function(AdminRegistry registry) configure) {
+    if (_configured) return;
+    configure(this);
+    _configured = true;
+  }
+
   /// Key numbers shown on the overview.
   List<AdminMetric> get metrics => List.unmodifiable(_metrics);
 
   /// Adds a key number to the overview, such as "Orders today". A metric
-  /// with the same label is replaced, as the configurator runs again on
-  /// each [adminRegister].
+  /// with the same label replaces the earlier one.
   void registerMetric(AdminMetric metric) {
     final index = _metrics.indexWhere((m) => m.label == metric.label);
     if (index == -1) {
@@ -275,5 +285,6 @@ class AdminRegistry {
     historyRetention = null;
     staffScopes = {};
     _metrics.clear();
+    _configured = false;
   }
 }

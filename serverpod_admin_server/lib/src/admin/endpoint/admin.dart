@@ -102,6 +102,7 @@ class AdminEndpoint extends Endpoint {
   /// shows "—".
   Future<List<AdminMetricValue>> metrics(Session session) async {
     final access = AdminAccess.of(session)..requireAllowed();
+    adminRegister();
     return Future.wait([
       for (final metric in _registry.metrics)
         if (access.sees(metric))
@@ -410,6 +411,7 @@ class AdminEndpoint extends Endpoint {
     int limit,
   ) {
     final access = AdminAccess.of(session)..requireAllowed();
+    adminRegister();
     if (resourceKey != null) {
       _entryFor(session, resourceKey, AdminOperation.view);
     }

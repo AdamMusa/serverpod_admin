@@ -28,10 +28,11 @@ List<AdminEntryBase> adminRegister() {
     );
   }
 
-  final registry = AdminRegistry();
-  configurator(registry);
-  if (jobs) {
-    registry.registerServerpodJobs();
-  }
-  return registry.registeredEntries;
+  // Registration runs once, not on every request, until the module is
+  // configured again.
+  return (AdminRegistry()..ensureConfigured((registry) {
+        configurator(registry);
+        if (jobs) registry.registerServerpodJobs();
+      }))
+      .registeredEntries;
 }
