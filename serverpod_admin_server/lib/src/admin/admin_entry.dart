@@ -205,8 +205,16 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
       limit: query.limit,
       offset: query.offset,
     );
-    // ignore: invalid_use_of_internal_member
-    final total = await session.db.count<T>(where: sql.where);
+    // A page that is not full holds the last matching rows, so they need no
+    // count.
+    final last =
+        rows.length < query.limit && (rows.isNotEmpty || query.offset == 0);
+    final total = last
+        ? query.offset + rows.length
+        : query.countTotal == false
+        ? -1
+        // ignore: invalid_use_of_internal_member
+        : await session.db.count<T>(where: sql.where);
     return (
       rows: [
         for (final row in rows) toJson(_present?.call(session, row) ?? row),

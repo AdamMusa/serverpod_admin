@@ -1,4 +1,5 @@
-### One page of rows, as text, and how many rows match in total.
+### One page of rows, as text, and how many rows match in total (-1 when
+### the query asked not to count them).
 class: AdminPage
 fields:
   rows: List<Map<String, String>>

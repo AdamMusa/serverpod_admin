@@ -9,3 +9,10 @@ fields:
   sortColumn: String?
   sortDescending: bool
   filters: List<AdminFilter>
+  ### Only these columns are returned, with the primary key; every column the
+  ### user may see when null. Lists ask for the columns they show.
+  columns: List<String>?
+  ### False skips counting the matching rows when only rows are needed, such
+  ### as lookups; a page that is not full is never counted. The total of a
+  ### full page is then -1.
+  countTotal: bool?

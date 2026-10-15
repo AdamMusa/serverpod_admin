@@ -5,6 +5,7 @@ import 'package:serverpod/protocol.dart' show SessionLogEntry;
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
 import 'package:serverpod_admin_server/src/admin/admin_access.dart';
+import 'package:serverpod_admin_server/src/admin/admin_auth_user_link.dart';
 import 'package:serverpod_admin_server/src/admin/admin_entry_base.dart';
 import 'package:serverpod_admin_server/src/admin/admin_history.dart';
 import 'package:serverpod_admin_server/src/admin/admin_query_engine.dart';
@@ -257,24 +258,41 @@ class AdminEndpoint extends Endpoint {
       offset: query.offset < 0 ? 0 : query.offset,
       limit: query.limit.clamp(1, adminMaxPageSize),
     );
+    final only = _onlyColumns(entry, query.columns);
     final page = await entry.queryPage(session, bounded);
     if (page != null) {
+      final rows = only == null || only.any(AdminAuthUserLink.isField)
+          ? await _withAuthUsers(session, entry, page.rows)
+          : page.rows;
       return AdminPage(
-        rows: _visibleRows(
-          entry,
-          await _withAuthUsers(session, entry, page.rows),
-        ),
+        rows: _visibleRows(entry, rows, only: only),
         total: page.total,
       );
     }
     final all = await _withAuthUsers(session, entry, await entry.list(session));
-    return AdminRowQuery.apply(
+    final matching = AdminRowQuery.apply(
       // Hidden values never reach the in-memory search.
       _visibleRows(entry, all),
       entry.metadata.columns,
       bounded,
     );
+    return only == null
+        ? matching
+        : matching.copyWith(
+            rows: [for (final row in matching.rows) _only(row, only)],
+          );
   }
+
+  /// The columns to return for [columns] (with the primary key), or null
+  /// for every visible column.
+  Set<String>? _onlyColumns(AdminEntryBase entry, List<String>? columns) =>
+      columns == null ? null : {entry.table.id.columnName, ...columns};
+
+  static Map<String, String> _only(Map<String, String> row, Set<String> only) =>
+      {
+        for (final MapEntry(:key, :value) in row.entries)
+          if (only.contains(key)) key: value,
+      };
 
   Future<List<Map<String, String>>> listPage(
     Session session,
@@ -287,10 +305,18 @@ class AdminEndpoint extends Endpoint {
         'Invalid pagination arguments. Offset must be >= 0 and limit > 0.',
       );
     }
-    final entry = _entryFor(session, resourceKey, AdminOperation.view);
-    final all = await entry.list(session);
-    final window = all.skip(offset).take(limit).toList(growable: false);
-    return _visibleRows(entry, await _withAuthUsers(session, entry, window));
+    final page = await query(
+      session,
+      resourceKey,
+      AdminQuery(
+        offset: offset,
+        limit: limit,
+        sortDescending: false,
+        filters: const [],
+        countTotal: false,
+      ),
+    );
+    return page.rows;
   }
 
   Future<Map<String, dynamic>?> find(
@@ -590,21 +616,24 @@ class AdminEndpoint extends Endpoint {
   ) async =>
       _visibleRows(entry, await _withAuthUsers(session, entry, [row])).single;
 
-  /// Rows as text, without the resource's hidden columns.
+  /// Rows as text, without the resource's hidden columns, and with only
+  /// the columns in [only] when given.
   List<Map<String, String>> _visibleRows(
     AdminEntryBase entry,
-    List<Map<String, dynamic>> rows,
-  ) {
+    List<Map<String, dynamic>> rows, {
+    Set<String>? only,
+  }) {
     final hidden = entry.options.hidden;
+    bool shown(String key) =>
+        key != _classNameKey &&
+        !hidden.contains(key) &&
+        (only == null || only.contains(key));
     return [
-      for (final row in _stringifyRecords(rows))
-        if (hidden.isEmpty)
-          row
-        else
-          {
-            for (final MapEntry(:key, :value) in row.entries)
-              if (!hidden.contains(key)) key: value,
-          },
+      for (final row in rows)
+        {
+          for (final MapEntry(:key, :value) in row.entries)
+            if (shown(key)) key: _stringifyValue(value),
+        },
     ];
   }
 
@@ -730,17 +759,6 @@ class AdminEndpoint extends Endpoint {
       'status': error.isEmpty ? 'finished' : 'failed',
       'source': 'history',
     };
-  }
-
-  List<Map<String, String>> _stringifyRecords(
-    List<Map<String, dynamic>> rows,
-  ) => rows.map(_stringifyRecord).toList();
-  Map<String, String> _stringifyRecord(Map<String, dynamic> row) {
-    return Map.fromEntries(
-      row.entries
-          .where((entry) => entry.key != _classNameKey)
-          .map((entry) => MapEntry(entry.key, _stringifyValue(entry.value))),
-    );
   }
 
   /// Removes __className__ from a dynamic map to prevent client-side

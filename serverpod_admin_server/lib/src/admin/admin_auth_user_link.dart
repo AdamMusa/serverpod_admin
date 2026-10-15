@@ -24,6 +24,10 @@ class AdminAuthUserLink {
   /// Whether the auth user is blocked from signing in.
   static const blockedField = 'authUser.blocked';
 
+  /// Whether [name] is one of the auth user's values shown in rows.
+  static bool isField(String name) =>
+      name == scopeNamesField || name == blockedField;
+
   /// The column holding the auth user's id.
   final String column;
 

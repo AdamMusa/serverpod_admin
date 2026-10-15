@@ -25,6 +25,8 @@ abstract class AdminQuery
     this.sortColumn,
     required this.sortDescending,
     required this.filters,
+    this.columns,
+    this.countTotal,
   });
 
   factory AdminQuery({
@@ -34,6 +36,8 @@ abstract class AdminQuery
     String? sortColumn,
     required bool sortDescending,
     required List<_i2.AdminFilter> filters,
+    List<String>? columns,
+    bool? countTotal,
   }) = _AdminQueryImpl;
 
   factory AdminQuery.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -48,6 +52,14 @@ abstract class AdminQuery
       filters: _i3.Protocol().deserialize<List<_i2.AdminFilter>>(
         jsonSerialization['filters'],
       ),
+      columns: jsonSerialization['columns'] == null
+          ? null
+          : _i3.Protocol().deserialize<List<String>>(
+              jsonSerialization['columns'],
+            ),
+      countTotal: jsonSerialization['countTotal'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['countTotal']),
     );
   }
 
@@ -64,6 +76,15 @@ abstract class AdminQuery
 
   List<_i2.AdminFilter> filters;
 
+  /// Only these columns are returned, with the primary key; every column the
+  /// user may see when null. Lists ask for the columns they show.
+  List<String>? columns;
+
+  /// False skips counting the matching rows when only rows are needed, such
+  /// as lookups; a page that is not full is never counted. The total of a
+  /// full page is then -1.
+  bool? countTotal;
+
   /// Returns a shallow copy of this [AdminQuery]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -74,6 +95,8 @@ abstract class AdminQuery
     String? sortColumn,
     bool? sortDescending,
     List<_i2.AdminFilter>? filters,
+    List<String>? columns,
+    bool? countTotal,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -85,6 +108,8 @@ abstract class AdminQuery
       if (sortColumn != null) 'sortColumn': sortColumn,
       'sortDescending': sortDescending,
       'filters': filters.toJson(valueToJson: (v) => v.toJson()),
+      if (columns != null) 'columns': columns?.toJson(),
+      if (countTotal != null) 'countTotal': countTotal,
     };
   }
 
@@ -98,6 +123,8 @@ abstract class AdminQuery
       if (sortColumn != null) 'sortColumn': sortColumn,
       'sortDescending': sortDescending,
       'filters': filters.toJson(valueToJson: (v) => v.toJsonForProtocol()),
+      if (columns != null) 'columns': columns?.toJson(),
+      if (countTotal != null) 'countTotal': countTotal,
     };
   }
 
@@ -117,6 +144,8 @@ class _AdminQueryImpl extends AdminQuery {
     String? sortColumn,
     required bool sortDescending,
     required List<_i2.AdminFilter> filters,
+    List<String>? columns,
+    bool? countTotal,
   }) : super._(
          offset: offset,
          limit: limit,
@@ -124,6 +153,8 @@ class _AdminQueryImpl extends AdminQuery {
          sortColumn: sortColumn,
          sortDescending: sortDescending,
          filters: filters,
+         columns: columns,
+         countTotal: countTotal,
        );
 
   /// Returns a shallow copy of this [AdminQuery]
@@ -137,6 +168,8 @@ class _AdminQueryImpl extends AdminQuery {
     Object? sortColumn = _Undefined,
     bool? sortDescending,
     List<_i2.AdminFilter>? filters,
+    Object? columns = _Undefined,
+    Object? countTotal = _Undefined,
   }) {
     return AdminQuery(
       offset: offset ?? this.offset,
@@ -145,6 +178,10 @@ class _AdminQueryImpl extends AdminQuery {
       sortColumn: sortColumn is String? ? sortColumn : this.sortColumn,
       sortDescending: sortDescending ?? this.sortDescending,
       filters: filters ?? this.filters.map((e0) => e0.copyWith()).toList(),
+      columns: columns is List<String>?
+          ? columns
+          : this.columns?.map((e0) => e0).toList(),
+      countTotal: countTotal is bool? ? countTotal : this.countTotal,
     );
   }
 }

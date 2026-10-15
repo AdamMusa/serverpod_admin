@@ -13,7 +13,8 @@
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import 'package:serverpod_admin_client/src/protocol/protocol.dart' as _i2;
 
-/// One page of rows, as text, and how many rows match in total.
+/// One page of rows, as text, and how many rows match in total (-1 when
+/// the query asked not to count them).
 abstract class AdminPage
     implements _i1.SerializableModel, _i1.ProtocolSerialization {
   AdminPage._({
