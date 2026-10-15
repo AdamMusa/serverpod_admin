@@ -16,6 +16,26 @@ class _FakeAdmin implements EndpointAdmin {
   final List<AdminActivityPoint> points;
   final bool failMetrics;
   final activityCalls = <String>[];
+  var overviewCalls = 0;
+
+  @override
+  Future<List<AdminTableSummary>> overview(int days) async {
+    overviewCalls++;
+    return [
+      AdminTableSummary(
+        resourceKey: 'ride',
+        count: 1234567,
+        estimated: true,
+        activity: points,
+      ),
+      AdminTableSummary(
+        resourceKey: 'driver_profile',
+        count: 3,
+        estimated: false,
+        activity: [],
+      ),
+    ];
+  }
 
   @override
   Future<List<AdminResource>> resources() async => [_rides, _drivers];
@@ -127,6 +147,14 @@ void main() {
     });
   });
 
+  test('large counts are shown in a few characters', () {
+    expect(compactCount(950), '950');
+    expect(compactCount(1234), '1.2k');
+    expect(compactCount(350400), '350k');
+    expect(compactCount(1234567), '1.2M');
+    expect(compactCount(25000000), '25M');
+  });
+
   group('controller', () {
     test('activity has a count for every day, today last', () async {
       final today = _today();
@@ -218,8 +246,12 @@ void main() {
     expect(find.text('since midnight'), findsOneWidget);
     expect(find.text('Rides'), findsOneWidget);
     expect(find.text('3 added in the last 30 days'), findsOneWidget);
-    // Only tables with a date column are charted.
-    expect(admin.activityCalls, ['ride']);
+    // A large table shows its estimate.
+    expect(find.text('≈ 1.2M'), findsOneWidget);
+    expect(find.text('3'), findsOneWidget);
+    // Every table's numbers come in one request.
+    expect(admin.overviewCalls, 1);
+    expect(admin.activityCalls, isEmpty);
   });
 
   testWidgets('a date shortcut filters the charted column', (tester) async {

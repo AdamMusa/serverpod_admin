@@ -309,26 +309,37 @@ class AdminDashboardController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// How many rows each resource has, for the overview.
-  Future<Map<String, int>> resourceCounts() async {
-    final counts = <String, int>{};
-    await Future.wait([
+  /// Every table's number of rows and the rows it gained on each of the
+  /// last [days] days (oldest first, today last; empty without a date
+  /// column), by resource key, in one request.
+  Future<Map<String, TableOverview>> overview({int days = 30}) async {
+    final List<admin_client.AdminTableSummary> summaries;
+    try {
+      summaries = await adminEndpoint.overview(days);
+    } catch (_) {
+      return const {};
+    }
+    final charted = {
       for (final resource in resources)
-        adminEndpoint
-            .query(
-              resource.key,
-              admin_client.AdminQuery(
-                offset: 0,
-                limit: 1,
-                sortDescending: false,
-                filters: const [],
-              ),
-            )
-            .then((page) => counts[resource.key] = page.total)
-            .catchError((Object _) => -1),
-    ]);
-    return counts;
+        if (resource.chartColumn != null) resource.key,
+    };
+    return {
+      for (final summary in summaries)
+        summary.resourceKey: TableOverview(
+          count: summary.count,
+          estimated: summary.estimated,
+          activity: charted.contains(summary.resourceKey)
+              ? _dailyCounts(summary.activity, days)
+              : const [],
+        ),
+    };
   }
+
+  /// How many rows each resource has, for the overview.
+  Future<Map<String, int>> resourceCounts() async => {
+    for (final MapEntry(:key, :value) in (await overview()).entries)
+      key: value.count,
+  };
 
   /// The key numbers the server registered, for the overview.
   Future<List<admin_client.AdminMetricValue>> metrics() async {
@@ -352,6 +363,14 @@ class AdminDashboardController extends ChangeNotifier {
     } catch (_) {
       return const [];
     }
+    return _dailyCounts(points, days);
+  }
+
+  /// [points] as a count for each of the last [days] days, today last.
+  static List<int> _dailyCounts(
+    List<admin_client.AdminActivityPoint> points,
+    int days,
+  ) {
     final now = DateTime.now().toUtc();
     final today = DateTime.utc(now.year, now.month, now.day);
     final counts = List.filled(days, 0);
@@ -1173,6 +1192,24 @@ class AdminDashboardController extends ChangeNotifier {
 
     return payload;
   }
+}
+
+/// A table on the overview.
+class TableOverview {
+  const TableOverview({
+    required this.count,
+    required this.estimated,
+    required this.activity,
+  });
+
+  /// The number of rows; -1 when unknown.
+  final int count;
+
+  /// [count] is the database's estimate, for a large table.
+  final bool estimated;
+
+  /// Rows added on each recent day, today last; empty without a date column.
+  final List<int> activity;
 }
 
 /// Rows of [resource] whose [column] points at a record, as listed on that

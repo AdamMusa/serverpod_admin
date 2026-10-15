@@ -41,6 +41,17 @@ class _FakeAdmin implements EndpointAdmin {
   Future<List<AdminResource>> resources() async => [_users, _rides];
 
   @override
+  Future<List<AdminTableSummary>> overview(int days) async => [
+    for (final key in ['user_profile', 'ride'])
+      AdminTableSummary(
+        resourceKey: key,
+        count: 1,
+        estimated: false,
+        activity: [],
+      ),
+  ];
+
+  @override
   Future<AdminPage> query(String key, AdminQuery query) async => key == 'ride'
       ? AdminPage(
           rows: [

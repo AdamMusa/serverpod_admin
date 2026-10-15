@@ -19,12 +19,13 @@ class OverviewView extends StatefulWidget {
 }
 
 class _OverviewViewState extends State<OverviewView> {
-  late Future<Map<String, int>> _counts = widget.controller.resourceCounts();
+  late Future<Map<String, TableOverview>> _tables = widget.controller
+      .overview();
   late Future<List<AdminMetricValue>> _metrics = widget.controller.metrics();
   int _version = 0;
 
   void _refresh() => setState(() {
-    _counts = widget.controller.resourceCounts();
+    _tables = widget.controller.overview();
     _metrics = widget.controller.metrics();
     _version++;
   });
@@ -71,19 +72,27 @@ class _OverviewViewState extends State<OverviewView> {
             );
           },
         ),
-        FutureBuilder<Map<String, int>>(
-          future: _counts,
+        FutureBuilder<Map<String, TableOverview>>(
+          future: _tables,
           builder: (context, snapshot) {
-            final counts = snapshot.data ?? const <String, int>{};
+            final tables = snapshot.data;
             return Wrap(
               spacing: 12,
               runSpacing: 12,
               children: [
                 for (final resource in controller.resources)
                   _ResourceCard(
-                    key: ValueKey('${resource.key}-$_version'),
                     resource: resource,
-                    count: counts[resource.key],
+                    // Unknown until loaded, and when it could not be read.
+                    table:
+                        tables?[resource.key] ??
+                        (tables == null
+                            ? null
+                            : const TableOverview(
+                                count: -1,
+                                estimated: false,
+                                activity: [],
+                              )),
                     controller: controller,
                   ),
               ],
@@ -162,37 +171,30 @@ class _MetricCard extends StatelessWidget {
 
 /// A table's row count and, when it has a date column, the rows added on
 /// each of the last 30 days.
-class _ResourceCard extends StatefulWidget {
+class _ResourceCard extends StatelessWidget {
   const _ResourceCard({
     required this.resource,
-    required this.count,
+    required this.table,
     required this.controller,
-    super.key,
   });
 
   final AdminResource resource;
-  final int? count;
+
+  /// Null while loading.
+  final TableOverview? table;
   final AdminDashboardController controller;
-
-  @override
-  State<_ResourceCard> createState() => _ResourceCardState();
-}
-
-class _ResourceCardState extends State<_ResourceCard> {
-  late final Future<List<int>> _activity = widget.controller.activity(
-    widget.resource,
-  );
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final resource = widget.resource;
+    final counts = table?.activity ?? const <int>[];
+    final added = counts.fold(0, (sum, c) => sum + c);
     return SizedBox(
       width: 220,
       child: Card(
         clipBehavior: Clip.antiAlias,
         child: InkWell(
-          onTap: () => widget.controller.selectResource(resource),
+          onTap: () => controller.selectResource(resource),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -205,10 +207,12 @@ class _ResourceCardState extends State<_ResourceCard> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  switch (widget.count) {
+                  switch (table) {
                     null => '…',
-                    -1 => '—',
-                    final count => '$count',
+                    TableOverview(count: -1) => '—',
+                    TableOverview(:final count, estimated: true) =>
+                      '≈ ${compactCount(count)}',
+                    TableOverview(:final count) => '$count',
                   },
                   style: theme.textTheme.headlineMedium?.copyWith(
                     color: theme.colorScheme.primary,
@@ -216,30 +220,23 @@ class _ResourceCardState extends State<_ResourceCard> {
                   ),
                 ),
                 Text('records', style: theme.textTheme.bodySmall),
-                FutureBuilder<List<int>>(
-                  future: _activity,
-                  builder: (context, snapshot) {
-                    final counts = snapshot.data ?? const <int>[];
-                    if (counts.isEmpty) return const SizedBox.shrink();
-                    final added = counts.fold(0, (sum, c) => sum + c);
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ActivityBars(counts: counts, height: 32),
-                          const SizedBox(height: 4),
-                          Text(
-                            '$added added in the last ${counts.length} days',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
+                if (counts.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ActivityBars(counts: counts, height: 32),
+                        const SizedBox(height: 4),
+                        Text(
+                          '$added added in the last ${counts.length} days',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
@@ -247,4 +244,13 @@ class _ResourceCardState extends State<_ResourceCard> {
       ),
     );
   }
+}
+
+/// A large number in a few characters, such as 1.2M or 350k.
+String compactCount(int count) {
+  String scaled(double value, String unit) =>
+      '${value >= 10 ? value.round() : (value * 10).round() / 10}$unit';
+  if (count >= 1000000) return scaled(count / 1000000, 'M');
+  if (count >= 1000) return scaled(count / 1000, 'k');
+  return '$count';
 }

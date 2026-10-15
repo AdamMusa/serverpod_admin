@@ -61,6 +61,17 @@ class _FakeAdmin implements EndpointAdmin {
   Future<List<AdminResource>> resources() async => [_users, _rides];
 
   @override
+  Future<List<AdminTableSummary>> overview(int days) async => [
+    for (final MapEntry(:key, :value) in data.entries)
+      AdminTableSummary(
+        resourceKey: key,
+        count: value.length,
+        estimated: false,
+        activity: [],
+      ),
+  ];
+
+  @override
   Future<AdminPage> query(String resourceKey, AdminQuery query) async {
     var rows = data[resourceKey]!;
     for (final filter in query.filters) {
