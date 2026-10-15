@@ -56,7 +56,10 @@ No more writing boilerplate CRUD endpoints. Register your models once, and insta
 - **Search, Filter & Sort** – Search every text column, add filters that fit each column (contains, is / is not, at least / at most, on or before / after, empty), and sort by any column; all of it runs in the database
 - **Pagination** – Pages are read from the database, so large tables stay fast
 - **Documents & Links** – URLs open inside the dashboard: images with zoom, PDFs in the browser's viewer, other pages one click away
-- **Overview** – A home page with every table's row count and the latest changes
+- **Overview** – A home page with your own key numbers (metrics), every table's row count with a 30-day chart of rows added, and the latest changes
+- **Table Options** – Like Django's ModelAdmin: labels, sidebar groups, default columns and ordering, read-only and hidden fields, help text, searchable columns, and turning create, edit or delete off per table
+- **Staff Roles** – Give support or operations staff their own scopes with view, create, edit and delete permissions per table; administrators keep full access
+- **Quick Date Filters** – Today, last 7 days, last 30 days and this month in one click
 - **Change History** – Who created, changed, deleted or ran an action on each row, and which values changed (like Django's admin log), on every record and as recent actions
 - **Bulk Changes & Custom Actions** – Select rows (or every row matching the filters), then delete them, set a field on all of them, or run actions you register per model
 - **Relationships** – Foreign keys show the related row's name and open it; every record lists the rows pointing at it, with a link to all of them; pickers search instead of loading whole tables
@@ -268,6 +271,99 @@ promise to erase:
 registry.historyRetention = const Duration(days: 30);
 ```
 
+### Table Options
+
+`register<T>(options: AdminOptions(...))` sets how a table appears and behaves,
+like a Django `ModelAdmin`:
+
+```dart
+registry.register<Order>(
+  options: AdminOptions(
+    label: 'Orders',                 // shown instead of the table name
+    group: 'Sales',                  // sidebar section
+    listColumns: ['id', 'customerId', 'status', 'total'], // shown at first
+    ordering: 'createdAt',           // default sort...
+    descending: true,                // ...newest first
+    readOnly: {'createdAt'},         // shown, not editable after creation
+    hidden: {'paymentToken'},        // never sent to the dashboard
+    searchColumns: {'reference', 'customerEmail'},
+    labels: {'customerId': 'Customer'},
+    help: {'status': 'Shipped orders can no longer be cancelled.'},
+    canDelete: false,                // nobody deletes orders here
+  ),
+);
+```
+
+- Columns left out of `listColumns` can still be turned on from the column
+  menu, and every column shows in a record's details.
+- `readOnly` columns can be set when a row is created, and keep their stored
+  values on every edit. `hidden` columns are never sent, searched, filtered,
+  exported or written to the change history, and keep their stored values on
+  edits too.
+- `canCreate`, `canEdit` and `canDelete` apply to everyone, administrators
+  included; read-only tables such as logs set all three to false.
+- `chartColumn` names the date column the overview charts. It defaults to
+  the first of `createdAt`, `requestedAt`, `insertedAt`, `addedAt`, `created`
+  or `time` that the table has.
+
+### Staff Roles and Permissions
+
+Administrators hold `serverpod.admin` and may do everything a table allows.
+To let other people in with less, declare staff scopes and grant them
+per table. Staff only see the tables they were granted:
+
+```dart
+const support = Scope('support');
+
+admin.configureAdminModule((registry) {
+  registry.staffScopes = {support};
+  registry.registerAuthUsers(scopes: [support]); // assign it in the dashboard
+
+  registry.register<Ticket>(
+    options: AdminOptions(permissions: AdminPermissions.all({support})),
+  );
+  registry.register<Customer>(
+    options: AdminOptions(
+      permissions: AdminPermissions(view: {support}, edit: {support}),
+    ),
+  );
+  registry.register<Payment>(); // administrators only
+});
+```
+
+A scope allowed to create, edit or delete may also view. Custom actions and
+"Set field" need edit; "Delete selected" needs delete. Every endpoint method
+checks the signed-in user's scopes on the server, so the dashboard's buttons
+are a convenience, not the protection. The jobs page stays administrators
+only, staff see the change history of the tables they may see, and only
+administrators change a user's scopes or blocked flag, even on rows staff may
+edit.
+
+The dashboard asks the server whether someone who signs in may enter, so the
+prebuilt `/admin` dashboard works for staff with no more setup. A custom
+dashboard can skip that request with `AdminDashboard(staffScopes: {'support'})`.
+
+### Overview Metrics and Charts
+
+Register the numbers your team checks every morning; they open the overview:
+
+```dart
+registry.registerMetric(AdminMetric(
+  label: 'Orders today',
+  hint: 'since midnight UTC',
+  compute: (session) async {
+    final now = DateTime.now().toUtc();
+    final midnight = DateTime.utc(now.year, now.month, now.day);
+    return '${await Order.db.count(session, where: (t) => t.createdAt >= midnight)}';
+  },
+));
+```
+
+A metric is shown to administrators, and to staff holding one of its
+`scopes`. One that fails or takes longer than 10 seconds shows "—" instead of
+breaking the page. Below the metrics, every table shows its row count and a
+bar chart of the rows added on each of the last 30 days.
+
 ### 3. Install the Prebuilt Dashboard
 
 From the same Serverpod server package directory:
@@ -403,7 +499,8 @@ overriding the parts you care about:
 - Footer
 
 The authentication behavior is the same as the non-custom path: unauthenticated
-users see login, and only users with `serverpod.admin` can enter.
+users see login, and only users with `serverpod.admin` or a staff scope can
+enter.
 
 ---
 
@@ -641,9 +738,10 @@ Widget CustomEditDialog({
 Serverpod Admin implements strict role-based access control:
 
 - ✅ **Admin-Only Access** – By default, **all access requires the `serverpod.admin` scope**
+- ✅ **Staff Roles** – Scopes you list in `registry.staffScopes` get only the per-table permissions you grant them (see [Staff Roles and Permissions](#staff-roles-and-permissions))
 - ✅ **Secure by Default** – Without admin privileges, users cannot access any part of the admin panel
 - ✅ **Authentication Required** – The dashboard automatically shows a login screen for unauthenticated users
-- ✅ **Scope Validation** – Users must have the `serverpod.admin` scope to access any admin functionality
+- ✅ **Scope Validation** – Every endpoint method checks the user's scopes on the server, whatever the dashboard shows
 
 **Important:** Without the `serverpod.admin` scope, users will see an error message and cannot access the admin panel, even if they successfully authenticate with email/password.
 
@@ -651,9 +749,9 @@ Serverpod Admin implements strict role-based access control:
 
 1. User enters email and password on the login screen
 2. Authentication is handled via `serverpod_auth_idp` (EmailAuthController)
-3. Upon successful authentication, the system checks for the `serverpod.admin` scope
-4. If the user has admin scope, they're granted access to the dashboard
-5. If the user lacks admin scope, they see an error: "User does not have admin privileges"
+3. Upon successful authentication, the system checks for the `serverpod.admin` scope, or asks the server whether the user holds a staff scope
+4. If they do, they're granted access to the dashboard
+5. Otherwise they see an error: "User does not have admin privileges"
 
 ---
 

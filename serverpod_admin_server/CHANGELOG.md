@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.20
+
+- Table options, like Django's ModelAdmin:
+  `register<T>(options: AdminOptions(...))` sets a table's label, sidebar
+  group, default columns and ordering, read-only and hidden columns, column
+  labels and help text, searched columns, and whether rows may be created,
+  edited or deleted here at all. Hidden columns never leave the server;
+  hidden and read-only columns keep their stored values on edits.
+- Staff roles: scopes in `registry.staffScopes` may open the dashboard, with
+  per-table `AdminPermissions` (view, create, edit, delete). Every endpoint
+  method checks them on the server. Administrators keep full access.
+  `admin.access` says whether the signed-in user may enter.
+- Overview metrics: `registry.registerMetric(AdminMetric(...))` adds key
+  numbers to the dashboard's overview (`admin.metrics`). A metric that fails
+  or times out shows "—".
+- `admin.activity` counts the rows a table gained on each recent day, by its
+  `chartColumn` (detected from names such as `createdAt`).
+- Only administrators change who may sign in: staff who may edit a row that
+  extends an auth user cannot change its `authUser.scopeNames` or
+  `authUser.blocked`.
+- Fixed editing, deleting and running actions on rows of tables with UUID
+  primary keys (their ids were looked up as text).
+
 ## 1.0.19
 
 - Change history: creations, edits, deletions and custom actions made in the

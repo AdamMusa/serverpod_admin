@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.20
+
+- Added `AdminAccessInfo`, `AdminMetricValue` and `AdminActivityPoint`, with
+  `access`, `metrics` and `activity`.
+- `AdminResource` carries `label`, `group`, `listColumns`, `sortColumn`,
+  `sortDescending`, `canCreate`, `canEdit`, `canDelete` and `chartColumn`;
+  `AdminColumn` carries `label`, `help` and `readOnly`.
+
 ## 1.0.19
 
 - Added `AdminLogEntry`, `AdminLogAction`, `AdminLogPage`, `AdminActionInfo`,

@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.20
+
+- Follows the server's table options: labels, sidebar groups, the columns
+  shown at first, the default sort, help text under fields, read-only fields
+  when editing, and no Add, Edit, Delete or bulk buttons where they are not
+  allowed (per table and per signed-in user).
+- Staff with the scopes the server lists in `staffScopes` can sign in, in the
+  prebuilt dashboard too; `AdminDashboard(staffScopes: ...)` lets them in
+  without asking the server.
+- The overview shows the server's metrics, and a chart of the rows each table
+  gained on each of the last 30 days.
+- Filters offer Today, Last 7 days, Last 30 days and This month for a date
+  column in one click.
+- List tiles in record details show their ink again on Flutter 3.44.
+
 ## 1.0.19
 
 - An overview home page with every table's row count and recent actions.
