@@ -71,11 +71,15 @@ class HomeOperations {
     }
   }
 
-  /// Shows the edit record dialog.
+  /// Shows the edit record dialog, with the row as stored now: lists hold
+  /// only the columns they show.
   Future<void> showEditDialog(
     AdminResource resource,
     Map<String, String> record,
   ) async {
+    final current = await _currentRecord(resource, record);
+    if (current == null || !context.mounted) return;
+    record = current;
     if (customEditDialogBuilder != null) {
       final updated = await showDialog<bool>(
         context: context,
@@ -110,9 +114,37 @@ class HomeOperations {
     }
   }
 
-  /// Shows the record details page.
-  void showDetailsPage(AdminResource resource, Map<String, String> record) {
-    controller.openDetails(resource, record);
+  /// Shows the record details page, with the row in full.
+  Future<void> showDetailsPage(
+    AdminResource resource,
+    Map<String, String> record,
+  ) async {
+    final current = await _currentRecord(resource, record);
+    if (current == null || !context.mounted) return;
+    controller.openDetails(resource, current);
+  }
+
+  /// [record] read again in full, or null (with a message) when it is gone.
+  /// Jobs are shown as listed: finished ones are no longer in their table.
+  Future<Map<String, String>?> _currentRecord(
+    AdminResource resource,
+    Map<String, String> record,
+  ) async {
+    if (resource.key == AdminDashboardController.serverpodJobsKey) {
+      return record;
+    }
+    final id = controller.resolvePrimaryKeyValue(resource, record);
+    if (id == null) return record;
+    try {
+      final current = await controller.loadRecord(resource, id);
+      if (current != null) return current;
+      if (context.mounted) {
+        _showSnackBar('This row no longer exists.', isError: true);
+      }
+    } catch (error) {
+      if (context.mounted) _showSnackBar('$error', isError: true);
+    }
+    return null;
   }
 
   /// Shows the delete confirmation dialog.

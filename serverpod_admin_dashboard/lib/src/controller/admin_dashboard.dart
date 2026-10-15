@@ -617,7 +617,11 @@ class AdminDashboardController extends ChangeNotifier {
     unawaited(loadRecords(resource));
   }
 
-  /// The row of [resource] with primary key [id], if there is one.
+  /// The row of [resource] with primary key [id], with every column, if
+  /// there is one.
+  Future<Map<String, String>?> loadRecord(AdminResource resource, String id) =>
+      _findRow(resource, id);
+
   Future<Map<String, String>?> _findRow(
     AdminResource resource,
     String id,
@@ -637,6 +641,7 @@ class AdminDashboardController extends ChangeNotifier {
             value: id,
           ),
         ],
+        countTotal: false,
       ),
     );
     return page.rows.firstOrNull;
@@ -974,9 +979,11 @@ class AdminDashboardController extends ChangeNotifier {
       if (isShowingDetails &&
           detailsResource?.key == resource.key &&
           detailsRecord != null) {
-        final updatedRecord =
-            _findUpdatedDetailsRecord(resource) ??
-            (isJobs ? null : await _fetchDetailsRecord(resource));
+        // A page holds only the columns it shows, so the open record is
+        // read again in full.
+        final updatedRecord = isJobs
+            ? _findUpdatedDetailsRecord(resource)
+            : await _fetchDetailsRecord(resource);
         if (updatedRecord != null) {
           detailsRecord = updatedRecord;
         } else if (resource.key != 'serverpod_future_call') {
@@ -1010,31 +1017,13 @@ class AdminDashboardController extends ChangeNotifier {
 
   int _recordsRequest = 0;
 
-  /// The open details row read by its primary key, when it is not on the
-  /// current page (for example after an edit moved it).
+  /// The open details row read again by its primary key.
   Future<Map<String, String>?> _fetchDetailsRecord(
     AdminResource resource,
   ) async {
     final record = detailsRecord;
-    final primary = resource.columns.where((c) => c.isPrimary).firstOrNull;
     final id = record == null ? null : resolvePrimaryKeyValue(resource, record);
-    if (primary == null || id == null) return null;
-    final page = await adminEndpoint.query(
-      resource.key,
-      admin_client.AdminQuery(
-        offset: 0,
-        limit: 1,
-        sortDescending: false,
-        filters: [
-          admin_client.AdminFilter(
-            column: primary.name,
-            comparison: admin_client.AdminFilterOperator.equals,
-            value: id,
-          ),
-        ],
-      ),
-    );
-    return page.rows.firstOrNull;
+    return id == null ? null : _findRow(resource, id);
   }
 
   Map<String, String>? _findUpdatedDetailsRecord(AdminResource resource) {

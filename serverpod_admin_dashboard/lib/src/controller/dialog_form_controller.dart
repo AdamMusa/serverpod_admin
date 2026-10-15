@@ -5,7 +5,6 @@ import 'package:serverpod_admin_dashboard/src/controller/admin_dashboard.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/dialog_form_helper.dart'
     show DialogFormHelper;
-import 'package:serverpod_admin_dashboard/src/helpers/foreign_key_helper.dart';
 
 /// Controller for managing form state in create/edit dialogs.
 /// Uses ChangeNotifier to avoid setState calls.
@@ -55,6 +54,9 @@ class DialogFormController extends ChangeNotifier {
   Map<String, TextEditingController> get controllers => _controllers;
   Map<String, String> get isoValues => _isoValues;
   Map<String, String?> get foreignKeyValues => _foreignKeyValues;
+
+  /// Empty: foreign key pickers search as the administrator types rather
+  /// than loading rows up front.
   Map<String, List<Map<String, String>>> get foreignKeyOptions =>
       _foreignKeyOptions;
   Map<String, bool> get booleanValues => _booleanValues;
@@ -92,7 +94,6 @@ class DialogFormController extends ChangeNotifier {
         _foreignKeyValues[column.name] = initialValue.isEmpty
             ? null
             : initialValue;
-        _loadForeignKeyOptions(column);
       } else if (DialogFormHelper.isDateType(column)) {
         if (initialValue.isNotEmpty) {
           _isoValues[column.name] = initialValue;
@@ -110,31 +111,6 @@ class DialogFormController extends ChangeNotifier {
           _obscurePasswordValues[column.name] = true;
         }
       }
-    }
-  }
-
-  Future<void> _loadForeignKeyOptions(AdminColumn column) async {
-    if (column.foreignKeyTable == null) return;
-
-    final relatedResource = ForeignKeyHelper.findRelatedResource(
-      adminController,
-      column,
-    );
-
-    if (relatedResource == null) return;
-
-    try {
-      // A first page only: pickers search as the administrator types.
-      final records = await adminController.searchRecords(
-        relatedResource,
-        '',
-        limit: 50,
-      );
-      _foreignKeyOptions[column.name] = records;
-      notifyListeners();
-    } catch (_) {
-      _foreignKeyOptions[column.name] = [];
-      notifyListeners();
     }
   }
 

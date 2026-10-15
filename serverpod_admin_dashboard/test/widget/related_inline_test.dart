@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:serverpod_admin_client/serverpod_admin_client.dart';
@@ -241,6 +243,40 @@ void main() {
     expect(admin.calls.last, 'delete ride 10');
     expect(find.text('Rides (1)'), findsOneWidget);
     expect(controller.records.map((r) => r['id']), ['1']);
+  });
+
+  testWidgets('a row is edited as stored, not as a list shows it', (
+    tester,
+  ) async {
+    late HomeOperations operations;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              operations = HomeOperations(
+                controller: controller,
+                context: context,
+              );
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      ),
+    );
+    // A list row holds only the columns it shows.
+    unawaited(operations.showEditDialog(_rides, const {'id': '11'}));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextFormField, 'open'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'b'), findsOneWidget);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    admin.data['ride']!.removeWhere((r) => r['id'] == '11');
+    unawaited(operations.showEditDialog(_rides, const {'id': '11'}));
+    await tester.pumpAndSettle();
+    expect(find.text('This row no longer exists.'), findsOneWidget);
+    expect(find.text('Update'), findsNothing);
   });
 
   testWidgets('a related row opens its record', (tester) async {
