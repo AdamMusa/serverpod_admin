@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
+import 'package:serverpod_admin_dashboard/src/helpers/fieldsets.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/format_value.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/links.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/document/link_value.dart';
+import 'package:serverpod_admin_dashboard/src/widgets/fieldset_section.dart';
 import 'package:serverpod_admin_dashboard/src/controller/admin_dashboard.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/history/record_history.dart';
 import 'package:serverpod_admin_dashboard/src/widgets/relations/foreign_key_value.dart';
@@ -33,7 +35,6 @@ class RecordDetails extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final columns = resource.columns;
 
     // A Material, so list tiles inside (related rows, history) show their
     // ink on it.
@@ -134,7 +135,7 @@ class RecordDetails extends StatelessWidget {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(24),
-              child: _buildBody(context, theme, columns),
+              child: _buildBody(context, theme),
             ),
           ),
         ],
@@ -191,12 +192,8 @@ class RecordDetails extends StatelessWidget {
     return content;
   }
 
-  Widget _buildBody(
-    BuildContext context,
-    ThemeData theme,
-    List<AdminColumn> columns,
-  ) {
-    final details = _buildDetailsTable(context, theme, columns);
+  Widget _buildBody(BuildContext context, ThemeData theme) {
+    final details = _buildDetailsTable(context, theme);
     final controller = this.controller;
     if (controller == null) return details;
     final id = controller.resolvePrimaryKeyValue(resource, record);
@@ -265,125 +262,140 @@ class RecordDetails extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailsTable(
+  /// Every column with its value, grouped by the resource's fieldsets.
+  Widget _buildDetailsTable(BuildContext context, ThemeData theme) {
+    final divider = Divider(
+      height: 1,
+      thickness: 0.5,
+      color: theme.dividerColor.withValues(alpha: 0.3),
+    );
+    return ListView(
+      children: [
+        for (final group in columnGroups(resource, withPrimary: true))
+          FieldsetSection(
+            key: ValueKey(group.name),
+            group: group,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final (index, column) in group.columns.indexed) ...[
+                  if (index > 0) divider,
+                  _buildDetailRow(context, theme, column),
+                ],
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildDetailRow(
     BuildContext context,
     ThemeData theme,
-    List<AdminColumn> columns,
+    AdminColumn column,
   ) {
-    return ListView.separated(
-      shrinkWrap: false,
-      itemCount: columns.length,
-      separatorBuilder: (context, index) => Divider(
-        height: 1,
-        thickness: 0.5,
-        color: theme.dividerColor.withValues(alpha: 0.3),
-      ),
-      itemBuilder: (context, index) {
-        final column = columns[index];
-        final value = record[column.name];
-        final formattedValue = formatRecordValue(column, value);
-        final isEmpty = formattedValue.isEmpty;
-        final isPrimary = column.isPrimary;
+    final value = record[column.name];
+    final formattedValue = formatRecordValue(column, value);
+    final isEmpty = formattedValue.isEmpty;
+    final isPrimary = column.isPrimary;
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Field column
-              SizedBox(
-                width: 200,
-                child: Row(
-                  children: [
-                    Icon(
-                      isPrimary ? Icons.vpn_key : Icons.label_outline,
-                      size: 18,
-                      color: isPrimary
-                          ? theme.colorScheme.primary
-                          : theme.textTheme.bodyMedium?.color?.withValues(
-                              alpha: 0.6,
-                            ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Field column
+          SizedBox(
+            width: 200,
+            child: Row(
+              children: [
+                Icon(
+                  isPrimary ? Icons.vpn_key : Icons.label_outline,
+                  size: 18,
+                  color: isPrimary
+                      ? theme.colorScheme.primary
+                      : theme.textTheme.bodyMedium?.color?.withValues(
+                          alpha: 0.6,
+                        ),
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    column.displayName,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: isPrimary ? theme.colorScheme.primary : null,
                     ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        column.displayName,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: isPrimary ? theme.colorScheme.primary : null,
-                        ),
-                      ),
+                  ),
+                ),
+                if (isPrimary) ...[
+                  const SizedBox(width: 8),
+                  Chip(
+                    label: const Text('PK', style: TextStyle(fontSize: 10)),
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    backgroundColor: theme.colorScheme.primary.withValues(
+                      alpha: 0.1,
                     ),
-                    if (isPrimary) ...[
-                      const SizedBox(width: 8),
-                      Chip(
-                        label: const Text('PK', style: TextStyle(fontSize: 10)),
-                        padding: EdgeInsets.zero,
-                        visualDensity: VisualDensity.compact,
-                        backgroundColor: theme.colorScheme.primary.withValues(
-                          alpha: 0.1,
-                        ),
-                        labelStyle: TextStyle(
-                          color: theme.colorScheme.primary,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ],
-                    if (column.hasDefault) ...[
-                      const SizedBox(width: 8),
-                      Chip(
-                        label: const Text(
-                          'Default',
-                          style: TextStyle(fontSize: 10),
-                        ),
-                        padding: EdgeInsets.zero,
-                        visualDensity: VisualDensity.compact,
-                        backgroundColor: theme.colorScheme.secondary.withValues(
-                          alpha: 0.1,
-                        ),
-                        labelStyle: TextStyle(
-                          color: theme.colorScheme.secondary,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ],
-                  ],
+                    labelStyle: TextStyle(
+                      color: theme.colorScheme.primary,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+                if (column.hasDefault) ...[
+                  const SizedBox(width: 8),
+                  Chip(
+                    label: const Text(
+                      'Default',
+                      style: TextStyle(fontSize: 10),
+                    ),
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                    backgroundColor: theme.colorScheme.secondary.withValues(
+                      alpha: 0.1,
+                    ),
+                    labelStyle: TextStyle(
+                      color: theme.colorScheme.secondary,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 24),
+          // Value column - wraps to multiple lines
+          Expanded(
+            child: switch (linkKind(value)) {
+              _
+                  when controller != null &&
+                      column.foreignKeyTable != null &&
+                      !isEmpty =>
+                _foreignKey(column, value!.trim()),
+              final kind? => Align(
+                alignment: Alignment.centerLeft,
+                child: LinkValue(
+                  url: value!.trim(),
+                  kind: kind,
+                  title: column.displayName,
+                  large: true,
                 ),
               ),
-              const SizedBox(width: 24),
-              // Value column - wraps to multiple lines
-              Expanded(
-                child: switch (linkKind(value)) {
-                  _
-                      when controller != null &&
-                          column.foreignKeyTable != null &&
-                          !isEmpty =>
-                    _foreignKey(column, value!.trim()),
-                  final kind? => Align(
-                    alignment: Alignment.centerLeft,
-                    child: LinkValue(
-                      url: value!.trim(),
-                      kind: kind,
-                      title: column.displayName,
-                      large: true,
-                    ),
-                  ),
-                  null => SelectableText(
-                    isEmpty ? '(empty)' : formattedValue,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: isEmpty
-                          ? theme.textTheme.bodyMedium?.color?.withValues(
-                              alpha: 0.5,
-                            )
-                          : null,
-                    ),
-                  ),
-                },
+              null => SelectableText(
+                isEmpty ? '(empty)' : formattedValue,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: isEmpty
+                      ? theme.textTheme.bodyMedium?.color?.withValues(
+                          alpha: 0.5,
+                        )
+                      : null,
+                ),
               ),
-            ],
+            },
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:serverpod_admin_dashboard/src/controller/admin_dashboard.dart';
 import 'package:serverpod_admin_dashboard/src/controller/dialog_form_controller.dart';
 import 'package:serverpod_admin_dashboard/src/helpers/admin_resources.dart';
-import 'package:serverpod_admin_dashboard/src/widgets/dialog_form_field.dart';
+import 'package:serverpod_admin_dashboard/src/widgets/dialog_form_fields.dart';
 
 /// Default create dialog with modern design
 class DefaultCreateDialog extends StatefulWidget {
@@ -41,7 +41,10 @@ class _DefaultCreateDialogState extends State<DefaultCreateDialog> {
   }
 
   Future<void> _handleSubmit() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      _formController.revealAllFields();
+      return;
+    }
 
     _formController.setSubmitting(true);
     _formController.setError(null);
@@ -133,15 +136,11 @@ class _DefaultCreateDialogState extends State<DefaultCreateDialog> {
                     builder: (context, _) {
                       return Column(
                         children: [
-                          ...widget.resource.columns
-                              .where((col) => !col.isPrimary)
-                              .map(
-                                (column) => DialogFormField(
-                                  column: column,
-                                  formController: _formController,
-                                  adminController: widget.controller,
-                                ),
-                              ),
+                          DialogFormFields(
+                            resource: widget.resource,
+                            formController: _formController,
+                            adminController: widget.controller,
+                          ),
                           if (_formController.errorMessage != null) ...[
                             const SizedBox(height: 16),
                             Container(

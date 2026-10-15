@@ -33,6 +33,16 @@ class DialogFormController extends ChangeNotifier {
   /// Editing an existing row (read-only columns are locked), not creating.
   bool isEditing = false;
 
+  /// Unfolds every fieldset, so fields with errors are seen.
+  bool get showAllFields => _showAllFields;
+  bool _showAllFields = false;
+
+  void revealAllFields() {
+    if (_showAllFields) return;
+    _showAllFields = true;
+    notifyListeners();
+  }
+
   bool _isSubmitting = false;
   String? _errorMessage;
 
