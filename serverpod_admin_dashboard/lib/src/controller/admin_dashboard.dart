@@ -87,7 +87,12 @@ class AdminDashboardController extends ChangeNotifier {
       resource.key,
       () => {..._defaultHidden(resource)},
     );
-    if (!hidden.remove(column)) hidden.add(column);
+    if (hidden.remove(column)) {
+      // The page holds only the columns it showed.
+      if (resource.key == selectedResource?.key) _reloadSelected();
+    } else {
+      hidden.add(column);
+    }
     notifyListeners();
   }
 
@@ -167,15 +172,21 @@ class AdminDashboardController extends ChangeNotifier {
     if (resource != null) unawaited(loadRecords(resource));
   }
 
-  admin_client.AdminQuery _query({int? offset, int? limit}) =>
-      admin_client.AdminQuery(
-        offset: offset ?? _pageIndex * _rowsPerPage,
-        limit: limit ?? _rowsPerPage,
-        search: _searchQuery.trim().isEmpty ? null : _searchQuery.trim(),
-        sortColumn: _sortColumn,
-        sortDescending: _sortDescending,
-        filters: _filters,
-      );
+  /// The selected table's current page, with only the columns it shows.
+  admin_client.AdminQuery _query({int? offset, int? limit}) {
+    final resource = selectedResource;
+    return admin_client.AdminQuery(
+      offset: offset ?? _pageIndex * _rowsPerPage,
+      limit: limit ?? _rowsPerPage,
+      search: _searchQuery.trim().isEmpty ? null : _searchQuery.trim(),
+      sortColumn: _sortColumn,
+      sortDescending: _sortDescending,
+      filters: _filters,
+      columns: resource == null
+          ? null
+          : _shownColumns(resource, hiddenColumns(resource)).toList(),
+    );
+  }
 
   /// Every row matching the current search and filters, in the current
   /// order, for export.
@@ -188,7 +199,7 @@ class AdminDashboardController extends ChangeNotifier {
     while (rows.length < maxRows) {
       final page = await adminEndpoint.query(
         resource.key,
-        _query(offset: rows.length, limit: 500),
+        _query(offset: rows.length, limit: 500).copyWith(columns: null),
       );
       rows.addAll(page.rows);
       if (page.rows.isEmpty || rows.length >= page.total) break;
@@ -561,6 +572,8 @@ class AdminDashboardController extends ChangeNotifier {
                 value: missing.join(','),
               ),
             ],
+            columns: [?labelColumn(resource)?.name],
+            countTotal: false,
           ),
         );
         for (final row in page.rows) {
@@ -577,7 +590,8 @@ class AdminDashboardController extends ChangeNotifier {
     };
   }
 
-  /// Rows of [resource] matching [text], for pickers.
+  /// Rows of [resource] matching [text], for pickers: their keys and
+  /// names only.
   Future<List<Map<String, String>>> searchRecords(
     AdminResource resource,
     String text, {
@@ -591,6 +605,8 @@ class AdminDashboardController extends ChangeNotifier {
         search: text.trim().isEmpty ? null : text.trim(),
         sortDescending: false,
         filters: const [],
+        columns: [?labelColumn(resource)?.name],
+        countTotal: false,
       ),
     );
     return page.rows;

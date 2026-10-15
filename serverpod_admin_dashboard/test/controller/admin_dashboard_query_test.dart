@@ -139,4 +139,41 @@ void main() {
       everyElement(500),
     );
   });
+
+  test('a page asks for the columns it shows, and labels only names', () async {
+    final rides = AdminResource(
+      key: 'ride',
+      tableName: 'ride',
+      listColumns: ['id', 'status'],
+      columns: [
+        ..._resource.columns,
+        AdminColumn(
+          name: 'note',
+          dataType: 'String',
+          hasDefault: false,
+          isPrimary: false,
+        ),
+      ],
+    );
+    await controller.selectResource(rides);
+    expect(admin.queries.last.columns, ['id', 'status']);
+
+    // Showing another column reads the page again with it.
+    controller.toggleColumn(rides, 'note');
+    await pumpEventQueue();
+    expect(admin.queries.last.columns, ['id', 'status', 'note']);
+    final asked = admin.queries.length;
+    controller.toggleColumn(rides, 'note');
+    await pumpEventQueue();
+    expect(admin.queries, hasLength(asked));
+
+    // Names of related rows need their key and name only, never a count.
+    await controller.labelsFor(rides, ['3']);
+    expect(admin.queries.last.columns, ['note']);
+    expect(admin.queries.last.countTotal, isFalse);
+
+    // An export reads every column.
+    await controller.fetchAllMatching(rides);
+    expect(admin.queries.last.columns, isNull);
+  });
 }
