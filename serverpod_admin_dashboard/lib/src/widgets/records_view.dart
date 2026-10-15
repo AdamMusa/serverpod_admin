@@ -117,10 +117,10 @@ class _RecordsViewState extends State<RecordsView> {
   @override
   void didUpdateWidget(RecordsView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Clear search when resource changes
-    if (oldWidget.resource?.key != widget.resource?.key) {
-      _searchController.clear();
-    }
+    // Shows a search set elsewhere, such as by a saved view or a link, and
+    // clears it for another table.
+    final query = widget.searchQuery ?? '';
+    if (query != _searchController.text) _searchController.text = query;
   }
 
   @override

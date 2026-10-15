@@ -230,6 +230,29 @@ void main() {
     expect(deleted, ['Open rides']);
   });
 
+  testWidgets('the search box shows the search of a view', (tester) async {
+    Widget view(String search) => MaterialApp(
+      home: Scaffold(
+        body: RecordsView(
+          resource: _rides,
+          records: const [],
+          isLoading: false,
+          errorMessage: null,
+          onAdd: null,
+          onEdit: null,
+          onDelete: null,
+          searchQuery: search,
+          onSearchChanged: (_) {},
+        ),
+      ),
+    );
+    await tester.pumpWidget(view(''));
+    await tester.pumpWidget(view('airport'));
+    expect(find.widgetWithText(TextField, 'airport'), findsOneWidget);
+    await tester.pumpWidget(view(''));
+    expect(find.widgetWithText(TextField, 'airport'), findsNothing);
+  });
+
   testWidgets('saving asks for a name, the current view at first', (
     tester,
   ) async {
