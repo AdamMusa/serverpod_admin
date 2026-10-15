@@ -53,11 +53,17 @@ jobs from the same admin dashboard.
 
 No more writing boilerplate CRUD endpoints. Register your models once, and instantly get a complete admin interface with:
 
-- **Browse & Search** – Navigate through all your data with powerful filtering
+- **Search, Filter & Sort** – Search every text column, add filters that fit each column (contains, is / is not, at least / at most, on or before / after, empty), and sort by any column; all of it runs in the database
+- **Pagination** – Pages are read from the database, so large tables stay fast
+- **Documents & Links** – URLs open inside the dashboard: images with zoom, PDFs in the browser's viewer, other pages one click away
+- **Overview** – A home page with every table's row count and the latest changes
+- **Change History** – Who created, changed, deleted or ran an action on each row, and which values changed (like Django's admin log), on every record and as recent actions
+- **Bulk Changes & Custom Actions** – Select rows (or every row matching the filters), then delete them, set a field on all of them, or run actions you register per model
+- **Relationships** – Foreign keys show the related row's name and open it; every record lists the rows pointing at it, with a link to all of them; pickers search instead of loading whole tables
 - **Create & Edit** – Intuitive forms for managing records
 - **Delete** – Safe deletion with proper validation
-- **Pagination** – Handle large datasets effortlessly
-- **CSV/XLSX Import & Export** – Move admin data in and out of your app without custom scripts
+- **Column Visibility** – Hide the columns you do not need on wide tables
+- **CSV/XLSX Import & Export** – Export every row matching the current search and filters, or import changes, without custom scripts
 - **Profile Management** – Admin users can update their profile from the dashboard
 - **Password Updates** – Admin users can securely change their password
 - **Job Monitoring UI** – A full Serverpod jobs dashboard for scheduled, ready, paused, failed, finished, and historical jobs
@@ -150,6 +156,118 @@ void run(List<String> args) async {
 dashboard, including scheduled, ready, paused, failed, finished, and historical
 jobs.
 
+Enum columns are edited with a dropdown. On the Dart VM (`dart run`) their
+values are discovered automatically. A compiled server (`dart compile exe`,
+`dart build cli`, most Docker images) cannot discover the values of
+name-serialized enums, so declare the enums your models use:
+
+```dart
+admin.configureAdminModule((registry) {
+  registry.register<Order>();
+  registry.registerEnum(OrderStatus.values);
+});
+```
+
+Pass the complete `values` list; it is harmless on the VM and takes precedence
+over automatic discovery.
+
+To manage who can open the dashboard, register Serverpod's auth users:
+
+```dart
+admin.configureAdminModule((registry) {
+  registry.registerAuthUsers();
+});
+```
+
+The `serverpod_auth_core_user` table then lists every account. Pick
+`serverpod.admin` in `scopeNames` to make someone an administrator (unpick it to
+remove access; it applies when their access token next refreshes), and tick
+`blocked` to stop someone signing in. Accounts are not created or deleted
+there: they come from sign-up or `AdminUser.create`.
+
+Models that extend the auth user show its access in their own rows, so you
+manage a user where you manage their profile. A model extends the auth user when
+it holds the user's id in a unique column: a relation to
+`module:serverpod_auth_core:AuthUser`, or a `UuidValue` field named
+`authUserId`:
+
+```yaml
+class: UserProfile
+table: user_profile
+fields:
+  authUserId: UuidValue
+  fullName: String
+indexes:
+  user_profile_auth_user_idx:
+    fields: authUserId
+    unique: true
+```
+
+`registry.register<UserProfile>()` then adds `authUser.scopeNames` and
+`authUser.blocked` to each row. They are read from and saved to
+`serverpod_auth_core_user`, never copied into your table. Rows whose auth user
+was deleted still save, with no access to grant. Name the column with
+`register<T>(authUserColumn: 'ownerId')` if it is not detected. An admin cannot
+remove their own admin access or block themselves.
+
+Offer your own permission scopes in the same picker:
+
+```dart
+registry.registerAuthUsers(scopes: [const Scope('dispatcher')]);
+```
+
+Any list or set column can be edited as a multi-select the same way:
+
+```dart
+registry.register<Team>(choices: {'tags': ['beta', 'internal']});
+```
+
+To adjust rows before the dashboard shows them, for example to replace a
+private file reference with a short-lived signed link, pass `present`. Paging,
+sorting, search and filters still run in the database:
+
+```dart
+registry.register<Document>(
+  present: (session, row) => row.copyWith(fileUrl: signedLink(row.fileUrl)),
+);
+```
+
+A custom `listRows` still works, but then those operations run in memory over
+every row it returns.
+
+Custom actions run on the rows an administrator selects, like Django admin
+actions. Each run is recorded in the rows' history:
+
+```dart
+registry.register<Order>(actions: [
+  AdminAction(
+    name: 'ship',
+    label: 'Mark as shipped',
+    run: (session, orders) async {
+      for (final order in orders) {
+        await Order.db.updateRow(session, order.copyWith(shipped: true));
+      }
+      return '${orders.length} orders shipped.';
+    },
+  ),
+]);
+```
+
+The dashboard also offers "Set field" and "Delete selected" for any
+selection; they go through the same validation and `updateRow` hooks as a
+single edit.
+
+The change history is stored in the module's `serverpod_admin_log` table.
+After upgrading to 1.0.19, create and apply a migration in your server
+(`serverpod create-migration`). Changes to fields that look secret
+(passwords, tokens, hashes) are recorded without their values. To keep the
+history only for a while, for example when rows hold personal data you
+promise to erase:
+
+```dart
+registry.historyRetention = const Duration(days: 30);
+```
+
 ### 3. Install the Prebuilt Dashboard
 
 From the same Serverpod server package directory:
@@ -158,8 +276,9 @@ From the same Serverpod server package directory:
 dart run serverpod_admin_server:serverpod_admin install
 ```
 
-The installer downloads the prebuilt Flutter web dashboard and places it in
-`web/admin`. `admin.serveAdminDashboard(pod)` serves that folder at `/admin`.
+The installer downloads the prebuilt Flutter web dashboard from the latest
+GitHub release and places it in `web/admin`. `admin.serveAdminDashboard(pod)`
+serves that folder at `/admin`.
 
 To install to another folder:
 
