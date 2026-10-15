@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:serverpod/serverpod.dart';
 
 /// Counts the database calls sessions make, so tests can hold endpoint
@@ -24,15 +26,20 @@ class QueryCounter {
   static Database intercept(Session session, Database inner) =>
       _CountingDatabase(inner);
 
+  static final _measuring = Object();
+
   /// Runs [call] and returns its result with the database calls it made.
+  /// Calls made by other work meanwhile, such as Serverpod's own background
+  /// tasks, are not counted.
   static Future<(T, int)> measure<T>(Future<T> Function() call) async {
     _calls = 0;
     calls.clear();
-    final result = await call();
+    final result = await runZoned(call, zoneValues: {_measuring: true});
     return (result, _calls);
   }
 
   static void _count(String name) {
+    if (Zone.current[_measuring] != true) return;
     _calls++;
     calls.add(name);
   }
@@ -160,11 +167,7 @@ class _CountingDatabase implements Database {
     Transaction? transaction,
   }) {
     QueryCounter._count('updateRow<$T>');
-    return _inner.updateRow<T>(
-      row,
-      columns: columns,
-      transaction: transaction,
-    );
+    return _inner.updateRow<T>(row, columns: columns, transaction: transaction);
   }
 
   @override
