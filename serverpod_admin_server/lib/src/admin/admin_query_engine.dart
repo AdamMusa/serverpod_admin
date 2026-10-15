@@ -8,6 +8,9 @@ import 'admin_auth_user_link.dart';
 /// The rows a page may hold.
 const adminMaxPageSize = 500;
 
+/// The rows an export or a "select all" may read at once.
+const adminMaxExportRows = 50000;
+
 /// An [AdminQuery] as SQL for one table: filters and search as a WHERE
 /// expression (values escaped by Serverpod) and the sort order. Newest rows
 /// come first unless another column is chosen; the primary key keeps pages

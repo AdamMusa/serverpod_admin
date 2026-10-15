@@ -42,6 +42,11 @@ abstract class AdminEntryBase {
     AdminQuery query,
   ) async => null;
 
+  /// The primary keys of the rows matching [query], read in the database
+  /// without the rest of the rows, or null when it cannot run there.
+  Future<List<String>?> queryIds(Session session, AdminQuery query) async =>
+      null;
+
   /// Creates a strongly typed row from a JSON payload.
   TableRow fromJson(JsonMap json);
 
@@ -72,6 +77,13 @@ abstract class AdminEntryBase {
   Future<List<JsonMap>> findMany(Session session, List<Object> ids) async => [
     for (final id in ids) ?await find(session, id),
   ];
+
+  /// Inserts [rows] (as JSON) in one query and returns them as created, or
+  /// null when the table creates rows its own way, one at a time.
+  Future<List<JsonMap>?> createMany(
+    Session session,
+    List<JsonMap> rows,
+  ) async => null;
 
   /// Saves [rows] (as JSON) in one query and returns them as saved, or
   /// null when the table saves rows its own way, one at a time.

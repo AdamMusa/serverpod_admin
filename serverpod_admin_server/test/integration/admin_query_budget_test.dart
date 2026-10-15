@@ -467,6 +467,93 @@ void main() {
       });
     });
 
+    test('an import creates and updates rows in one request', () async {
+      final (result, queries) = await measure(
+        () => endpoints.admin.importRows(admin, 'counters', [
+          for (var i = 0; i < 5; i++) {'number': '${100 + i}'},
+          for (final row in counters.take(5))
+            {'id': '${row.id}', 'number': '${200 + row.number}'},
+          {'number': ''},
+          {'number': 'many'},
+          {'id': '999999', 'number': '1'},
+        ]),
+      );
+      // Insert, read and save the updated rows, one history insert.
+      expect(queries, 4, reason: '${QueryCounter.calls}');
+      expect((result.created, result.updated, result.skipped), (5, 5, 1));
+      expect(result.failures, hasLength(2));
+      expect(result.failures.first, startsWith('row 12: '));
+      expect(result.failures.last, startsWith('999999: '));
+      final db = sessionBuilder.build();
+      expect(await ReadWriteTestEntry.db.count(db), 35);
+      expect(
+        (await ReadWriteTestEntry.db.findById(db, counters[2].id!))?.number,
+        202,
+      );
+      final logged = (await endpoints.admin.history(
+        admin,
+        'counters',
+        null,
+        0,
+        50,
+      )).entries;
+      expect(logged, hasLength(10));
+    });
+
+    test('an export reads every matching row in one query', () async {
+      final (rows, queries) = await measure(
+        () => endpoints.admin.exportRows(
+          admin,
+          'counters',
+          page(
+            limit: 1,
+            filters: [
+              AdminFilter(
+                column: 'number',
+                comparison: AdminFilterOperator.greaterOrEqual,
+                value: '10',
+              ),
+            ],
+          ),
+          1000,
+        ),
+      );
+      expect(queries, 1, reason: '${QueryCounter.calls}');
+      expect(rows, hasLength(20));
+    });
+
+    test('selecting every matching row reads only their keys', () async {
+      final (ids, queries) = await measure(
+        () => endpoints.admin.matchingIds(
+          admin,
+          'counters',
+          page(
+            filters: [
+              AdminFilter(
+                column: 'number',
+                comparison: AdminFilterOperator.lessOrEqual,
+                value: '4',
+              ),
+            ],
+          ).copyWith(sortColumn: 'number', sortDescending: true),
+          1000,
+        ),
+      );
+      expect(queries, 1, reason: '${QueryCounter.calls}');
+      expect(ids, [
+        for (final row in counters.take(5).toList().reversed) '${row.id}',
+      ]);
+      // Auth users have UUID keys.
+      final users = await endpoints.admin.matchingIds(
+        admin,
+        'serverpod_auth_core_user',
+        page(),
+        1000,
+      );
+      expect(users, hasLength(6));
+      expect(users, contains('${profiles.first.authUserId}'));
+    });
+
     test('a list page is read in the database', () async {
       final (rows, queries) = await measure(
         () => endpoints.admin.listPage(admin, 'counters', 5, 5),

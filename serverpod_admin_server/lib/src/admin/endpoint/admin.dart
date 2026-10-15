@@ -27,6 +27,7 @@ import '../../../serverpod_admin_server.dart'
         AdminPage,
         AdminFilter,
         AdminFilterOperator,
+        AdminImportResult,
         AdminQuery,
         AdminRelatedRows,
         AdminResource,
@@ -254,11 +255,23 @@ class AdminEndpoint extends Endpoint {
     AdminQuery query,
   ) async {
     final entry = _entryFor(session, resourceKey, AdminOperation.view);
-    final bounded = query.copyWith(
-      offset: query.offset < 0 ? 0 : query.offset,
-      limit: query.limit.clamp(1, adminMaxPageSize),
+    return _page(
+      session,
+      entry,
+      query.copyWith(
+        offset: query.offset < 0 ? 0 : query.offset,
+        limit: query.limit.clamp(1, adminMaxPageSize),
+      ),
     );
-    final only = _onlyColumns(entry, query.columns);
+  }
+
+  /// The rows of [entry] matching [bounded], in the database when possible.
+  Future<AdminPage> _page(
+    Session session,
+    AdminEntryBase entry,
+    AdminQuery bounded,
+  ) async {
+    final only = _onlyColumns(entry, bounded.columns);
     final page = await entry.queryPage(session, bounded);
     if (page != null) {
       final rows = only == null || only.any(AdminAuthUserLink.isField)
@@ -338,21 +351,7 @@ class AdminEndpoint extends Endpoint {
     Map<String, String> data,
   ) async {
     final entry = _entryFor(session, resourceKey, AdminOperation.create);
-    // Hidden columns are never set from the dashboard.
-    data = {
-      for (final MapEntry(:key, :value) in data.entries)
-        if (!entry.options.hidden.contains(key)) key: value,
-    };
-    final normalized = _normalizePayload(entry, data);
-    _requireStorable(entry, normalized);
-    final authUser = await entry.authUserLink?.change(
-      session,
-      normalized,
-      data,
-    );
-    final created = await entry.create(session, normalized);
-    if (authUser != null) await AuthUser.db.updateRow(session, authUser);
-    final text = await _text(session, entry, created);
+    final text = await _create(session, entry, data);
     await AdminHistory.record(
       session,
       resourceKey: entry.resourceKey,
@@ -379,6 +378,37 @@ class AdminEndpoint extends Endpoint {
       after: after,
     );
     return after;
+  }
+
+  /// Creates a row from [data] and returns it as text.
+  Future<Map<String, String>> _create(
+    Session session,
+    AdminEntryBase entry,
+    Map<String, String> data,
+  ) async {
+    final normalized = _normalizeCreate(entry, data);
+    final authUser = await entry.authUserLink?.change(
+      session,
+      normalized,
+      data,
+    );
+    final created = await entry.create(session, normalized);
+    if (authUser != null) await AuthUser.db.updateRow(session, authUser);
+    return _text(session, entry, created);
+  }
+
+  /// [data] for a new row, checked; hidden columns are never set from the
+  /// dashboard.
+  Map<String, dynamic> _normalizeCreate(
+    AdminEntryBase entry,
+    Map<String, String> data,
+  ) {
+    final normalized = _normalizePayload(entry, {
+      for (final MapEntry(:key, :value) in data.entries)
+        if (!entry.options.hidden.contains(key)) key: value,
+    });
+    _requireStorable(entry, normalized);
+    return normalized;
   }
 
   /// Saves [data] over its row and returns the row as text before and
@@ -680,10 +710,37 @@ class AdminEndpoint extends Endpoint {
         message: 'The primary key cannot be changed in bulk.',
       );
     }
+    final (:changes, :failures) = await _saveMany(session, entry, {
+      for (final id in ids) id: values,
+    });
+    await AdminHistory.recordAll(
+      session,
+      resourceKey: entry.resourceKey,
+      changes: changes,
+    );
+    return _result(
+      changes.length,
+      failures,
+      done: 'Updated ${changes.length} ${_rows(changes.length)}.',
+    );
+  }
+
+  /// Sets the values of [changesById] (column name to text) on each row:
+  /// the rows are read in one query, then valid ones saved in one query
+  /// unless the table saves rows its own way (or a value changes access,
+  /// checked row by row). Returns the changes to record and why other rows
+  /// were not saved.
+  Future<({List<AdminChange> changes, Map<String, String> failures})> _saveMany(
+    Session session,
+    AdminEntryBase entry,
+    Map<String, Map<String, String>> changesById,
+  ) async {
+    final primary = entry.table.id.columnName;
     final failures = <String, String>{};
+    final changes = <AdminChange>[];
     final stored = {
       for (final row in await entry.findMany(session, [
-        for (final id in ids) _parseId(entry, id),
+        for (final id in changesById.keys) _parseId(entry, id),
       ]))
         _stringifyValue(row[primary]): row,
     };
@@ -691,10 +748,9 @@ class AdminEndpoint extends Endpoint {
       for (final row in await _texts(session, entry, stored.values.toList()))
         _idOf(entry, row): row,
     };
-    final changes = <AdminChange>[];
-    // Valid rows saved together, with their values as text before.
+    // Valid rows saved together.
     final pending = <({String id, Map<String, dynamic> row})>[];
-    for (final id in ids) {
+    for (final MapEntry(key: id, value: values) in changesById.entries) {
       final row = stored[id];
       final before = current[id];
       if (row == null || before == null) {
@@ -732,54 +788,203 @@ class AdminEndpoint extends Endpoint {
         failures[id] = _reason(error);
       }
     }
-    if (pending.isNotEmpty) {
-      List<Map<String, dynamic>>? saved;
-      try {
-        saved = await entry.updateMany(session, [
-          for (final item in pending) item.row,
-        ]);
-      } catch (_) {
-        saved = null;
+    if (pending.isEmpty) return (changes: changes, failures: failures);
+    List<Map<String, dynamic>>? saved;
+    try {
+      saved = await entry.updateMany(session, [
+        for (final item in pending) item.row,
+      ]);
+    } catch (_) {
+      saved = null;
+    }
+    if (saved != null) {
+      final after = {
+        for (final row in await _texts(session, entry, saved))
+          _idOf(entry, row): row,
+      };
+      for (final item in pending) {
+        if (after[item.id] case final row?) {
+          changes.add(_updated(item.id, current[item.id]!, row));
+        }
       }
-      if (saved != null) {
-        final after = {
-          for (final row in await _texts(session, entry, saved))
-            _idOf(entry, row): row,
-        };
-        for (final item in pending) {
-          if (after[item.id] case final row?) {
-            changes.add(_updated(item.id, current[item.id]!, row));
-          }
-        }
-      } else {
-        // One by one, through the table's own save or to tell which row
-        // failed.
-        for (final item in pending) {
-          try {
-            final updated = await entry.update(session, item.row);
-            changes.add(
-              _updated(
-                item.id,
-                current[item.id]!,
-                await _text(session, entry, updated),
-              ),
-            );
-          } catch (error) {
-            failures[item.id] = _reason(error);
-          }
-        }
+      return (changes: changes, failures: failures);
+    }
+    // One by one, through the table's own save or to tell which row failed.
+    for (final item in pending) {
+      try {
+        final updated = await entry.update(session, item.row);
+        changes.add(
+          _updated(
+            item.id,
+            current[item.id]!,
+            await _text(session, entry, updated),
+          ),
+        );
+      } catch (error) {
+        failures[item.id] = _reason(error);
       }
     }
+    return (changes: changes, failures: failures);
+  }
+
+  /// Imports [rows] as a spreadsheet does: rows without a primary key are
+  /// created (in one query unless the table creates rows its own way) and
+  /// rows with one update theirs (read in one query and saved in one query
+  /// unless the table saves rows its own way), all in one request.
+  Future<AdminImportResult> importRows(
+    Session session,
+    String resourceKey,
+    List<Map<String, String>> rows,
+  ) async {
+    final access = AdminAccess.of(session)..requireAllowed();
+    final entry = _resolve(resourceKey);
+    access.require(entry, AdminOperation.view);
+    final primary = entry.table.id.columnName;
+    final known = {for (final column in entry.metadata.columns) column.name};
+    final failures = <String>[];
+    var skipped = 0;
+    final creates = <({int line, Map<String, String> data})>[];
+    final updates = <String, Map<String, String>>{};
+    for (final (index, row) in rows.indexed) {
+      final data = {
+        for (final MapEntry(:key, :value) in row.entries)
+          if (known.contains(key.trim()) && value.trim().isNotEmpty)
+            key.trim(): value.trim(),
+      };
+      if (data.isEmpty) {
+        skipped++;
+      } else if (data[primary] case final id?) {
+        updates[id] = data;
+      } else {
+        creates.add((line: index + 1, data: data));
+      }
+    }
+    if (creates.isNotEmpty) access.require(entry, AdminOperation.create);
+    if (updates.isNotEmpty) access.require(entry, AdminOperation.edit);
+
+    final changes = <AdminChange>[];
+    // New rows: checked one by one, inserted together.
+    final valid = <({int line, Map<String, dynamic> row})>[];
+    final oneByOne = <({int line, Map<String, String> data})>[];
+    for (final item in creates) {
+      if (item.data.keys.any(AdminAuthUserLink.isField)) {
+        oneByOne.add(item);
+        continue;
+      }
+      try {
+        valid.add((line: item.line, row: _normalizeCreate(entry, item.data)));
+      } catch (error) {
+        failures.add('row ${item.line}: ${_reason(error)}');
+      }
+    }
+    List<Map<String, dynamic>>? inserted;
+    if (valid.isNotEmpty) {
+      try {
+        inserted = await entry.createMany(session, [
+          for (final item in valid) item.row,
+        ]);
+      } catch (_) {
+        inserted = null;
+      }
+    }
+    if (inserted != null) {
+      for (final row in await _texts(session, entry, inserted)) {
+        changes.add(
+          AdminChange(
+            recordId: _idOf(entry, row),
+            action: AdminLogAction.created,
+            after: row,
+          ),
+        );
+      }
+    } else {
+      oneByOne.addAll([
+        for (final item in valid)
+          (
+            line: item.line,
+            data: creates.firstWhere((c) => c.line == item.line).data,
+          ),
+      ]);
+    }
+    for (final item in oneByOne) {
+      try {
+        final row = await _create(session, entry, item.data);
+        changes.add(
+          AdminChange(
+            recordId: _idOf(entry, row),
+            action: AdminLogAction.created,
+            after: row,
+          ),
+        );
+      } catch (error) {
+        failures.add('row ${item.line}: ${_reason(error)}');
+      }
+    }
+    final created = changes.length;
+
+    final saved = await _saveMany(session, entry, updates);
+    changes.addAll(saved.changes);
+    failures.addAll([
+      for (final MapEntry(key: id, value: reason) in saved.failures.entries)
+        '$id: $reason',
+    ]);
     await AdminHistory.recordAll(
       session,
       resourceKey: entry.resourceKey,
       changes: changes,
     );
-    return _result(
-      changes.length,
-      failures,
-      done: 'Updated ${changes.length} ${_rows(changes.length)}.',
+    return AdminImportResult(
+      created: created,
+      // Rows whose values were already stored count as updated.
+      updated: updates.length - saved.failures.length,
+      skipped: skipped,
+      failures: failures,
     );
+  }
+
+  /// Every row matching [query] (its search, filters and order) up to
+  /// [maxRows], for exports, in one query.
+  Future<List<Map<String, String>>> exportRows(
+    Session session,
+    String resourceKey,
+    AdminQuery query,
+    int maxRows,
+  ) async {
+    final entry = _entryFor(session, resourceKey, AdminOperation.view);
+    final page = await _page(
+      session,
+      entry,
+      query.copyWith(
+        offset: 0,
+        limit: maxRows.clamp(1, adminMaxExportRows),
+        countTotal: false,
+      ),
+    );
+    return page.rows;
+  }
+
+  /// The primary keys of the rows matching [query] up to [maxRows], to
+  /// select them all, in one query reading only the keys.
+  Future<List<String>> matchingIds(
+    Session session,
+    String resourceKey,
+    AdminQuery query,
+    int maxRows,
+  ) async {
+    final entry = _entryFor(session, resourceKey, AdminOperation.view);
+    final bounded = query.copyWith(
+      offset: 0,
+      limit: maxRows.clamp(1, adminMaxExportRows),
+      countTotal: false,
+    );
+    final ids = await entry.queryIds(session, bounded);
+    if (ids != null) return ids;
+    final page = await _page(
+      session,
+      entry,
+      bounded.copyWith(columns: const []),
+    );
+    return [for (final row in page.rows) _idOf(entry, row)];
   }
 
   static AdminChange _updated(

@@ -542,6 +542,90 @@ class Endpoints extends _i1.EndpointDispatch {
                 params['values'],
               ),
         ),
+        'importRows': _i1.MethodConnector(
+          name: 'importRows',
+          params: {
+            'resourceKey': _i1.ParameterDescription(
+              name: 'resourceKey',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'rows': _i1.ParameterDescription(
+              name: 'rows',
+              type: _i1.getType<List<Map<String, String>>>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint).importRows(
+                session,
+                params['resourceKey'],
+                params['rows'],
+              ),
+        ),
+        'exportRows': _i1.MethodConnector(
+          name: 'exportRows',
+          params: {
+            'resourceKey': _i1.ParameterDescription(
+              name: 'resourceKey',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'query': _i1.ParameterDescription(
+              name: 'query',
+              type: _i1.getType<_i3.AdminQuery>(),
+              nullable: false,
+            ),
+            'maxRows': _i1.ParameterDescription(
+              name: 'maxRows',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint).exportRows(
+                session,
+                params['resourceKey'],
+                params['query'],
+                params['maxRows'],
+              ),
+        ),
+        'matchingIds': _i1.MethodConnector(
+          name: 'matchingIds',
+          params: {
+            'resourceKey': _i1.ParameterDescription(
+              name: 'resourceKey',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'query': _i1.ParameterDescription(
+              name: 'query',
+              type: _i1.getType<_i3.AdminQuery>(),
+              nullable: false,
+            ),
+            'maxRows': _i1.ParameterDescription(
+              name: 'maxRows',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['admin'] as _i2.AdminEndpoint).matchingIds(
+                session,
+                params['resourceKey'],
+                params['query'],
+                params['maxRows'],
+              ),
+        ),
         'runAction': _i1.MethodConnector(
           name: 'runAction',
           params: {

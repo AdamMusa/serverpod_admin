@@ -1,0 +1,9 @@
+### What importing rows from a spreadsheet did.
+class: AdminImportResult
+fields:
+  created: int
+  updated: int
+  ### Rows without any value.
+  skipped: int
+  ### Rows that could not be saved and why, such as "row 3: …".
+  failures: List<String>

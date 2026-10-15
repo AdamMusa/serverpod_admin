@@ -121,6 +121,7 @@ class AdminRegistry {
       // Rows are read, saved and deleted many at a time unless the table
       // gives its own way to do it one row at a time.
       batchFind: findRowById == null,
+      batchCreate: createRow == null,
       batchUpdate: updateRow == null,
       batchDelete: deleteById == null,
       present: present,

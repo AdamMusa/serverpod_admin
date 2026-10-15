@@ -20,6 +20,7 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
     String? authUserColumn,
     bool queryable = false,
     bool batchFind = false,
+    bool batchCreate = false,
     bool batchUpdate = false,
     bool batchDelete = false,
     List<AdminAction<T>> actions = const [],
@@ -29,6 +30,7 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
        _actions = actions,
        _queryable = queryable,
        _batchFind = batchFind,
+       _batchCreate = batchCreate,
        _batchUpdate = batchUpdate,
        _batchDelete = batchDelete,
        _present = present,
@@ -55,6 +57,7 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
   final String? _authUserColumn;
   final bool _queryable;
   final bool _batchFind;
+  final bool _batchCreate;
   final bool _batchUpdate;
   final bool _batchDelete;
   final List<AdminAction<T>> _actions;
@@ -196,16 +199,7 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
     Session session,
     AdminQuery query,
   ) async {
-    if (!_queryable) return null;
-    final sql = AdminSqlQuery.build(
-      _resolvedTable,
-      metadata.columns,
-      query,
-      searchColumns: _options.searchColumns,
-      defaultSort: _options.ordering,
-      defaultDescending: _options.ordering == null || _options.descending,
-      authUserColumn: authUserLink?.column,
-    );
+    final sql = _sql(query);
     if (sql == null) return null;
     // ignore: invalid_use_of_internal_member
     final rows = await session.db.find<T>(
@@ -231,6 +225,35 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
       total: total,
     );
   }
+
+  @override
+  Future<List<String>?> queryIds(Session session, AdminQuery query) async {
+    final sql = _sql(query);
+    if (sql == null) return null;
+    final table = _resolvedTable;
+    final where = sql.where;
+    // ignore: invalid_use_of_internal_member
+    final rows = await session.db.unsafeQuery(
+      'SELECT ${table.id} FROM "${table.tableName.replaceAll('"', '""')}"'
+      '${where == null ? '' : ' WHERE $where'} '
+      'ORDER BY ${sql.orderBy.join(', ')} LIMIT ${query.limit}',
+    );
+    return [for (final row in rows) '${row[0]}'];
+  }
+
+  /// [query] as SQL for this table, or null when it cannot run in the
+  /// database.
+  AdminSqlQuery? _sql(AdminQuery query) => !_queryable
+      ? null
+      : AdminSqlQuery.build(
+          _resolvedTable,
+          metadata.columns,
+          query,
+          searchColumns: _options.searchColumns,
+          defaultSort: _options.ordering,
+          defaultDescending: _options.ordering == null || _options.descending,
+          authUserColumn: authUserLink?.column,
+        );
 
   @override
   TableRow fromJson(JsonMap json) => _resolvedFromJson(json);
@@ -296,6 +319,17 @@ class AdminEntry<T extends TableRow> extends AdminEntryBase {
     return [
       for (final row in rows) toJson(_present?.call(session, row) ?? row),
     ];
+  }
+
+  @override
+  Future<List<JsonMap>?> createMany(Session session, List<JsonMap> rows) async {
+    if (!_batchCreate) return null;
+    if (rows.isEmpty) return const [];
+    // ignore: invalid_use_of_internal_member
+    final created = await session.db.insert<T>([
+      for (final row in rows) _resolvedFromJson(row),
+    ]);
+    return [for (final row in created) toJson(row)];
   }
 
   @override

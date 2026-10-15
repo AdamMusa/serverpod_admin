@@ -37,6 +37,8 @@ import 'package:serverpod_admin_server/src/generated/admin/admin_saved_view.dart
     as _i14;
 import 'package:serverpod_admin_server/src/generated/admin/admin_action_result.dart'
     as _i15;
+import 'package:serverpod_admin_server/src/generated/admin/admin_import_result.dart'
+    as _i16;
 import 'package:serverpod_admin_server/src/generated/protocol.dart';
 import 'package:serverpod_admin_server/src/generated/endpoints.dart';
 export 'package:serverpod_test/serverpod_test_public_exports.dart';
@@ -965,6 +967,115 @@ class _AdminEndpoint {
                   _localCallContext.arguments,
                 )
                 as _i4.Future<_i15.AdminActionResult>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i4.Future<_i16.AdminImportResult> importRows(
+    _i1.TestSessionBuilder sessionBuilder,
+    String resourceKey,
+    List<Map<String, String>> rows,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'admin',
+            method: 'importRows',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'admin',
+          methodName: 'importRows',
+          parameters: _i1.testObjectToJson({
+            'resourceKey': resourceKey,
+            'rows': rows,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i4.Future<_i16.AdminImportResult>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i4.Future<List<Map<String, String>>> exportRows(
+    _i1.TestSessionBuilder sessionBuilder,
+    String resourceKey,
+    _i11.AdminQuery query,
+    int maxRows,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'admin',
+            method: 'exportRows',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'admin',
+          methodName: 'exportRows',
+          parameters: _i1.testObjectToJson({
+            'resourceKey': resourceKey,
+            'query': query,
+            'maxRows': maxRows,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i4.Future<List<Map<String, String>>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i4.Future<List<String>> matchingIds(
+    _i1.TestSessionBuilder sessionBuilder,
+    String resourceKey,
+    _i11.AdminQuery query,
+    int maxRows,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'admin',
+            method: 'matchingIds',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'admin',
+          methodName: 'matchingIds',
+          parameters: _i1.testObjectToJson({
+            'resourceKey': resourceKey,
+            'query': query,
+            'maxRows': maxRows,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i4.Future<List<String>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

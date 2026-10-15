@@ -22,4 +22,7 @@ admin:
   - deleteView:
   - deleteMany:
   - updateMany:
+  - importRows:
+  - exportRows:
+  - matchingIds:
   - runAction:

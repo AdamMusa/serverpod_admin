@@ -34,6 +34,8 @@ import 'package:serverpod_admin_client/src/protocol/admin/admin_saved_view.dart'
     as _i12;
 import 'package:serverpod_admin_client/src/protocol/admin/admin_action_result.dart'
     as _i13;
+import 'package:serverpod_admin_client/src/protocol/admin/admin_import_result.dart'
+    as _i14;
 
 /// {@category Endpoint}
 class EndpointAdmin extends _i1.EndpointRef {
@@ -317,6 +319,54 @@ class EndpointAdmin extends _i1.EndpointRef {
       'resourceKey': resourceKey,
       'ids': ids,
       'values': values,
+    },
+  );
+
+  /// Imports [rows] as a spreadsheet does: rows without a primary key are
+  /// created (in one query unless the table creates rows its own way) and
+  /// rows with one update theirs (read in one query and saved in one query
+  /// unless the table saves rows its own way), all in one request.
+  _i2.Future<_i14.AdminImportResult> importRows(
+    String resourceKey,
+    List<Map<String, String>> rows,
+  ) => caller.callServerEndpoint<_i14.AdminImportResult>(
+    'serverpod_admin.admin',
+    'importRows',
+    {
+      'resourceKey': resourceKey,
+      'rows': rows,
+    },
+  );
+
+  /// Every row matching [query] (its search, filters and order) up to
+  /// [maxRows], for exports, in one query.
+  _i2.Future<List<Map<String, String>>> exportRows(
+    String resourceKey,
+    _i9.AdminQuery query,
+    int maxRows,
+  ) => caller.callServerEndpoint<List<Map<String, String>>>(
+    'serverpod_admin.admin',
+    'exportRows',
+    {
+      'resourceKey': resourceKey,
+      'query': query,
+      'maxRows': maxRows,
+    },
+  );
+
+  /// The primary keys of the rows matching [query] up to [maxRows], to
+  /// select them all, in one query reading only the keys.
+  _i2.Future<List<String>> matchingIds(
+    String resourceKey,
+    _i9.AdminQuery query,
+    int maxRows,
+  ) => caller.callServerEndpoint<List<String>>(
+    'serverpod_admin.admin',
+    'matchingIds',
+    {
+      'resourceKey': resourceKey,
+      'query': query,
+      'maxRows': maxRows,
     },
   );
 
